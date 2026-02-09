@@ -1,38 +1,39 @@
 #!/bin/bash
 # ============================================================================
-#  🔧 FIX GITHUB PAGES PATHS
-#  Run from your repo root:
-#    chmod +x fix_github_pages.sh && ./fix_github_pages.sh
-#    git add . && git commit -m "fix: use relative paths" && git push
+#  🔧 FIX ALL PATHS — Run from your repo root (where README.md is)
+#
+#  chmod +x fix_paths.sh
+#  ./fix_paths.sh
+#  git add . && git commit -m "fix: CSS and link paths" && git push
 # ============================================================================
 
-echo "🔧 Fixing paths..."
+echo "🔧 Fixing all paths in docs/..."
 
 if [ ! -d "docs" ]; then
-  echo "❌ 'docs/' not found. Run from repo root."
+  echo "❌ 'docs/' folder not found. Make sure you're in the repo root."
   exit 1
 fi
 
-count=0
-
-# For each HTML file, replace /system-design-mastery/ with correct relative path
 find docs/ -name "*.html" -type f | sort | while read -r file; do
   # Get depth relative to docs/
   rel="${file#docs/}"
   depth=$(echo "$rel" | tr -cd '/' | wc -c)
-  
+
   # Build prefix: depth 0 = "", depth 1 = "../", depth 2 = "../../"
   prefix=""
   for ((i=0; i<depth; i++)); do
     prefix="../${prefix}"
   done
-  
-  # Single replacement: /system-design-mastery/ → relative prefix
+
+  # Replace ALL occurrences of /system-design-mastery/ with relative prefix
   sed -i "s|/system-design-mastery/|${prefix}|g" "$file"
-  
-  echo "  ✅ ${file} (prefix: '${prefix:-root}')"
+
+  echo "  ✅ ${file} → prefix: '${prefix:-.}'"
 done
 
 echo ""
 echo "🎉 Done! Now run:"
-echo "  git add . && git commit -m 'fix: relative paths' && git push"
+echo "  git add . && git commit -m 'fix: relative paths for CSS and links' && git push"
+echo ""
+echo "Then wait 1-2 min and hard refresh (Ctrl+Shift+R) your site:"
+echo "  https://ashish-bisht.github.io/all_about_system_design/"
