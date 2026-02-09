@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trade-offs Guide — System Design Mastery</title>
+  <link rel="stylesheet" href="/system-design-mastery/styles.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container">
+    <a href="/system-design-mastery/" class="nav-brand">🏗️ <span>SystemDesign</span>Mastery</a>
+    <ul class="nav-links">
+      <li><a href="/system-design-mastery/">Home</a></li>
+      <li><a href="/system-design-mastery/projects/">Projects</a></li>
+      <li><a href="/system-design-mastery/patterns/overview.html">Patterns</a></li>
+      <li><a href="/system-design-mastery/interview-prep/">Interview Prep</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="breadcrumb">
+    <a href="/system-design-mastery/">Home</a>
+    <span>›</span>
+    <a href="/system-design-mastery/interview-prep/">Interview Prep</a>
+    <span>›</span>
+    <span>Trade-offs</span>
+  </div>
+
+  <div class="page-content">
+    <h1>⚖️ Trade-offs Guide</h1>
+    <p style="font-size: 1.15rem; color: var(--text-secondary); margin-bottom: 2rem;">
+      System design is all about trade-offs. Here are the key ones you should know.
+    </p>
+
+    <h2>SQL vs NoSQL</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+      <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1.25rem;">
+        <h3 style="color: var(--accent-green); font-size: 1rem;">✅ SQL When...</h3>
+        <ul>
+          <li>ACID compliance needed</li>
+          <li>Complex queries/joins</li>
+          <li>Data integrity is critical</li>
+          <li>Structured, relational data</li>
+        </ul>
+      </div>
+      <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1.25rem;">
+        <h3 style="color: var(--accent-yellow); font-size: 1rem;">✅ NoSQL When...</h3>
+        <ul>
+          <li>Horizontal scaling needed</li>
+          <li>Flexible schema</li>
+          <li>High write throughput</li>
+          <li>Denormalized data is OK</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>REST vs gRPC</h2>
+    <p>TODO: Add comparison</p>
+
+    <h2>Push vs Pull</h2>
+    <p>TODO: Add comparison</p>
+
+    <h2>Consistency vs Availability (CAP)</h2>
+    <p>TODO: Add comparison</p>
+
+    <h2>Monolith vs Microservices</h2>
+    <p>TODO: Add comparison</p>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>🏗️ System Design Mastery — Built for learning, one system at a time.</p>
+    <p style="margin-top: 0.5rem;">
+      <a href="https://github.com/yourusername/system-design-mastery" style="color: var(--text-muted);">GitHub</a>
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
