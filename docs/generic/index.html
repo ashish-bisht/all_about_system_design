@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,11 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Generic Guides — System Design Mastery</title>
   <link rel="stylesheet" href="../styles.css">
+  <script>
+    (function(){var m=localStorage.getItem('sdm-reader-mode');if(m==='on')document.documentElement.setAttribute('data-reader-mode','on');})();
+  </script>
 </head>
 <body>
 <a href="#main" class="skip-link">Skip to content</a>
 <div class="nav-overlay"></div>
-
 
 <nav class="nav" aria-label="Main navigation">
   <div class="container">
@@ -20,9 +21,13 @@
       <li><a href="../projects/">Projects</a></li>
       <li><a href="../patterns/overview.html">Patterns</a></li>
       <li><a href="../interview-prep/">Interview Prep</a></li>
-      <li><a href="../generic/">Guides</a></li>
+      <li><a href="./">Guides</a></li>
       <li><a href="https://github.com/ashish-bisht/all_about_system_design" target="_blank" rel="noopener">GitHub</a></li>
     </ul>
+    <button class="reader-toggle" aria-label="Switch to Reader mode">
+      <span class="icon">🖥️</span>
+      <span class="label">Reader</span>
+    </button>
     <button class="nav-search-btn" aria-label="Search">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       <kbd>⌘K</kbd>
@@ -49,191 +54,90 @@
 </div>
 
 <div class="container">
+  <div class="breadcrumb">
+    <a href="../">Home</a>
+    <span>›</span>
+    <span>Generic Guides</span>
+  </div>
+</div>
 
-    <!-- NAV -->
-    <div class="top-nav">
-        <div class="breadcrumb">
-            <a href="../../">🏗️ SystemDesignMastery</a>
-            <span>›</span>
-            <a href="../">Interview Prep</a>
-            <span>›</span>
-            <span style="color: var(--text-primary);">Generic Guides</span>
-        </div>
+<section class="section" id="main">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">📚 Generic System Design Guides</h2>
+      <p class="section-subtitle">Har interview mein kaam aane wale universal concepts — ek baar padho, har jagah lagao. Ye kisi ek project se tied nahi hain.</p>
     </div>
 
-    <!-- HERO -->
-    <div class="hero">
-        <div class="hero-badge">📚 Reusable Knowledge Base</div>
-        <h1>Generic System Design Guides</h1>
-        <p>Har interview mein kaam aane wale universal concepts — ek baar padho, har jagah lagao. Ye kisi ek project se tied nahi hain.</p>
+    <div class="stats" style="justify-content: flex-start; margin-bottom: 3rem;">
+      <div class="stat">
+        <div class="stat-number">5</div>
+        <div class="stat-label">Ready</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">4</div>
+        <div class="stat-label">Planned</div>
+      </div>
     </div>
 
-    <!-- STATS -->
-    <div class="stats-row">
-        <div class="stat">
-            <div class="stat-value">1</div>
-            <div class="stat-label">Ready</div>
-        </div>
-        <div class="stat">
-            <div class="stat-value">8</div>
-            <div class="stat-label">Planned</div>
-        </div>
-        <div class="stat">
-            <div class="stat-value">∞</div>
-            <div class="stat-label">Reusable</div>
-        </div>
+    <!-- FUNDAMENTALS -->
+    <h3 style="color: var(--mint); margin-bottom: 1.25rem; font-size: 1rem; letter-spacing: 1px;">🧮 Fundamentals & Numbers</h3>
+    <div class="guide-grid" style="margin-bottom: 3rem;">
+      <a href="numbers-to-know.html" class="guide-card-home animate-on-scroll">
+        <h3>📐 Numbers Every Engineer Should Know</h3>
+        <p>Data type sizes, latency hierarchy, throughput benchmarks, availability SLAs, capacity estimation formulas — sab ek page mein.</p>
+      </a>
+      <a href="app_sizing.html" class="guide-card-home animate-on-scroll">
+        <h3>⚙️ App Server Sizing</h3>
+        <p>FastAPI workers formula, CPU vs I/O bound, GIL bypass, OCI production setup, replicas — sab sizing yahan.</p>
+      </a>
     </div>
 
-    <hr class="divider">
-
-    <!-- ===== FUNDAMENTALS ===== -->
-    <div class="category">
-        <div class="category-header">
-            <span class="icon">🧮</span>
-            <h2>Fundamentals & Numbers</h2>
-            <span class="count">1 guide</span>
-        </div>
-
-        <div class="guides-grid">
-            <!-- READY -->
-            <a href="numbers-to-know.html" class="guide-card green">
-                <div class="card-icon">📐</div>
-                <h3>Numbers Every Engineer Should Know</h3>
-                <div class="card-desc">Data type sizes, latency hierarchy, throughput benchmarks, availability SLAs, capacity estimation formulas, aur interview script — sab ek page mein.</div>
-                <div class="card-tags">
-                    <span class="tag">latency</span>
-                    <span class="tag">throughput</span>
-                    <span class="tag">estimation</span>
-                    <span class="tag">data types</span>
-                </div>
-            </a>
-
-            <!-- COMING SOON -->
-            <div class="guide-card blue coming-soon">
-                <div class="card-icon">📊</div>
-                <h3>Back-of-Envelope Estimation Templates</h3>
-                <div class="card-desc">Ready-made estimation templates for common systems — URL shortener, social media, messaging, video streaming. Plug in your numbers and go.</div>
-                <div class="card-tags">
-                    <span class="tag">templates</span>
-                    <span class="tag">qps</span>
-                    <span class="tag">storage</span>
-                </div>
-            </div>
-        </div>
+    <!-- DATA & STORAGE -->
+    <h3 style="color: var(--cyan); margin-bottom: 1.25rem; font-size: 1rem; letter-spacing: 1px;">💾 Data & Storage</h3>
+    <div class="guide-grid" style="margin-bottom: 3rem;">
+      <a href="access_pattern.html" class="guide-card-home animate-on-scroll">
+        <h3>📊 Access Patterns & Storage Strategy</h3>
+        <p>Read-heavy vs write-heavy, normalize vs denormalize, CQRS, write amplification, myth busting — full decision guide.</p>
+      </a>
+      <a href="bloom_filter.html" class="guide-card-home animate-on-scroll">
+        <h3>🌸 Bloom Filter</h3>
+        <p>Probabilistic data structure — interactive demo, false positive math, real-world use cases (CDN, DB, spam).</p>
+      </a>
     </div>
 
-    <!-- ===== DATA & STORAGE ===== -->
-    <div class="category">
-        <div class="category-header">
-            <span class="icon">💾</span>
-            <h2>Data & Storage</h2>
-            <span class="count">coming soon</span>
-        </div>
-
-        <div class="guides-grid">
-            <div class="guide-card purple coming-soon">
-                <div class="card-icon">🗄️</div>
-                <h3>Database Selection Guide</h3>
-                <div class="card-desc">SQL vs NoSQL vs NewSQL vs Graph — kab kya use karo? PostgreSQL, MongoDB, Cassandra, DynamoDB, Neo4j ka comparison with use cases.</div>
-                <div class="card-tags">
-                    <span class="tag">sql</span>
-                    <span class="tag">nosql</span>
-                    <span class="tag">selection</span>
-                </div>
-            </div>
-
-            <div class="guide-card cyan coming-soon">
-                <div class="card-icon">⚡</div>
-                <h3>Caching Patterns & Strategies</h3>
-                <div class="card-desc">Cache-Aside, Write-Through, Write-Behind, Refresh-Ahead. LRU vs LFU. Redis vs Memcached. Cache stampede, hot keys, invalidation.</div>
-                <div class="card-tags">
-                    <span class="tag">redis</span>
-                    <span class="tag">eviction</span>
-                    <span class="tag">patterns</span>
-                </div>
-            </div>
-        </div>
+    <!-- COMMUNICATION -->
+    <h3 style="color: var(--amber); margin-bottom: 1.25rem; font-size: 1rem; letter-spacing: 1px;">📡 Communication & Concurrency</h3>
+    <div class="guide-grid" style="margin-bottom: 3rem;">
+      <a href="concurency.html" class="guide-card-home animate-on-scroll">
+        <h3>⚡ Python Concurrency</h3>
+        <p>asyncio vs threading vs multiprocessing. GIL deep dive, event loop, when to use what — visual explainer.</p>
+      </a>
+      <div class="guide-card-home animate-on-scroll" style="opacity: 0.5; pointer-events: none; border-color: rgba(255,255,255,0.03);">
+        <h3>📬 Messaging & Queue Patterns <span class="status-badge todo">coming soon</span></h3>
+        <p>Kafka vs RabbitMQ vs SQS. Pub/Sub, message ordering, exactly-once delivery, dead letter queues.</p>
+      </div>
     </div>
 
-    <!-- ===== COMMUNICATION & MESSAGING ===== -->
-    <div class="category">
-        <div class="category-header">
-            <span class="icon">📡</span>
-            <h2>Communication & Messaging</h2>
-            <span class="count">coming soon</span>
-        </div>
-
-        <div class="guides-grid">
-            <div class="guide-card orange coming-soon">
-                <div class="card-icon">📬</div>
-                <h3>Messaging & Queue Patterns</h3>
-                <div class="card-desc">Kafka vs RabbitMQ vs SQS vs Redis Streams. Pub/Sub, message ordering, exactly-once delivery, dead letter queues, backpressure.</div>
-                <div class="card-tags">
-                    <span class="tag">kafka</span>
-                    <span class="tag">rabbitmq</span>
-                    <span class="tag">async</span>
-                </div>
-            </div>
-
-            <div class="guide-card teal coming-soon">
-                <div class="card-icon">🔌</div>
-                <h3>API Design Patterns</h3>
-                <div class="card-desc">REST vs gRPC vs GraphQL. Pagination, rate limiting, versioning, idempotency, authentication. WebSocket vs SSE vs Long Polling.</div>
-                <div class="card-tags">
-                    <span class="tag">rest</span>
-                    <span class="tag">grpc</span>
-                    <span class="tag">websocket</span>
-                </div>
-            </div>
-        </div>
+    <!-- PLANNED -->
+    <h3 style="color: var(--muted); margin-bottom: 1.25rem; font-size: 1rem; letter-spacing: 1px;">🔜 Coming Soon</h3>
+    <div class="guide-grid">
+      <div class="guide-card-home animate-on-scroll" style="opacity: 0.4; pointer-events: none; border-color: rgba(255,255,255,0.03);">
+        <h3>🗄️ Database Selection Guide <span class="status-badge todo">planned</span></h3>
+        <p>SQL vs NoSQL vs NewSQL vs Graph — kab kya use karo?</p>
+      </div>
+      <div class="guide-card-home animate-on-scroll" style="opacity: 0.4; pointer-events: none; border-color: rgba(255,255,255,0.03);">
+        <h3>🔌 API Design Patterns <span class="status-badge todo">planned</span></h3>
+        <p>REST vs gRPC vs GraphQL. Pagination, versioning, idempotency.</p>
+      </div>
+      <div class="guide-card-home animate-on-scroll" style="opacity: 0.4; pointer-events: none; border-color: rgba(255,255,255,0.03);">
+        <h3>🏗️ Scaling Patterns Master Guide <span class="status-badge todo">planned</span></h3>
+        <p>Horizontal vs vertical, sharding, consistent hashing, CQRS, event sourcing.</p>
+      </div>
     </div>
+  </div>
+</section>
 
-    <!-- ===== SCALING & RELIABILITY ===== -->
-    <div class="category">
-        <div class="category-header">
-            <span class="icon">📈</span>
-            <h2>Scaling & Reliability</h2>
-            <span class="count">coming soon</span>
-        </div>
-
-        <div class="guides-grid">
-            <div class="guide-card red coming-soon">
-                <div class="card-icon">🏗️</div>
-                <h3>Scaling Patterns Master Guide</h3>
-                <div class="card-desc">Horizontal vs Vertical scaling, sharding strategies, consistent hashing, read replicas, CQRS, event sourcing, load balancing algorithms.</div>
-                <div class="card-tags">
-                    <span class="tag">sharding</span>
-                    <span class="tag">replicas</span>
-                    <span class="tag">cqrs</span>
-                </div>
-            </div>
-
-            <div class="guide-card yellow coming-soon">
-                <div class="card-icon">🛡️</div>
-                <h3>Reliability & Fault Tolerance</h3>
-                <div class="card-desc">Circuit breakers, retries with backoff, bulkhead pattern, health checks, graceful degradation, chaos engineering basics.</div>
-                <div class="card-tags">
-                    <span class="tag">resilience</span>
-                    <span class="tag">circuit-breaker</span>
-                    <span class="tag">failover</span>
-                </div>
-            </div>
-
-            <div class="guide-card pink coming-soon">
-                <div class="card-icon">⚖️</div>
-                <h3>Load Balancing Deep Dive</h3>
-                <div class="card-desc">L4 vs L7, round robin, least connections, consistent hashing, health checks. Nginx, HAProxy, ALB/NLB comparison.</div>
-                <div class="card-tags">
-                    <span class="tag">nginx</span>
-                    <span class="tag">l4-vs-l7</span>
-                    <span class="tag">algorithms</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- FOOTER -->
-    <footer class="footer-upgraded">
+<footer class="footer-upgraded">
   <div class="container">
     <div class="footer-grid">
       <div>
@@ -267,7 +171,6 @@
 
 <button class="back-to-top" aria-label="Back to top">↑</button>
 
-</div>
 <script src="../nav.js"></script>
 <script src="../site.js"></script>
 </body>

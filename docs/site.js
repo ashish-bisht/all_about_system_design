@@ -1,5 +1,5 @@
 /* ============================================================================
-   SITE.JS — Back-to-top, Scroll Animations, TOC, Active Nav
+   SITE.JS — Back-to-top, Scroll Animations, TOC, Active Nav, Reader Mode
    ============================================================================ */
 
 (function () {
@@ -74,6 +74,30 @@
         });
       }, { passive: true });
     }
+  }
+
+  // --- Reader Mode Toggle ---
+  var READER_KEY = 'sdm-reader-mode';
+  var readerBtn = document.querySelector('.reader-toggle');
+
+  // Apply saved preference immediately (also set in <head> inline script for flash prevention)
+  function applyReaderMode(on) {
+    document.documentElement.setAttribute('data-reader-mode', on ? 'on' : 'off');
+    if (readerBtn) {
+      readerBtn.querySelector('.icon').textContent = on ? '\uD83D\uDCD6' : '\uD83D\uDDA5\uFE0F';
+      readerBtn.setAttribute('aria-label', on ? 'Switch to Cyber mode' : 'Switch to Reader mode');
+    }
+  }
+
+  var readerOn = localStorage.getItem(READER_KEY) === 'on';
+  applyReaderMode(readerOn);
+
+  if (readerBtn) {
+    readerBtn.addEventListener('click', function () {
+      readerOn = !readerOn;
+      localStorage.setItem(READER_KEY, readerOn ? 'on' : 'off');
+      applyReaderMode(readerOn);
+    });
   }
 
   // --- Active Nav Link ---
