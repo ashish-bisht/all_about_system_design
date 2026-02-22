@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,90 +9,934 @@
 </head>
 <body>
 
+<!-- NAV -->
 <nav class="nav">
   <div class="container">
     <a href="../../" class="nav-brand">🏗️ <span>SystemDesign</span>Mastery</a>
     <ul class="nav-links">
       <li><a href="../../">Home</a></li>
-      <li><a href="../../projects/">Projects</a></li>
+      <li><a href="../">Projects</a></li>
       <li><a href="../../patterns/overview.html">Patterns</a></li>
       <li><a href="../../interview-prep/">Interview Prep</a></li>
+      <li><a href="https://github.com/ashish-bisht/all_about_system_design" target="_blank" rel="noopener">GitHub</a></li>
     </ul>
   </div>
 </nav>
 
 <div class="container">
-  <div class="breadcrumb">
-    <a href="../../">Home</a>
-    <span>›</span>
-    <a href="../../projects/">Projects</a>
-    <span>›</span>
-    <span>Rate Limiter</span>
-  </div>
-
-  <div class="page-content">
-    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
-      <span class="card-badge easy">easy</span>
-      <span class="card-tag">infrastructure</span>
-      <span style="color: var(--text-muted); font-family: var(--font-mono); font-size: 0.85rem;">#03</span>
-    </div>
-
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-badge">🛡️ Project 03 — Easy</div>
     <h1>Rate Limiter</h1>
-    <p style="font-size: 1.15rem; color: var(--text-secondary); margin-bottom: 2rem;">Design a distributed rate limiting system</p>
-
-    <h2>📋 Requirements</h2>
-    <h3>Functional Requirements</h3>
-    <ul>
-      <li>TODO: Add functional requirements</li>
-    </ul>
-    <h3>Non-Functional Requirements</h3>
-    <ul>
-      <li>TODO: Latency, throughput, availability targets</li>
-    </ul>
-
-    <h2>📊 Capacity Estimation</h2>
-    <p>TODO: Add back-of-envelope calculations — QPS, storage, bandwidth.</p>
-
-    <h2>🏛️ High-Level Architecture</h2>
-    <pre><code>┌─────────┐     ┌──────────┐     ┌──────────┐
-│  Client  │────▶│  API GW  │────▶│  Service │
-└─────────┘     └──────────┘     └────┬─────┘
-                                      │
-                                 ┌────▼─────┐
-                                 │    DB     │
-                                 └──────────┘</code></pre>
-    <p>TODO: Replace with actual architecture diagram</p>
-
-    <h2>🔧 API Design</h2>
-    <p>TODO: Define REST/gRPC endpoints</p>
-
-    <h2>💾 Data Model</h2>
-    <p>TODO: Define database schema and data access patterns</p>
-
-    <h2>⚡ Deep Dive</h2>
-    <p>TODO: Walk through the most interesting technical challenges</p>
-
-    <h2>📈 Scaling</h2>
-    <p>TODO: How to scale from 1K to 1M to 1B users</p>
-
-    <h2>🧪 Implementation</h2>
-    <p>Working code: <a href="https://github.com/yourusername../../tree/main/projects/03-easy-rate-limiter">projects/03-easy-rate-limiter/</a></p>
-
-    <h2>📝 Key Learnings</h2>
-    <ul>
-      <li>TODO: Add learnings after implementation</li>
-    </ul>
+    <p class="hero-desc">Design a distributed rate limiting system that protects APIs from abuse while ensuring fair usage. Used by every major API platform — Stripe, Twitter, Cloudflare, AWS.</p>
+    <div class="hero-meta">
+      <div class="hero-meta-item">📁 Difficulty: <span>Easy</span></div>
+      <div class="hero-meta-item">⏱️ Interview: <span>30–40 min</span></div>
+      <div class="hero-meta-item">🔥 Frequency: <span>Very High</span></div>
+      <div class="hero-meta-item">🏷️ Category: <span>Infrastructure</span></div>
+    </div>
+    <div class="chips" style="margin-top:1rem;">
+      <span class="chip orange">🛡️ Dealing with Contention</span>
+      <span class="chip blue">📖 Scaling Reads</span>
+      <span class="chip purple">✍️ Scaling Writes</span>
+      <span class="chip red">⚡ Low Latency</span>
+      <span class="chip cyan">🔄 Distributed Systems</span>
+    </div>
   </div>
-</div>
 
-<footer class="footer">
-  <div class="container">
-    <p>🏗️ System Design Mastery — Built for learning, one system at a time.</p>
-    <p style="margin-top: 0.5rem;">
-      <a href="https://github.com/yourusername/system-design-mastery" style="color: var(--text-muted);">GitHub</a>
-    </p>
-  </div>
+  <div class="main">
+    <!-- TOC -->
+    <aside class="toc">
+      <h3>Contents</h3>
+      <a href="#requirements" class="active">Requirements</a>
+      <a href="#core-entities">Core Entities</a>
+      <a href="#algorithms">Algorithms Deep Dive</a>
+      <a href="#high-level-design">High-Level Design</a>
+      <a href="#api-design">API / Interface</a>
+      <a href="#data-flow">Data Flow</a>
+      <a href="#redis-implementation">Redis Implementation</a>
+      <a href="#race-conditions">Race Conditions</a>
+      <a href="#fault-tolerance">Fault Tolerance</a>
+      <a href="#consistent-hashing">Consistent Hashing</a>
+      <a href="#capacity">Capacity Estimation</a>
+      <a href="#interview-tips">Interview Tips</a>
+    </aside>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- ==================== REQUIREMENTS ==================== -->
+      <section class="section" id="requirements">
+        <div class="section-label">🎯 Step 1</div>
+        <h2>Requirements</h2>
+        <p class="section-desc">Clarify functional and non-functional requirements upfront.</p>
+
+        <div class="card">
+          <h3>✅ Functional Requirements</h3>
+          <h4>FR-1: Client Identification</h4>
+          <p>Identify clients by <code>User ID</code>, <code>IP Address</code>, or <code>API Key</code> with priority-based resolution: User ID → API Key → IP.</p>
+          <h4>FR-2: Configurable Rate Rules</h4>
+          <p>Limit HTTP requests based on configurable rules — e.g., 1000 req/min for authenticated users, 50 req/min for anonymous IPs.</p>
+          <h4>FR-3: Meaningful Rejection</h4>
+          <p>Return HTTP <code>429 Too Many Requests</code> with rate limit headers when limits are exceeded.</p>
+        </div>
+
+        <div class="card">
+          <h3>⚡ Non-Functional Requirements</h3>
+          <h4>NFR-1: Low Latency</h4>
+          <p>Rate check must be < 5ms — it runs on every single request as middleware.</p>
+          <h4>NFR-2: Scalable</h4>
+          <p>Handle millions of concurrent users across multiple API gateway instances.</p>
+          <h4>NFR-3: Fault Tolerant</h4>
+          <p>If rate limiter is down, system should <strong>fail open</strong> — allow requests rather than blocking legitimate traffic.</p>
+        </div>
+
+        <div class="callout info">
+          <strong>💡 Interview Tip</strong>
+          <p>Always ask: "Should the rate limiter be at the application level or infrastructure level?" — It shows you understand the placement matters.</p>
+        </div>
+      </section>
+
+      <!-- ==================== CORE ENTITIES ==================== -->
+      <section class="section" id="core-entities">
+        <div class="section-label">🧩 Step 2</div>
+        <h2>Core Entities</h2>
+        <p class="section-desc">Three core entities power the rate limiting system.</p>
+
+        <div class="card">
+          <h3>📦 Entity Model</h3>
+          <div class="table-wrap">
+            <table class="schema-tbl">
+              <thead>
+                <tr><th>Entity</th><th>Description</th><th>Fields</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Client</td>
+                  <td>Who is making the request</td>
+                  <td>Identified by: user_id, api_key, or ip_address (priority order)</td>
+                </tr>
+                <tr>
+                  <td>Rule</td>
+                  <td>What limits apply</td>
+                  <td>max_requests, window_seconds, identifier_type, endpoint (optional)</td>
+                </tr>
+                <tr>
+                  <td>Counter</td>
+                  <td>Current request count in window</td>
+                  <td>identifier_key, request_timestamps, window_start</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>🔑 Client Identification Priority</h3>
+          <p>Different trust levels get different rate limits:</p>
+<pre><code>if "Authorization" in headers → extract user_id → 1000 req/min  (highest trust)
+elif "X-API-Key" in headers   → extract api_key → 500 req/min   (registered dev)
+elif request.client.host      → use IP address  → 50 req/min    (anonymous)
+else                          → REJECT immediately               (no identity)</code></pre>
+          <div class="callout warn">
+            <strong>⚠️ Why priority-based?</strong>
+            <p>A logged-in user should get their full limit regardless of IP changes (mobile → wifi). API key users are registered and somewhat trusted. IP-only gets lowest limit as anyone could be behind that IP.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>🗝️ Redis Key Design</h3>
+          <p>Each identifier maps to a unique Redis key with type prefix to avoid collisions:</p>
+<pre><code>rate_limit:user:&lt;hash(user_id)&gt;      → Authenticated user counter
+rate_limit:apikey:&lt;hash(api_key)&gt;    → API key counter
+rate_limit:ip:&lt;hash(ip_address)&gt;     → IP-based counter
+
+# Examples:
+rate_limit:user:a1b2c3d4      → Ashish's counter (1000/min limit)
+rate_limit:apikey:x7y8z9      → Dev app counter (500/min limit)
+rate_limit:ip:f5e6d7c8        → Anonymous counter (50/min limit)</code></pre>
+          <div class="int-banner">
+            <div class="icon">💡</div>
+            <div>
+              <h4>Why hash the identifier?</h4>
+              <p>IPv6 addresses contain colons (<code>2001:0db8::1</code>) which conflict with Redis key separators. Hashing gives consistent, fixed-length keys regardless of identifier type.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== ALGORITHMS ==================== -->
+      <section class="section" id="algorithms">
+        <div class="section-label">🧮 Step 3</div>
+        <h2>Algorithms Deep Dive</h2>
+        <p class="section-desc">Four major algorithms — each with different trade-offs.</p>
+
+        <div class="algo-grid">
+          <div class="algo-card">
+            <h4>🪣 Token Bucket</h4>
+            <p>Bucket holds tokens (capacity = limit). Each request consumes 1 token. Tokens refill at fixed rate. Empty bucket = rejected.</p>
+            <p style="color:var(--accent-green);margin-top:0.5rem;font-size:0.8rem"><strong>✅ Allows burst traffic</strong> — bucket full? Fire all at once!</p>
+            <p style="color:var(--text-dim);font-size:0.78rem;margin-top:0.3rem">Used by: AWS, Stripe, API Gateway</p>
+            <span class="badge good">Great for APIs</span>
+          </div>
+          <div class="algo-card">
+            <h4>🚿 Leaky Bucket</h4>
+            <p>Requests enter a queue (bucket). Queue processes at fixed rate. Queue full = rejected. Output is always smooth.</p>
+            <p style="color:var(--accent-yellow);margin-top:0.5rem;font-size:0.8rem"><strong>⚠️ No burst</strong> — constant output rate regardless of input.</p>
+            <p style="color:var(--text-dim);font-size:0.78rem;margin-top:0.3rem">Used by: Nginx, traffic shaping</p>
+            <span class="badge ok">Smooth output</span>
+          </div>
+          <div class="algo-card">
+            <h4>🪟 Fixed Window Counter</h4>
+            <p>Divide time into fixed windows (e.g., per minute). Count requests in current window. Count ≥ limit = rejected. Window ends = counter resets.</p>
+            <p style="color:var(--accent-red);margin-top:0.5rem;font-size:0.8rem"><strong>❌ Boundary burst problem</strong> — 2x limit possible at window edges!</p>
+            <p style="color:var(--text-dim);font-size:0.78rem;margin-top:0.3rem">Used by: Simple internal tools</p>
+            <span class="badge ok">Simple but flawed</span>
+          </div>
+          <div class="algo-card">
+            <h4>📐 Sliding Window</h4>
+            <p>Combines sliding log + counter. Looks at weighted count across current and previous window. No boundary issues. Accurate limiting.</p>
+            <p style="color:var(--accent-green);margin-top:0.5rem;font-size:0.8rem"><strong>✅ Most accurate</strong> — no boundary burst, smooth limiting.</p>
+            <p style="color:var(--text-dim);font-size:0.78rem;margin-top:0.3rem">Used by: Cloudflare, Redis-based systems</p>
+            <span class="badge best">✅ Our Choice</span>
+          </div>
+        </div>
+
+        <!-- ALGO COMPARISON TABLE -->
+        <div class="card">
+          <h3>📊 Algorithm Comparison</h3>
+          <div class="table-wrap">
+            <table class="compare-tbl">
+              <thead>
+                <tr><th>Factor</th><th>Token Bucket</th><th>Leaky Bucket</th><th>Fixed Window</th><th>Sliding Window</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Accuracy</td><td class="yes">Good</td><td class="yes">Good</td><td class="no">Poor (boundary)</td><td class="yes">Best</td></tr>
+                <tr><td>Burst Traffic</td><td class="yes">✅ Yes (feature)</td><td class="no">❌ No</td><td class="mid">⚠️ Yes (bug!)</td><td class="no">❌ No</td></tr>
+                <tr><td>Memory Usage</td><td class="yes">Low (2 values)</td><td class="mid">Medium (queue)</td><td class="yes">Low (1 counter)</td><td class="mid">Medium (sorted set)</td></tr>
+                <tr><td>Redis Fit</td><td class="yes">Simple</td><td class="mid">Queue mgmt</td><td class="yes">Simple</td><td class="yes">Sorted Set</td></tr>
+                <tr><td>Complexity</td><td class="yes">Low</td><td class="mid">Medium</td><td class="yes">Very Low</td><td class="mid">Medium</td></tr>
+                <tr><td>Used By</td><td>AWS, Stripe</td><td>Nginx</td><td>Small apps</td><td>Cloudflare</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- REAL LIFE ANALOGY -->
+        <div class="card">
+          <h3>🏠 Real-Life Analogies</h3>
+          <h4>Token Bucket = Jio Recharge</h4>
+          <p>2GB/day limit — but you CAN download 2GB all at once in morning (burst). Phir slowly recharge hoga next day.</p>
+          <h4>Leaky Bucket = Office WiFi with Speed Limit</h4>
+          <p>Always 27 KB/sec max — chahe free ho ya urgent download. Constant speed, no burst.</p>
+          <h4>Fixed Window = Club Bouncer (Hourly Reset)</h4>
+          <p>Max 10 people per hour. 8:59 PM pe 10 aaye, 9:01 pe 10 aur — 20 in 2 minutes! 😱</p>
+          <h4>Sliding Window = Smart Bouncer</h4>
+          <p>"Last 60 minutes mein kitne aaye?" — no fixed boundary, always accurate count.</p>
+        </div>
+
+        <!-- WHEN TO USE WHAT -->
+        <div class="int-banner">
+          <div class="icon">🎯</div>
+          <div>
+            <h4>When to use what?</h4>
+            <p><strong>Token Bucket</strong> — Video streaming, file downloads, bursty APIs. <strong>Sliding Window</strong> — Payment APIs, auth endpoints, general API gateway. <strong>Leaky Bucket</strong> — Message queues, smooth traffic shaping. <strong>Fixed Window</strong> — Avoid in production, okay for internal tooling.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== HIGH-LEVEL DESIGN ==================== -->
+      <section class="section" id="high-level-design">
+        <div class="section-label">🏗️ Step 4</div>
+        <h2>High-Level Design</h2>
+        <p class="section-desc">Rate Limiter sits as middleware in the API Gateway — before requests reach backend servers.</p>
+
+        <div class="diagram-box">
+          <h4>System Architecture</h4>
+          <svg viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto;">
+            <defs>
+              <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#8b8b9e"/></marker>
+              <marker id="arr-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#00dc82"/></marker>
+              <marker id="arr-red" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#f87171"/></marker>
+            </defs>
+
+            <!-- Background -->
+            <rect width="900" height="420" fill="#0a0a0f" rx="12"/>
+            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1e1e2e" stroke-width="0.5"/></pattern>
+            <rect width="900" height="420" fill="url(#grid)" rx="12"/>
+
+            <!-- Client -->
+            <rect x="30" y="160" width="100" height="55" rx="8" fill="rgba(56,189,248,0.1)" stroke="#38bdf8" stroke-width="1.5"/>
+            <text x="80" y="183" text-anchor="middle" fill="#38bdf8" font-family="Outfit" font-size="11" font-weight="700">Client</text>
+            <text x="80" y="200" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">HTTP Request</text>
+
+            <!-- Load Balancer -->
+            <rect x="180" y="155" width="110" height="65" rx="8" fill="rgba(167,139,250,0.1)" stroke="#a78bfa" stroke-width="1.5"/>
+            <text x="235" y="180" text-anchor="middle" fill="#a78bfa" font-family="Outfit" font-size="11" font-weight="700">Load Balancer</text>
+            <text x="235" y="196" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">Nginx / ALB</text>
+            <text x="235" y="210" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">Round Robin</text>
+
+            <!-- Arrow: Client → LB -->
+            <line x1="130" y1="187" x2="175" y2="187" stroke="#8b8b9e" stroke-width="1.5" marker-end="url(#arr)"/>
+
+            <!-- API Gateway Box -->
+            <rect x="340" y="60" width="240" height="295" rx="10" fill="rgba(251,146,60,0.05)" stroke="#fb923c" stroke-width="1" stroke-dasharray="6 3"/>
+            <text x="460" y="82" text-anchor="middle" fill="#fb923c" font-family="Outfit" font-size="10" font-weight="700">API GATEWAY</text>
+
+            <!-- Rate Limiter Middleware -->
+            <rect x="365" y="100" width="190" height="65" rx="8" fill="rgba(248,113,113,0.15)" stroke="#f87171" stroke-width="2"/>
+            <text x="460" y="123" text-anchor="middle" fill="#f87171" font-family="Outfit" font-size="12" font-weight="800">🛡️ Rate Limiter</text>
+            <text x="460" y="140" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">Middleware Layer</text>
+            <text x="460" y="155" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">Extract ID → Check → Allow/Deny</text>
+
+            <!-- Auth + Router -->
+            <rect x="365" y="185" width="90" height="45" rx="6" fill="rgba(167,139,250,0.1)" stroke="#a78bfa" stroke-width="1"/>
+            <text x="410" y="205" text-anchor="middle" fill="#a78bfa" font-family="Outfit" font-size="9" font-weight="600">Auth</text>
+            <text x="410" y="220" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">JWT/Token</text>
+
+            <rect x="465" y="185" width="90" height="45" rx="6" fill="rgba(34,211,238,0.1)" stroke="#22d3ee" stroke-width="1"/>
+            <text x="510" y="205" text-anchor="middle" fill="#22d3ee" font-family="Outfit" font-size="9" font-weight="600">Router</text>
+            <text x="510" y="220" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">Endpoints</text>
+
+            <!-- Gateway instances -->
+            <rect x="365" y="250" width="190" height="35" rx="6" fill="rgba(251,146,60,0.08)" stroke="#fb923c" stroke-width="0.8"/>
+            <text x="460" y="272" text-anchor="middle" fill="#fb923c" font-family="JetBrains Mono" font-size="8">Instance 1 | Instance 2 | Instance 3</text>
+
+            <!-- Arrow: LB → Gateway -->
+            <line x1="290" y1="187" x2="335" y2="187" stroke="#8b8b9e" stroke-width="1.5" marker-end="url(#arr)"/>
+            <line x1="335" y1="187" x2="335" y2="132" stroke="#8b8b9e" stroke-width="1" stroke-dasharray="3 2"/>
+            <line x1="335" y1="132" x2="360" y2="132" stroke="#8b8b9e" stroke-width="1.5" marker-end="url(#arr)"/>
+
+            <!-- Redis Cluster -->
+            <rect x="360" y="330" width="200" height="70" rx="8" fill="rgba(248,113,113,0.1)" stroke="#f87171" stroke-width="1.5"/>
+            <text x="460" y="355" text-anchor="middle" fill="#f87171" font-family="Outfit" font-size="11" font-weight="700">Redis Cluster</text>
+            <text x="460" y="372" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">Sorted Sets + Lua Scripts</text>
+            <text x="460" y="388" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">Node 1 | Node 2 | Node 3</text>
+
+            <!-- Arrow: Rate Limiter ↔ Redis -->
+            <line x1="460" y1="165" x2="460" y2="325" stroke="#f87171" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr-red)"/>
+            <text x="490" y="250" fill="#f87171" font-family="JetBrains Mono" font-size="7">Lua Script</text>
+            <text x="490" y="262" fill="#555568" font-family="JetBrains Mono" font-size="7">(Atomic Check)</text>
+
+            <!-- Backend Servers -->
+            <rect x="640" y="100" width="120" height="50" rx="8" fill="rgba(0,220,130,0.1)" stroke="#00dc82" stroke-width="1.5"/>
+            <text x="700" y="122" text-anchor="middle" fill="#00dc82" font-family="Outfit" font-size="10" font-weight="700">API Server 1</text>
+            <text x="700" y="138" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">FastAPI</text>
+
+            <rect x="640" y="165" width="120" height="50" rx="8" fill="rgba(0,220,130,0.1)" stroke="#00dc82" stroke-width="1.5"/>
+            <text x="700" y="187" text-anchor="middle" fill="#00dc82" font-family="Outfit" font-size="10" font-weight="700">API Server 2</text>
+            <text x="700" y="203" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">FastAPI</text>
+
+            <rect x="640" y="230" width="120" height="50" rx="8" fill="rgba(0,220,130,0.1)" stroke="#00dc82" stroke-width="1.5"/>
+            <text x="700" y="252" text-anchor="middle" fill="#00dc82" font-family="Outfit" font-size="10" font-weight="700">API Server 3</text>
+            <text x="700" y="268" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">FastAPI</text>
+
+            <!-- Arrow: Gateway → Servers (ALLOWED) -->
+            <line x1="580" y1="132" x2="635" y2="125" stroke="#00dc82" stroke-width="1.5" marker-end="url(#arr-green)"/>
+            <line x1="580" y1="132" x2="635" y2="190" stroke="#00dc82" stroke-width="1.5" marker-end="url(#arr-green)"/>
+            <line x1="580" y1="132" x2="635" y2="255" stroke="#00dc82" stroke-width="1.5" marker-end="url(#arr-green)"/>
+            <text x="600" y="110" fill="#00dc82" font-family="Outfit" font-size="8" font-weight="600">✅ ALLOWED</text>
+
+            <!-- 429 Response -->
+            <rect x="640" y="330" width="120" height="50" rx="8" fill="rgba(248,113,113,0.1)" stroke="#f87171" stroke-width="1.5"/>
+            <text x="700" y="352" text-anchor="middle" fill="#f87171" font-family="Outfit" font-size="11" font-weight="700">429</text>
+            <text x="700" y="368" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">Too Many Requests</text>
+
+            <!-- Arrow: Rate Limiter → 429 -->
+            <line x1="555" y1="145" x2="600" y2="355" stroke="#f87171" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr-red)"/>
+            <text x="600" y="305" fill="#f87171" font-family="Outfit" font-size="8" font-weight="600">❌ DENIED</text>
+
+            <!-- Database -->
+            <rect x="780" y="165" width="100" height="55" rx="8" fill="rgba(250,204,21,0.1)" stroke="#facc15" stroke-width="1.5"/>
+            <text x="830" y="188" text-anchor="middle" fill="#facc15" font-family="Outfit" font-size="10" font-weight="700">PostgreSQL</text>
+            <text x="830" y="204" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">App Data</text>
+
+            <!-- Arrow: Server → DB -->
+            <line x1="760" y1="190" x2="775" y2="192" stroke="#8b8b9e" stroke-width="1" marker-end="url(#arr)"/>
+
+            <!-- Consistent Hashing label -->
+            <rect x="365" y="300" width="190" height="22" rx="4" fill="rgba(251,146,60,0.08)"/>
+            <text x="460" y="315" text-anchor="middle" fill="#fb923c" font-family="JetBrains Mono" font-size="7" font-weight="600">↓ Consistent Hashing (key → node)</text>
+          </svg>
+        </div>
+
+        <div class="callout tip">
+          <strong>✅ Key Design Decision: API Gateway Middleware</strong>
+          <p>Rate limiter sits BEFORE the application server — requests are checked and rejected at the gateway level itself. This protects backend from unnecessary load.</p>
+        </div>
+      </section>
+
+      <!-- ==================== API DESIGN ==================== -->
+      <section class="section" id="api-design">
+        <div class="section-label">🛠️ Step 5</div>
+        <h2>API / Interface</h2>
+        <p class="section-desc">Rate Limiter is middleware, not a separate endpoint. It adds headers to every response.</p>
+
+        <div class="card">
+          <h3>📤 Response Headers (Every Response)</h3>
+<pre><code># Success (200, 201, etc.)
+X-RateLimit-Limit: 1000           # Total limit for this window
+X-RateLimit-Remaining: 847        # Requests remaining
+X-RateLimit-Reset: 1707234567     # Unix timestamp when window resets
+
+# Rate Limited (429)
+HTTP/1.1 429 Too Many Requests
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1707234567
+Retry-After: 30                    # Seconds to wait before retrying</code></pre>
+        </div>
+
+        <div class="card">
+          <h3>⚙️ Internal Function Interface</h3>
+<pre><code>async def rate_limit_check(
+    identifier: str,        # "user:a1b2c3" or "apikey:x7y8z9" or "ip:f5e6d7"
+    limit: int,             # Max requests allowed (e.g., 1000)
+    window_seconds: int     # Time window (e.g., 60)
+) -> RateLimitResult:
+    """
+    Returns:
+        allowed: bool       # True = proceed, False = reject
+        remaining: int      # Requests left in window
+        reset_at: int       # Unix timestamp when window resets
+    """</code></pre>
+        </div>
+
+        <div class="card">
+          <h3>🔀 Middleware Flow (Pseudocode)</h3>
+<pre><code>@app.middleware("http")
+async def rate_limiter_middleware(request, call_next):
+    # Step 1: Extract identifier (priority-based)
+    identifier = extract_identifier(request)
+    if not identifier:
+        return Response(status=403, body="No valid identifier")
+
+    # Step 2: Determine limit based on identifier type
+    limit = get_limit_for_type(identifier.type)
+    # user → 1000/min, apikey → 500/min, ip → 50/min
+
+    # Step 3: Check rate limit (Redis Lua script)
+    result = await rate_limit_check(identifier.key, limit, window=60)
+
+    # Step 4: Reject or proceed
+    if not result.allowed:
+        return Response(
+            status=429,
+            headers={
+                "X-RateLimit-Limit": str(limit),
+                "X-RateLimit-Remaining": "0",
+                "X-RateLimit-Reset": str(result.reset_at),
+                "Retry-After": str(result.retry_after)
+            }
+        )
+
+    # Step 5: Proceed + attach headers
+    response = await call_next(request)
+    response.headers["X-RateLimit-Limit"] = str(limit)
+    response.headers["X-RateLimit-Remaining"] = str(result.remaining)
+    response.headers["X-RateLimit-Reset"] = str(result.reset_at)
+    return response</code></pre>
+        </div>
+      </section>
+
+      <!-- ==================== DATA FLOW ==================== -->
+      <section class="section" id="data-flow">
+        <div class="section-label">🔄 Step 6</div>
+        <h2>Data Flow</h2>
+        <p class="section-desc">Step-by-step flow of a request through the rate limiter.</p>
+
+        <div class="diagram-box">
+          <h4>Request Flow — Sliding Window</h4>
+          <svg viewBox="0 0 880 350" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto;">
+            <defs>
+              <marker id="fa" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#8b8b9e"/></marker>
+              <marker id="fg" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#00dc82"/></marker>
+              <marker id="fr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#f87171"/></marker>
+            </defs>
+
+            <rect width="880" height="350" fill="#0a0a0f" rx="12"/>
+            <pattern id="grid2" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1e1e2e" stroke-width="0.5"/></pattern>
+            <rect width="880" height="350" fill="url(#grid2)" rx="12"/>
+
+            <!-- Step numbers -->
+            <circle cx="70" cy="55" r="14" fill="rgba(251,146,60,0.15)" stroke="#fb923c" stroke-width="1.5"/>
+            <text x="70" y="60" text-anchor="middle" fill="#fb923c" font-family="Outfit" font-size="11" font-weight="800">1</text>
+
+            <!-- Step 1: Request arrives -->
+            <rect x="95" y="35" width="130" height="40" rx="6" fill="rgba(56,189,248,0.1)" stroke="#38bdf8" stroke-width="1"/>
+            <text x="160" y="52" text-anchor="middle" fill="#38bdf8" font-family="Outfit" font-size="9" font-weight="600">Request Arrives</text>
+            <text x="160" y="66" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">Headers extracted</text>
+
+            <line x1="225" y1="55" x2="265" y2="55" stroke="#8b8b9e" stroke-width="1" marker-end="url(#fa)"/>
+
+            <!-- Step 2: Extract Identifier -->
+            <circle cx="280" cy="55" r="14" fill="rgba(251,146,60,0.15)" stroke="#fb923c" stroke-width="1.5"/>
+            <text x="280" y="60" text-anchor="middle" fill="#fb923c" font-family="Outfit" font-size="11" font-weight="800">2</text>
+
+            <rect x="305" y="35" width="150" height="40" rx="6" fill="rgba(167,139,250,0.1)" stroke="#a78bfa" stroke-width="1"/>
+            <text x="380" y="52" text-anchor="middle" fill="#a78bfa" font-family="Outfit" font-size="9" font-weight="600">Extract Identifier</text>
+            <text x="380" y="66" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">user_id > api_key > ip</text>
+
+            <line x1="455" y1="55" x2="495" y2="55" stroke="#8b8b9e" stroke-width="1" marker-end="url(#fa)"/>
+
+            <!-- Step 3: Build Redis Key -->
+            <circle cx="510" cy="55" r="14" fill="rgba(251,146,60,0.15)" stroke="#fb923c" stroke-width="1.5"/>
+            <text x="510" y="60" text-anchor="middle" fill="#fb923c" font-family="Outfit" font-size="11" font-weight="800">3</text>
+
+            <rect x="535" y="35" width="150" height="40" rx="6" fill="rgba(251,146,60,0.1)" stroke="#fb923c" stroke-width="1"/>
+            <text x="610" y="52" text-anchor="middle" fill="#fb923c" font-family="Outfit" font-size="9" font-weight="600">Build Redis Key</text>
+            <text x="610" y="66" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">rate_limit:user:hash</text>
+
+            <line x1="685" y1="55" x2="725" y2="55" stroke="#8b8b9e" stroke-width="1" marker-end="url(#fa)"/>
+
+            <!-- Step 4: Lua Script -->
+            <circle cx="740" cy="55" r="14" fill="rgba(251,146,60,0.15)" stroke="#fb923c" stroke-width="1.5"/>
+            <text x="740" y="60" text-anchor="middle" fill="#fb923c" font-family="Outfit" font-size="11" font-weight="800">4</text>
+
+            <rect x="765" y="30" width="95" height="50" rx="6" fill="rgba(248,113,113,0.15)" stroke="#f87171" stroke-width="1.5"/>
+            <text x="812" y="50" text-anchor="middle" fill="#f87171" font-family="Outfit" font-size="9" font-weight="700">Redis</text>
+            <text x="812" y="64" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="7">Lua Script 🔒</text>
+
+            <!-- Lua Script breakdown -->
+            <rect x="190" y="120" width="540" height="100" rx="8" fill="rgba(248,113,113,0.05)" stroke="#f87171" stroke-width="1" stroke-dasharray="4 3"/>
+            <text x="460" y="140" text-anchor="middle" fill="#f87171" font-family="Outfit" font-size="10" font-weight="700">Atomic Lua Script (Single Operation)</text>
+
+            <rect x="210" y="155" width="145" height="45" rx="6" fill="rgba(248,113,113,0.1)" stroke="#f87171" stroke-width="0.8"/>
+            <text x="282" y="174" text-anchor="middle" fill="#f87171" font-family="JetBrains Mono" font-size="8">ZREMRANGEBYSCORE</text>
+            <text x="282" y="190" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">Remove old entries</text>
+
+            <line x1="355" y1="177" x2="380" y2="177" stroke="#8b8b9e" stroke-width="1" marker-end="url(#fa)"/>
+
+            <rect x="385" y="155" width="100" height="45" rx="6" fill="rgba(250,204,21,0.1)" stroke="#facc15" stroke-width="0.8"/>
+            <text x="435" y="174" text-anchor="middle" fill="#facc15" font-family="JetBrains Mono" font-size="8">ZCARD</text>
+            <text x="435" y="190" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">Count entries</text>
+
+            <line x1="485" y1="177" x2="510" y2="177" stroke="#8b8b9e" stroke-width="1" marker-end="url(#fa)"/>
+
+            <rect x="515" y="155" width="120" height="45" rx="6" fill="rgba(0,220,130,0.1)" stroke="#00dc82" stroke-width="0.8"/>
+            <text x="575" y="174" text-anchor="middle" fill="#00dc82" font-family="JetBrains Mono" font-size="8">ZADD (if OK)</text>
+            <text x="575" y="190" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">Add timestamp</text>
+
+            <!-- Decision -->
+            <line x1="460" y1="220" x2="460" y2="255" stroke="#8b8b9e" stroke-width="1.5" marker-end="url(#fa)"/>
+
+            <!-- Step 5: Decision -->
+            <circle cx="460" cy="270" r="14" fill="rgba(251,146,60,0.15)" stroke="#fb923c" stroke-width="1.5"/>
+            <text x="460" y="275" text-anchor="middle" fill="#fb923c" font-family="Outfit" font-size="11" font-weight="800">5</text>
+
+            <text x="460" y="300" text-anchor="middle" fill="#text-primary" font-family="Outfit" font-size="10" font-weight="600" fill="#e8e8ef">count &lt; limit ?</text>
+
+            <!-- ALLOWED path -->
+            <line x1="330" y1="295" x2="230" y2="320" stroke="#00dc82" stroke-width="1.5" marker-end="url(#fg)"/>
+            <rect x="120" y="305" width="115" height="35" rx="6" fill="rgba(0,220,130,0.15)" stroke="#00dc82" stroke-width="1.5"/>
+            <text x="177" y="327" text-anchor="middle" fill="#00dc82" font-family="Outfit" font-size="10" font-weight="700">✅ ALLOW</text>
+
+            <!-- DENIED path -->
+            <line x1="590" y1="295" x2="690" y2="320" stroke="#f87171" stroke-width="1.5" marker-end="url(#fr)"/>
+            <rect x="680" y="305" width="115" height="35" rx="6" fill="rgba(248,113,113,0.15)" stroke="#f87171" stroke-width="1.5"/>
+            <text x="737" y="327" text-anchor="middle" fill="#f87171" font-family="Outfit" font-size="10" font-weight="700">❌ 429 DENY</text>
+
+            <!-- Labels on paths -->
+            <text x="250" y="310" fill="#00dc82" font-family="JetBrains Mono" font-size="7">Forward + Headers</text>
+            <text x="620" y="310" fill="#f87171" font-family="JetBrains Mono" font-size="7">Retry-After header</text>
+
+            <!-- Arrow from Redis to Lua -->
+            <line x1="812" y1="80" x2="812" y2="115" stroke="#f87171" stroke-width="1" stroke-dasharray="3 2"/>
+            <line x1="812" y1="115" x2="735" y2="115" stroke="#f87171" stroke-width="1" marker-end="url(#fr)"/>
+          </svg>
+        </div>
+      </section>
+
+      <!-- ==================== REDIS IMPLEMENTATION ==================== -->
+      <section class="section" id="redis-implementation">
+        <div class="section-label">💾 Deep Dive 1</div>
+        <h2>Redis Implementation</h2>
+        <p class="section-desc">Sliding Window using Redis Sorted Sets — the production-grade approach.</p>
+
+        <div class="card">
+          <h3>📊 How Sliding Window Works in Redis</h3>
+          <p>Each request's timestamp is stored in a Redis Sorted Set. The score AND member are both the timestamp.</p>
+<pre><code># User ashish makes requests at these times:
+# Limit: 5 requests per 60 seconds
+
+t=100 → ZADD rate_limit:user:abc 100 100  → Set: {100}           → count=1 ✅
+t=115 → ZADD rate_limit:user:abc 115 115  → Set: {100,115}       → count=2 ✅
+t=130 → ZADD rate_limit:user:abc 130 130  → Set: {100,115,130}   → count=3 ✅
+t=145 → ZADD rate_limit:user:abc 145 145  → Set: {...,145}       → count=4 ✅
+t=150 → ZADD rate_limit:user:abc 150 150  → Set: {...,150}       → count=5 ✅
+
+t=155 → window_start = 155-60 = 95
+         ZREMRANGEBYSCORE ... 0 95 → nothing removed (all > 95)
+         ZCARD → 5 → 5 >= 5 → ❌ REJECTED!
+
+t=165 → window_start = 165-60 = 105
+         ZREMRANGEBYSCORE ... 0 105 → removes t=100!
+         ZCARD → 4 → 4 < 5 → ✅ ALLOWED! → ZADD 165</code></pre>
+        </div>
+
+        <div class="card">
+          <h3>🔒 Atomic Lua Script</h3>
+          <p>All three operations in ONE atomic call — no race conditions possible.</p>
+<pre><code>-- rate_limiter.lua
+local key = KEYS[1]                    -- rate_limit:user:abc123
+local window = tonumber(ARGV[1])       -- 60 (seconds)
+local limit = tonumber(ARGV[2])        -- 1000
+local now = tonumber(ARGV[3])          -- current timestamp (ms)
+local window_start = now - (window * 1000)
+
+-- Step 1: Remove expired entries (outside window)
+redis.call('ZREMRANGEBYSCORE', key, 0, window_start)
+
+-- Step 2: Count current entries
+local count = redis.call('ZCARD', key)
+
+-- Step 3: Check limit
+if count < limit then
+    -- ALLOWED: Add new entry + set TTL
+    redis.call('ZADD', key, now, now)
+    redis.call('PEXPIRE', key, window * 1000)
+    return {1, limit - count - 1, now + (window * 1000)}
+    --     allowed, remaining,    reset_at
+else
+    -- DENIED: Don't add, return info
+    local oldest = redis.call('ZRANGE', key, 0, 0, 'WITHSCORES')
+    local reset_at = tonumber(oldest[2]) + (window * 1000)
+    return {0, 0, reset_at}
+    --     denied, remaining=0, reset_at
+end</code></pre>
+        </div>
+
+        <div class="callout tip">
+          <strong>✅ Why Lua Script?</strong>
+          <p>Redis executes Lua scripts atomically — no other command can run in between. This eliminates race conditions between ZCARD (check) and ZADD (update) that would allow limit bypass.</p>
+        </div>
+      </section>
+
+      <!-- ==================== RACE CONDITIONS ==================== -->
+      <section class="section" id="race-conditions">
+        <div class="section-label">⚡ Deep Dive 2</div>
+        <h2>Race Conditions</h2>
+        <p class="section-desc">Why atomicity matters in distributed rate limiting.</p>
+
+        <div class="card">
+          <h3>🐛 The Race Condition Bug</h3>
+          <p>Without atomic operations, two gateway instances can bypass limits simultaneously:</p>
+<pre><code># User: ashish | Limit: 5/min | Current count: 4
+
+Gateway 1 (Request A):              Gateway 2 (Request B):
+─────────────────────               ─────────────────────
+ZCARD → count = 4 ✅                ZCARD → count = 4 ✅
+4 < 5 → ALLOW!                      4 < 5 → ALLOW!
+ZADD  → count = 5                   ZADD  → count = 6 😱
+
+# Both allowed! Limit was 5 but 6 requests got through!</code></pre>
+        </div>
+
+        <div class="card">
+          <h3>✅ The Fix: Atomic Lua Script</h3>
+<pre><code># Same scenario with Lua Script:
+
+Gateway 1 (Request A):              Gateway 2 (Request B):
+─────────────────────               ─────────────────────
+LUA SCRIPT START 🔒
+  ZCARD → 4                         ⏳ WAITING (Redis locked)
+  4 < 5 → ALLOW                     ⏳ WAITING...
+  ZADD → count = 5
+LUA SCRIPT END 🔓
+                                     LUA SCRIPT START 🔒
+                                       ZCARD → 5
+                                       5 >= 5 → DENIED ❌
+                                     LUA SCRIPT END 🔓
+
+# Correct! Only 5 requests allowed. Gateway 2 properly rejected.</code></pre>
+        </div>
+
+        <div class="int-banner">
+          <div class="icon">🏠</div>
+          <div>
+            <h4>Analogy: Bathroom Lock</h4>
+            <p><strong>Without Lua</strong> = bathroom door open, 2 people walk in simultaneously 😅. <strong>With Lua</strong> = door locked, one waits outside until the other finishes 🔒.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== FAULT TOLERANCE ==================== -->
+      <section class="section" id="fault-tolerance">
+        <div class="section-label">🛡️ Deep Dive 3</div>
+        <h2>Fault Tolerance</h2>
+        <p class="section-desc">What happens when Redis goes down? The answer determines your system's philosophy.</p>
+
+        <div class="card">
+          <h3>🔥 Fail Open vs Fail Closed</h3>
+          <div class="table-wrap">
+            <table class="compare-tbl">
+              <thead>
+                <tr><th>Strategy</th><th>Behavior</th><th>Risk</th><th>When to Use</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Fail Open ✅</td>
+                  <td class="yes">Allow all requests</td>
+                  <td class="mid">Temporary abuse possible</td>
+                  <td>API Gateway (availability > protection)</td>
+                </tr>
+                <tr>
+                  <td>Fail Closed</td>
+                  <td class="no">Block all requests</td>
+                  <td class="no">Legitimate users blocked!</td>
+                  <td>Payment/Security critical systems</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout warn">
+            <strong>⚠️ Our Choice: Fail Open</strong>
+            <p>Service being down is worse than temporary lack of rate limiting. Legitimate users getting blocked = revenue loss. Brief abuse window is recoverable.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>🔄 Multi-Layer Fallback Strategy</h3>
+<pre><code>async def rate_limit_check(identifier, limit, window):
+    try:
+        # Layer 1: Redis Cluster (primary)
+        return await redis_cluster.eval(lua_script, key, args)
+    except RedisClusterError:
+        try:
+            # Layer 2: Local in-memory counter (approximate)
+            return local_counter.check(identifier, limit, window)
+        except Exception:
+            # Layer 3: Fail Open — allow everything
+            log.warning("Rate limiter fully down, failing open")
+            return RateLimitResult(allowed=True, remaining=limit)</code></pre>
+          <p style="color:var(--text-secondary);font-size:0.85rem;margin-top:0.75rem;">
+            <strong>Layer 1:</strong> Redis Cluster — distributed, accurate, fast.<br>
+            <strong>Layer 2:</strong> Local counters per gateway instance — not shared, but better than nothing.<br>
+            <strong>Layer 3:</strong> Fail open — allow all requests, log for monitoring.
+          </p>
+        </div>
+      </section>
+
+      <!-- ==================== CONSISTENT HASHING ==================== -->
+      <section class="section" id="consistent-hashing">
+        <div class="section-label">🔄 Deep Dive 4</div>
+        <h2>Consistent Hashing</h2>
+        <p class="section-desc">How to distribute rate limit keys across Redis Cluster nodes with minimal disruption.</p>
+
+        <div class="card">
+          <h3>❌ Problem: Simple Hash Modulo</h3>
+<pre><code># 3 Redis nodes: R1, R2, R3
+hash("rate_limit:user:ashish") % 3 = 1  → R2 ✅
+
+# Add R4 (scaling up):
+hash("rate_limit:user:ashish") % 4 = 3  → R4 😱
+# Key moved! Counter lost! User's limit temporarily reset!</code></pre>
+          <p style="color:var(--accent-red);font-size:0.85rem;margin-top:0.5rem;">Adding/removing nodes reshuffles ALL keys — every user's counter resets!</p>
+        </div>
+
+        <div class="card">
+          <h3>✅ Solution: Consistent Hashing Ring</h3>
+<pre><code># Nodes placed on hash ring:
+Ring: [0 ... R1(100) ... R2(300) ... R3(600) ... 2^32]
+
+hash("rate_limit:user:ashish") = 250 → nearest node clockwise = R2 ✅
+
+# Add R4 at position 450:
+Ring: [0 ... R1(100) ... R2(300) ... R4(450) ... R3(600) ...]
+
+hash("rate_limit:user:ashish") = 250 → still R2 ✅ (no change!)
+# Only keys between 300-450 move to R4 (~1/N keys affected)</code></pre>
+        </div>
+
+        <div class="card">
+          <h3>🔑 How It Works for Rate Limiting</h3>
+<pre><code># Every request:
+identifier = "rate_limit:user:hash(ashish)"
+
+# Consistent hash determines which Redis node
+node = consistent_hash(identifier)  → R2
+
+# Lua script runs on THAT specific node
+result = R2.eval(lua_script, identifier, [window, limit, now])
+
+# Same identifier ALWAYS goes to same node
+# = consistent counter, no double-counting</code></pre>
+        </div>
+
+        <div class="int-banner">
+          <div class="icon">💡</div>
+          <div>
+            <h4>Key Point for Interview</h4>
+            <p>Consistent hashing works on the <strong>Redis key string</strong> — it doesn't care if it's a user_id, api_key, or IP. Any string gets hashed to a position on the ring, routed to the nearest node. Simple and uniform.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== CAPACITY ESTIMATION ==================== -->
+      <section class="section" id="capacity">
+        <div class="section-label">📊 Step 7</div>
+        <h2>Capacity Estimation</h2>
+        <p class="section-desc">Back-of-envelope math for scaling decisions.</p>
+
+        <div class="card">
+          <h3>📐 Numbers</h3>
+<pre><code># Assumptions
+DAU = 10M users
+Avg requests per user = 100/day
+Total daily requests = 10M × 100 = 1B requests/day
+
+# QPS
+Avg QPS = 1B / 86,400 ≈ 11,500 QPS
+Peak QPS = 5x = ~58,000 QPS
+
+# Redis Memory (Sliding Window)
+Per user: ~50 entries in sorted set × 16 bytes = 800 bytes
+Active users in any minute: ~1M
+Memory = 1M × 800B = 800 MB ← fits in single Redis node!
+
+# But for availability → Redis Cluster with 3 nodes
+Per node: ~267 MB (well within limits)
+
+# Rate limit check latency
+Redis sorted set ops: < 1ms
+Network (same DC): < 0.5ms
+Total per request: < 2ms ← excellent!</code></pre>
+        </div>
+
+        <div class="card">
+          <h3>⚡ Redis Performance</h3>
+          <div class="table-wrap">
+            <table class="schema-tbl">
+              <thead>
+                <tr><th>Metric</th><th>Value</th><th>Note</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Single node throughput</td><td>100,000+ ops/sec</td><td>More than enough for 58K peak QPS</td></tr>
+                <tr><td>Lua script execution</td><td>< 0.5ms</td><td>3 operations atomic</td></tr>
+                <tr><td>Memory per user</td><td>~800 bytes</td><td>Sorted set with TTL</td></tr>
+                <tr><td>Cluster size needed</td><td>3 nodes</td><td>For HA + 58K QPS</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== INTERVIEW TIPS ==================== -->
+      <section class="section" id="interview-tips">
+        <div class="section-label">🎯 Final</div>
+        <h2>Interview Tips & Cheatsheet</h2>
+        <p class="section-desc">Quick reference for the interview room.</p>
+
+        <div class="card">
+          <h3>🏆 30-Second Elevator Pitch</h3>
+<pre><code>"I'd design the rate limiter as middleware in the API Gateway layer.
+Client identification uses a priority system — user_id > api_key > ip.
+
+For the algorithm, I'd use Sliding Window with Redis Sorted Sets
+because it's accurate (no boundary burst) and Redis-native.
+
+All operations happen in an atomic Lua script to prevent race
+conditions across multiple gateway instances.
+
+For scaling, Redis Cluster with consistent hashing distributes
+keys evenly. Fault tolerance uses fail-open with local counters
+as fallback."</code></pre>
+        </div>
+
+        <div class="card">
+          <h3>🔥 Common Follow-up Questions</h3>
+          <h4>Q: "Why not Token Bucket?"</h4>
+          <p>"Token Bucket is great when you WANT burst — like video streaming or file downloads. For a general API gateway where we want fair, consistent limiting, Sliding Window is more accurate."</p>
+
+          <h4>Q: "What if someone changes IP to bypass?"</h4>
+          <p>"That's why we have priority-based identification. Authenticated users are tracked by user_id regardless of IP. Only anonymous users fall back to IP-based limiting with the lowest limits."</p>
+
+          <h4>Q: "How do you handle distributed rate limiting across data centers?"</h4>
+          <p>"Two approaches: (1) Global Redis Cluster with cross-DC replication — accurate but higher latency. (2) Local rate limiting per DC with slightly higher total limits — faster but less precise. Choice depends on consistency requirements."</p>
+
+          <h4>Q: "What about per-endpoint rate limits?"</h4>
+          <p>"Extend the Redis key: <code>rate_limit:user:abc:POST:/api/payment</code>. Different endpoints get different rules — payment APIs get stricter limits than read APIs."</p>
+
+          <h4>Q: "How do you monitor rate limiting?"</h4>
+          <p>"Emit metrics on every check: total requests, allowed, denied, latency. Dashboard shows denial rate per user type. Alerts on sudden spikes in 429s or Redis latency."</p>
+        </div>
+
+        <div class="card">
+          <h3>⚡ Quick Comparison Cheatsheet</h3>
+          <div class="table-wrap">
+            <table class="compare-tbl">
+              <thead>
+                <tr><th>Decision</th><th>Our Choice</th><th>Why</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Placement</td><td class="yes">API Gateway Middleware</td><td>Before app server, protects backend</td></tr>
+                <tr><td>Algorithm</td><td class="yes">Sliding Window</td><td>Accurate, no boundary burst</td></tr>
+                <tr><td>Storage</td><td class="yes">Redis Sorted Set</td><td>Fast, sorted by time, TTL support</td></tr>
+                <tr><td>Atomicity</td><td class="yes">Lua Script</td><td>Check+update in one shot, no races</td></tr>
+                <tr><td>Identification</td><td class="yes">Priority: user > apikey > ip</td><td>Trust-based limits</td></tr>
+                <tr><td>Fault Tolerance</td><td class="yes">Fail Open</td><td>Availability > abuse protection</td></tr>
+                <tr><td>Distribution</td><td class="yes">Consistent Hashing</td><td>Minimal disruption on node changes</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="int-banner">
+          <div class="icon">🎯</div>
+          <div>
+            <h4>Patterns Covered in This Design</h4>
+            <div class="chips" style="margin-top:0.5rem;">
+              <span class="chip orange">🛡️ Contention (Lua atomic)</span>
+              <span class="chip blue">📖 Scaling Reads (Redis cache)</span>
+              <span class="chip purple">✍️ Scaling Writes (Sorted Sets)</span>
+              <span class="chip green">🔄 Consistent Hashing</span>
+              <span class="chip red">⚡ Fail Open/Closed</span>
+              <span class="chip cyan">🔒 Distributed Locking</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /container -->
+
+<!-- FOOTER -->
+<footer style="text-align:center;padding:3rem;border-top:1px solid var(--border-color);margin-top:3rem;color:var(--text-dim);font-size:0.82rem;">
+  <p>System Design Mastery — Built for Interview Prep 🚀</p>
+  <p style="margin-top:0.3rem;"><a href="../../index.html" style="color:var(--accent-orange);">← Back to All Projects</a></p>
 </footer>
 
+<script>
+// TOC active state on scroll
+const tocLinks = document.querySelectorAll('.toc a');
+const sections = document.querySelectorAll('section[id]');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      tocLinks.forEach(l => l.classList.remove('active'));
+      const a = document.querySelector(`.toc a[href="#${entry.target.id}"]`);
+      if (a) a.classList.add('active');
+    }
+  });
+}, { rootMargin: '-80px 0px -60% 0px' });
+sections.forEach(s => observer.observe(s));
+
+// API endpoint toggle
+document.querySelectorAll('.api-hd').forEach(hd => {
+  hd.addEventListener('click', () => {
+    hd.nextElementSibling.classList.toggle('open');
+  });
+});
+
+// Animate on scroll
+const animObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.style.opacity = '1'; e.target.style.transform = 'translateY(0)'; } });
+}, { threshold: 0.1 });
+document.querySelectorAll('.card, .diagram-box, .int-banner, .callout').forEach(el => {
+  el.style.opacity = '0'; el.style.transform = 'translateY(15px)'; el.style.transition = 'all 0.5s ease-out';
+  animObserver.observe(el);
+});
+</script>
 </body>
 </html>

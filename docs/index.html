@@ -11,12 +11,13 @@
 
 <nav class="nav">
   <div class="container">
-    <a href="" class="nav-brand">🏗️ <span>SystemDesign</span>Mastery</a>
+    <a href="./" class="nav-brand">🏗️ <span>SystemDesign</span>Mastery</a>
     <ul class="nav-links">
-      <li><a href="">Home</a></li>
+      <li><a href="./">Home</a></li>
       <li><a href="projects/">Projects</a></li>
       <li><a href="patterns/overview.html">Patterns</a></li>
       <li><a href="interview-prep/">Interview Prep</a></li>
+      <li><a href="https://github.com/ashish-bisht/all_about_system_design" target="_blank" rel="noopener">GitHub</a></li>
     </ul>
   </div>
 </nav>
@@ -49,325 +50,17 @@
   <div class="container">
     <div class="section-header">
       <h2 class="section-title">🗂️ Projects</h2>
-      <p class="section-subtitle">Click any project to dive into its architecture and implementation</p>
+      <p class="section-subtitle">Pick projects directly, ya patterns ke hisaab se browse karo (dashboard clean)</p>
     </div>
 
-    <div class="filter-tabs">
-      <button class="filter-tab active" data-filter="all">All (28)</button>
-      <button class="filter-tab" data-filter="easy">🟢 Easy (8)</button>
-      <button class="filter-tab" data-filter="medium">🟡 Medium (10)</button>
-      <button class="filter-tab" data-filter="hard">🔴 Hard (10)</button>
-    </div>
-
-    <div class="project-grid">
-
-      <a href="projects/bitly/" class="project-card easy animate-in" data-difficulty="easy">
-        <div class="card-header">
-          <span class="card-number">#01</span>
-          <span class="card-badge easy">easy</span>
-        </div>
-        <h3 class="card-title">Bitly URL Shortener</h3>
-        <p class="card-desc">Design a URL shortening service like bit.ly</p>
-        <div class="card-tags">
-          <span class="card-tag">storage</span>
-        </div>
+    <div class="pattern-grid">
+      <a href="projects/" class="pattern-card">
+        <h3>All Projects</h3>
+        <p>28 end-to-end project breakdowns (filter by difficulty)</p>
       </a>
-      <a href="projects/pastebin/" class="project-card easy animate-in" data-difficulty="easy">
-        <div class="card-header">
-          <span class="card-number">#02</span>
-          <span class="card-badge easy">easy</span>
-        </div>
-        <h3 class="card-title">Pastebin</h3>
-        <p class="card-desc">Design a text/code snippet sharing service</p>
-        <div class="card-tags">
-          <span class="card-tag">storage</span>
-        </div>
-      </a>
-      <a href="projects/rate-limiter/" class="project-card easy animate-in" data-difficulty="easy">
-        <div class="card-header">
-          <span class="card-number">#03</span>
-          <span class="card-badge easy">easy</span>
-        </div>
-        <h3 class="card-title">Rate Limiter</h3>
-        <p class="card-desc">Design a distributed rate limiting system</p>
-        <div class="card-tags">
-          <span class="card-tag">infrastructure</span>
-        </div>
-      </a>
-      <a href="projects/kv-store/" class="project-card easy animate-in" data-difficulty="easy">
-        <div class="card-header">
-          <span class="card-number">#04</span>
-          <span class="card-badge easy">easy</span>
-        </div>
-        <h3 class="card-title">Key-Value Store</h3>
-        <p class="card-desc">Design a distributed key-value store like Redis</p>
-        <div class="card-tags">
-          <span class="card-tag">database</span>
-        </div>
-      </a>
-      <a href="projects/task-queue/" class="project-card easy animate-in" data-difficulty="easy">
-        <div class="card-header">
-          <span class="card-number">#05</span>
-          <span class="card-badge easy">easy</span>
-        </div>
-        <h3 class="card-title">Task Queue</h3>
-        <p class="card-desc">Design a distributed task queue like Celery/SQS</p>
-        <div class="card-tags">
-          <span class="card-tag">messaging</span>
-        </div>
-      </a>
-      <a href="projects/leaderboard/" class="project-card easy animate-in" data-difficulty="easy">
-        <div class="card-header">
-          <span class="card-number">#06</span>
-          <span class="card-badge easy">easy</span>
-        </div>
-        <h3 class="card-title">Leaderboard</h3>
-        <p class="card-desc">Design a real-time gaming leaderboard</p>
-        <div class="card-tags">
-          <span class="card-tag">real-time</span>
-        </div>
-      </a>
-      <a href="projects/url-crawler/" class="project-card easy animate-in" data-difficulty="easy">
-        <div class="card-header">
-          <span class="card-number">#07</span>
-          <span class="card-badge easy">easy</span>
-        </div>
-        <h3 class="card-title">URL Crawler</h3>
-        <p class="card-desc">Design a basic web page crawler</p>
-        <div class="card-tags">
-          <span class="card-tag">data-processing</span>
-        </div>
-      </a>
-      <a href="projects/chat-app/" class="project-card easy animate-in" data-difficulty="easy">
-        <div class="card-header">
-          <span class="card-number">#08</span>
-          <span class="card-badge easy">easy</span>
-        </div>
-        <h3 class="card-title">Chat Application</h3>
-        <p class="card-desc">Design a simple real-time chat application</p>
-        <div class="card-tags">
-          <span class="card-tag">real-time</span>
-        </div>
-      </a>
-      <a href="projects/dropbox/" class="project-card medium animate-in" data-difficulty="medium">
-        <div class="card-header">
-          <span class="card-number">#09</span>
-          <span class="card-badge medium">medium</span>
-        </div>
-        <h3 class="card-title">Dropbox File Storage</h3>
-        <p class="card-desc">Design a cloud file storage and sync service</p>
-        <div class="card-tags">
-          <span class="card-tag">storage</span>
-        </div>
-      </a>
-      <a href="projects/instagram/" class="project-card medium animate-in" data-difficulty="medium">
-        <div class="card-header">
-          <span class="card-number">#10</span>
-          <span class="card-badge medium">medium</span>
-        </div>
-        <h3 class="card-title">Instagram</h3>
-        <p class="card-desc">Design a photo sharing social network</p>
-        <div class="card-tags">
-          <span class="card-tag">social</span>
-        </div>
-      </a>
-      <a href="projects/twitter-timeline/" class="project-card medium animate-in" data-difficulty="medium">
-        <div class="card-header">
-          <span class="card-number">#11</span>
-          <span class="card-badge medium">medium</span>
-        </div>
-        <h3 class="card-title">Twitter Timeline</h3>
-        <p class="card-desc">Design a social media feed/timeline system</p>
-        <div class="card-tags">
-          <span class="card-tag">social</span>
-        </div>
-      </a>
-      <a href="projects/notification/" class="project-card medium animate-in" data-difficulty="medium">
-        <div class="card-header">
-          <span class="card-number">#12</span>
-          <span class="card-badge medium">medium</span>
-        </div>
-        <h3 class="card-title">Notification System</h3>
-        <p class="card-desc">Design a multi-channel notification platform</p>
-        <div class="card-tags">
-          <span class="card-tag">messaging</span>
-        </div>
-      </a>
-      <a href="projects/ticketmaster/" class="project-card medium animate-in" data-difficulty="medium">
-        <div class="card-header">
-          <span class="card-number">#13</span>
-          <span class="card-badge medium">medium</span>
-        </div>
-        <h3 class="card-title">Ticketmaster</h3>
-        <p class="card-desc">Design an event ticketing and booking system</p>
-        <div class="card-tags">
-          <span class="card-tag">booking</span>
-        </div>
-      </a>
-      <a href="projects/yelp/" class="project-card medium animate-in" data-difficulty="medium">
-        <div class="card-header">
-          <span class="card-number">#14</span>
-          <span class="card-badge medium">medium</span>
-        </div>
-        <h3 class="card-title">Yelp Nearby Search</h3>
-        <p class="card-desc">Design a location-based business discovery service</p>
-        <div class="card-tags">
-          <span class="card-tag">search</span>
-        </div>
-      </a>
-      <a href="projects/web-crawler/" class="project-card medium animate-in" data-difficulty="medium">
-        <div class="card-header">
-          <span class="card-number">#15</span>
-          <span class="card-badge medium">medium</span>
-        </div>
-        <h3 class="card-title">Distributed Web Crawler</h3>
-        <p class="card-desc">Design a large-scale distributed web crawler</p>
-        <div class="card-tags">
-          <span class="card-tag">data-processing</span>
-        </div>
-      </a>
-      <a href="projects/typeahead/" class="project-card medium animate-in" data-difficulty="medium">
-        <div class="card-header">
-          <span class="card-number">#16</span>
-          <span class="card-badge medium">medium</span>
-        </div>
-        <h3 class="card-title">Typeahead Autocomplete</h3>
-        <p class="card-desc">Design a real-time search autocomplete system</p>
-        <div class="card-tags">
-          <span class="card-tag">search</span>
-        </div>
-      </a>
-      <a href="projects/api-gateway/" class="project-card medium animate-in" data-difficulty="medium">
-        <div class="card-header">
-          <span class="card-number">#17</span>
-          <span class="card-badge medium">medium</span>
-        </div>
-        <h3 class="card-title">API Gateway</h3>
-        <p class="card-desc">Design a scalable API gateway with rate limiting</p>
-        <div class="card-tags">
-          <span class="card-tag">infrastructure</span>
-        </div>
-      </a>
-      <a href="projects/distributed-cache/" class="project-card medium animate-in" data-difficulty="medium">
-        <div class="card-header">
-          <span class="card-number">#18</span>
-          <span class="card-badge medium">medium</span>
-        </div>
-        <h3 class="card-title">Distributed Cache</h3>
-        <p class="card-desc">Design a distributed caching layer like Memcached</p>
-        <div class="card-tags">
-          <span class="card-tag">infrastructure</span>
-        </div>
-      </a>
-      <a href="projects/youtube/" class="project-card hard animate-in" data-difficulty="hard">
-        <div class="card-header">
-          <span class="card-number">#19</span>
-          <span class="card-badge hard">hard</span>
-        </div>
-        <h3 class="card-title">YouTube Video Streaming</h3>
-        <p class="card-desc">Design a video upload and streaming platform</p>
-        <div class="card-tags">
-          <span class="card-tag">streaming</span>
-        </div>
-      </a>
-      <a href="projects/uber/" class="project-card hard animate-in" data-difficulty="hard">
-        <div class="card-header">
-          <span class="card-number">#20</span>
-          <span class="card-badge hard">hard</span>
-        </div>
-        <h3 class="card-title">Uber Ride Sharing</h3>
-        <p class="card-desc">Design a ride-sharing service with real-time matching</p>
-        <div class="card-tags">
-          <span class="card-tag">location</span>
-        </div>
-      </a>
-      <a href="projects/google-docs/" class="project-card hard animate-in" data-difficulty="hard">
-        <div class="card-header">
-          <span class="card-number">#21</span>
-          <span class="card-badge hard">hard</span>
-        </div>
-        <h3 class="card-title">Google Docs</h3>
-        <p class="card-desc">Design a real-time collaborative document editor</p>
-        <div class="card-tags">
-          <span class="card-tag">real-time</span>
-        </div>
-      </a>
-      <a href="projects/search-engine/" class="project-card hard animate-in" data-difficulty="hard">
-        <div class="card-header">
-          <span class="card-number">#22</span>
-          <span class="card-badge hard">hard</span>
-        </div>
-        <h3 class="card-title">Search Engine</h3>
-        <p class="card-desc">Design a web-scale search engine</p>
-        <div class="card-tags">
-          <span class="card-tag">search</span>
-        </div>
-      </a>
-      <a href="projects/whatsapp/" class="project-card hard animate-in" data-difficulty="hard">
-        <div class="card-header">
-          <span class="card-number">#23</span>
-          <span class="card-badge hard">hard</span>
-        </div>
-        <h3 class="card-title">WhatsApp Messaging</h3>
-        <p class="card-desc">Design an end-to-end encrypted messaging platform</p>
-        <div class="card-tags">
-          <span class="card-tag">messaging</span>
-        </div>
-      </a>
-      <a href="projects/payment/" class="project-card hard animate-in" data-difficulty="hard">
-        <div class="card-header">
-          <span class="card-number">#24</span>
-          <span class="card-badge hard">hard</span>
-        </div>
-        <h3 class="card-title">Payment System</h3>
-        <p class="card-desc">Design a payment processing system like Stripe</p>
-        <div class="card-tags">
-          <span class="card-tag">fintech</span>
-        </div>
-      </a>
-      <a href="projects/news-feed/" class="project-card hard animate-in" data-difficulty="hard">
-        <div class="card-header">
-          <span class="card-number">#25</span>
-          <span class="card-badge hard">hard</span>
-        </div>
-        <h3 class="card-title">News Feed System</h3>
-        <p class="card-desc">Design a personalized news feed with ranking</p>
-        <div class="card-tags">
-          <span class="card-tag">social</span>
-        </div>
-      </a>
-      <a href="projects/hotel-booking/" class="project-card hard animate-in" data-difficulty="hard">
-        <div class="card-header">
-          <span class="card-number">#26</span>
-          <span class="card-badge hard">hard</span>
-        </div>
-        <h3 class="card-title">Hotel Booking</h3>
-        <p class="card-desc">Design a hotel reservation system like Booking.com</p>
-        <div class="card-tags">
-          <span class="card-tag">booking</span>
-        </div>
-      </a>
-      <a href="projects/stock-exchange/" class="project-card hard animate-in" data-difficulty="hard">
-        <div class="card-header">
-          <span class="card-number">#27</span>
-          <span class="card-badge hard">hard</span>
-        </div>
-        <h3 class="card-title">Stock Exchange</h3>
-        <p class="card-desc">Design a real-time stock trading platform</p>
-        <div class="card-tags">
-          <span class="card-tag">fintech</span>
-        </div>
-      </a>
-      <a href="projects/distributed-db/" class="project-card hard animate-in" data-difficulty="hard">
-        <div class="card-header">
-          <span class="card-number">#28</span>
-          <span class="card-badge hard">hard</span>
-        </div>
-        <h3 class="card-title">Distributed Database</h3>
-        <p class="card-desc">Design a distributed SQL database</p>
-        <div class="card-tags">
-          <span class="card-tag">database</span>
-        </div>
+      <a href="patterns/projects-by-pattern.html" class="pattern-card">
+        <h3>Projects by Pattern</h3>
+        <p>“Design a …” prompts ko patterns ke hisaab se grouped dekho</p>
       </a>
     </div>
   </div>
@@ -378,49 +71,17 @@
   <div class="container">
     <div class="section-header">
       <h2 class="section-title">🏛️ Design Patterns</h2>
-      <p class="section-subtitle">Reusable architectural patterns that appear across projects</p>
+      <p class="section-subtitle">Library open karo, pattern choose karo, phir relevant projects pick karo</p>
     </div>
-    <div class="pattern-grid">
 
-      <a href="patterns/scaling-reads.html" class="pattern-card">
-        <h3>Scaling Reads</h3>
-        <p>CQRS, Read Replicas, Caching layers, CDN</p>
+    <div class="pattern-grid">
+      <a href="patterns/overview.html" class="pattern-card">
+        <h3>Open Pattern Library</h3>
+        <p>10 core patterns — scaling, caching, DB, messaging, security</p>
       </a>
-      <a href="patterns/scaling-writes.html" class="pattern-card">
-        <h3>Scaling Writes</h3>
-        <p>Sharding, Partitioning, Write-ahead logs, LSM trees</p>
-      </a>
-      <a href="patterns/real-time.html" class="pattern-card">
-        <h3>Real-Time Systems</h3>
-        <p>WebSockets, SSE, Long polling, Pub/Sub</p>
-      </a>
-      <a href="patterns/consistency.html" class="pattern-card">
-        <h3>Consistency Patterns</h3>
-        <p>Strong vs Eventual, CAP theorem, Consensus</p>
-      </a>
-      <a href="patterns/caching.html" class="pattern-card">
-        <h3>Caching Strategies</h3>
-        <p>Write-through, Write-back, Cache-aside, TTL</p>
-      </a>
-      <a href="patterns/messaging.html" class="pattern-card">
-        <h3>Message Queues</h3>
-        <p>Kafka, RabbitMQ, Dead letter queues, Backpressure</p>
-      </a>
-      <a href="patterns/load-balancing.html" class="pattern-card">
-        <h3>Load Balancing</h3>
-        <p>Round robin, Consistent hashing, Health checks</p>
-      </a>
-      <a href="patterns/database.html" class="pattern-card">
-        <h3>Database Design</h3>
-        <p>SQL vs NoSQL, Indexing, Denormalization, Replication</p>
-      </a>
-      <a href="patterns/microservices.html" class="pattern-card">
-        <h3>Microservices</h3>
-        <p>Service discovery, Circuit breaker, Saga pattern</p>
-      </a>
-      <a href="patterns/security.html" class="pattern-card">
-        <h3>Security Patterns</h3>
-        <p>OAuth, JWT, Rate limiting, Encryption at rest</p>
+      <a href="patterns/projects-by-pattern.html" class="pattern-card">
+        <h3>Projects by Pattern</h3>
+        <p>Pattern pick karo → relevant “Design a …” projects dekho</p>
       </a>
     </div>
   </div>
@@ -462,28 +123,10 @@
   <div class="container">
     <p>🏗️ System Design Mastery — Built for learning, one system at a time.</p>
     <p style="margin-top: 0.5rem;">
-      <a href="https://github.com/yourusername/system-design-mastery" style="color: var(--text-muted);">GitHub</a>
+      <a href="https://github.com/ashish-bisht/all_about_system_design" style="color: var(--text-muted);">GitHub</a>
     </p>
   </div>
 </footer>
-
-<script>
-// Filter functionality
-document.querySelectorAll('.filter-tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    const filter = tab.dataset.filter;
-    document.querySelectorAll('.project-card').forEach(card => {
-      if (filter === 'all' || card.dataset.difficulty === filter) {
-        card.style.display = 'flex';
-      } else {
-        card.style.display = 'none';
-      }
-    });
-  });
-});
-</script>
 
 </body>
 </html>

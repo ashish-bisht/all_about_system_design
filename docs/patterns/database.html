@@ -14,8 +14,9 @@
     <ul class="nav-links">
       <li><a href="../">Home</a></li>
       <li><a href="../projects/">Projects</a></li>
-      <li><a href="../patterns/overview.html">Patterns</a></li>
+      <li><a href="overview.html">Patterns</a></li>
       <li><a href="../interview-prep/">Interview Prep</a></li>
+      <li><a href="https://github.com/ashish-bisht/all_about_system_design" target="_blank" rel="noopener">GitHub</a></li>
     </ul>
   </div>
 </nav>
@@ -35,6 +36,14 @@
       Key concepts: SQL vs NoSQL, Indexing, Denormalization, Replication
     </p>
 
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1.25rem; margin: 1.5rem 0;">
+      <h2 style="margin: 0 0 0.5rem;">🧭 Related Guide: Access Patterns</h2>
+      <p style="margin: 0; color: var(--text-secondary);">
+        Read-heavy vs write-heavy (UPDATE vs INSERT stream), write amplification, normalize/denormalize decision map.
+        <a href="../generic/access_pattern.html">Open guide →</a>
+      </p>
+    </div>
+
     <h2>📖 Overview</h2>
     <p>TODO: Explain this pattern — what problem it solves, when to use it.</p>
 
@@ -52,7 +61,32 @@
     </ul>
 
     <h2>🗂️ Projects Using This Pattern</h2>
-    <p>TODO: Link to projects that implement this pattern</p>
+    <div class="project-grid">
+      <a href="../projects/bitly/" class="project-card easy" data-difficulty="easy">
+        <div class="card-header"><span class="card-number">#01</span><span class="card-badge easy">easy</span></div>
+        <h3 class="card-title">Bitly URL Shortener</h3>
+        <p class="card-desc">Design a URL shortening service like bit.ly</p>
+        <div class="card-tags"><span class="card-tag">storage</span></div>
+      </a>
+      <a href="../projects/pastebin/" class="project-card easy" data-difficulty="easy">
+        <div class="card-header"><span class="card-number">#02</span><span class="card-badge easy">easy</span></div>
+        <h3 class="card-title">Pastebin</h3>
+        <p class="card-desc">Design a text/code snippet sharing service</p>
+        <div class="card-tags"><span class="card-tag">storage</span></div>
+      </a>
+      <a href="../projects/kv-store/" class="project-card easy" data-difficulty="easy">
+        <div class="card-header"><span class="card-number">#04</span><span class="card-badge easy">easy</span></div>
+        <h3 class="card-title">Key-Value Store</h3>
+        <p class="card-desc">Design a distributed key-value store like Redis</p>
+        <div class="card-tags"><span class="card-tag">database</span></div>
+      </a>
+      <a href="../projects/dropbox/" class="project-card medium" data-difficulty="medium">
+        <div class="card-header"><span class="card-number">#09</span><span class="card-badge medium">medium</span></div>
+        <h3 class="card-title">Dropbox File Storage</h3>
+        <p class="card-desc">Design a cloud file storage and sync service</p>
+        <div class="card-tags"><span class="card-tag">storage</span></div>
+      </a>
+    </div>
 
     <h2>📚 References</h2>
     <ul>
@@ -65,7 +99,7 @@
   <div class="container">
     <p>🏗️ System Design Mastery — Built for learning, one system at a time.</p>
     <p style="margin-top: 0.5rem;">
-      <a href="https://github.com/yourusername/system-design-mastery" style="color: var(--text-muted);">GitHub</a>
+      <a href="https://github.com/ashish-bisht/all_about_system_design" style="color: var(--text-muted);">GitHub</a>
     </p>
   </div>
 </footer>

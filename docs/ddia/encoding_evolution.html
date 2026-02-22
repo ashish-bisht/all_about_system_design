@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DDIA Ch.5 — Encoding & Evolution</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3d;
+    --accent: #7c5cfc;
+    --accent2: #fc5c7d;
+    --accent3: #5cfcb8;
+    --text: #e8e8f0;
+    --muted: #7878a0;
+    --yellow: #fcdb5c;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Instrument Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(124,92,252,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,92,252,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* HERO */
+  .hero {
+    padding: 80px 0 60px;
+    text-align: center;
+    position: relative;
+  }
+
+  .hero-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent3);
+    border: 1px solid var(--accent3);
+    padding: 4px 12px;
+    border-radius: 2px;
+    margin-bottom: 24px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(40px, 7vw, 72px);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -2px;
+    animation: fadeDown 0.6s ease 0.1s both;
+  }
+
+  .hero h1 span {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hero-sub {
+    margin-top: 16px;
+    color: var(--muted);
+    font-size: 16px;
+    animation: fadeDown 0.6s ease 0.2s both;
+  }
+
+  /* NAV PILLS */
+  .nav-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 40px 0;
+    animation: fadeDown 0.6s ease 0.3s both;
+  }
+
+  .pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 8px 16px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+
+  .pill:hover, .pill.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(124,92,252,0.1);
+  }
+
+  /* SECTION */
+  .section {
+    margin-bottom: 64px;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(124,92,252,0.15);
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+
+  .section h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  /* CARDS */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    transition: transform 0.2s, border-color 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+  }
+
+  .card:hover::before { opacity: 1; }
+
+  .card-icon {
+    font-size: 28px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .card h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .card p {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .card .tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin-top: 12px;
+  }
+
+  .tag-green { background: rgba(92,252,184,0.1); color: var(--accent3); }
+  .tag-red { background: rgba(252,92,125,0.1); color: var(--accent2); }
+  .tag-purple { background: rgba(124,92,252,0.1); color: var(--accent); }
+  .tag-yellow { background: rgba(252,219,92,0.1); color: var(--yellow); }
+
+  /* COMPAT TABLE */
+  .compat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 16px;
+  }
+
+  .compat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .compat-card {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 20px;
+    border-left: 3px solid var(--accent3);
+  }
+
+  .compat-card.backward { border-left-color: var(--accent); }
+  .compat-card.forward { border-left-color: var(--accent2); }
+
+  .compat-card h4 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    margin-bottom: 8px;
+    color: var(--accent);
+  }
+
+  .compat-card.forward h4 { color: var(--accent2); }
+
+  .compat-card p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* FORMAT COMPARISON TABLE */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th {
+    background: var(--surface2);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    padding: 14px 20px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 14px 20px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(124,92,252,0.04); }
+
+  td:first-child {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  .yes { color: var(--accent3); font-weight: 600; }
+  .no { color: var(--accent2); font-weight: 600; }
+  .partial { color: var(--yellow); font-weight: 600; }
+
+  /* CASE STUDY BOX */
+  .case-study {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .case-header {
+    background: linear-gradient(135deg, rgba(124,92,252,0.2), rgba(252,92,125,0.1));
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .case-header h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .case-body {
+    padding: 24px;
+  }
+
+  .case-body p {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.7;
+    margin-bottom: 16px;
+  }
+
+  /* CODE BLOCK */
+  .code-block {
+    background: #0d0d15;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    color: #c8c8e0;
+    margin: 12px 0;
+    overflow-x: auto;
+  }
+
+  .code-block .kw { color: var(--accent); }
+  .code-block .str { color: var(--accent3); }
+  .code-block .num { color: var(--yellow); }
+  .code-block .cm { color: var(--muted); }
+
+  /* FLOW DIAGRAM */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 20px 0;
+    flex-wrap: wrap;
+  }
+
+  .flow-node {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+    transition: border-color 0.2s;
+  }
+
+  .flow-node:hover { border-color: var(--accent); }
+  .flow-node.highlight { border-color: var(--accent); background: rgba(124,92,252,0.1); color: var(--accent); }
+  .flow-node.broker { border-color: var(--accent3); background: rgba(92,252,184,0.08); color: var(--accent3); }
+
+  .flow-arrow {
+    color: var(--muted);
+    font-size: 18px;
+    padding: 0 8px;
+    flex-shrink: 0;
+  }
+
+  /* RULE BOX */
+  .rule-box {
+    background: rgba(124,92,252,0.08);
+    border: 1px solid rgba(124,92,252,0.3);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .rule-box strong {
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    display: block;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* INTERVIEW SECTION */
+  .interview-box {
+    background: linear-gradient(135deg, var(--surface), var(--surface2));
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+  }
+
+  .interview-q {
+    background: rgba(252,219,92,0.08);
+    border-left: 3px solid var(--yellow);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: var(--yellow);
+    font-style: italic;
+  }
+
+  .interview-a {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* FOOTER */
+  .footer {
+    text-align: center;
+    padding: 40px 0 60px;
+    color: var(--muted);
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ANIMATIONS */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* DIVIDER */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 48px 0;
+  }
+
+  .highlight-text {
+    color: var(--accent3);
+    font-weight: 600;
+  }
+
+  .bytes-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 600;
+    display: block;
+    margin-top: 8px;
+  }
+
+  .bytes-badge span { color: var(--muted); font-size: 12px; font-weight: 400; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">🎯 Mission FANG · DDIA Chapter 5</div>
+    <h1>Encoding &<br><span>Evolution</span></h1>
+    <p class="hero-sub">Swiggy case study · Protobuf vs Avro · Dataflow modes</p>
+  </div>
+
+  <!-- NAV -->
+  <div class="nav-pills">
+    <a href="#compat" class="pill">Compatibility</a>
+    <a href="#formats" class="pill">Encoding Formats</a>
+    <a href="#protobuf" class="pill">Protobuf</a>
+    <a href="#avro" class="pill">Avro</a>
+    <a href="#dataflow" class="pill">Dataflow</a>
+    <a href="#interview" class="pill">🎤 Interview Q&A</a>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 1. CORE PROBLEM -->
+  <div class="section" id="compat">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2>The Core Problem</h2>
+    </div>
+
+    <div class="case-study">
+      <div class="case-header">
+        <span>🍕</span>
+        <h3>Swiggy Rolling Upgrade — What goes wrong?</h3>
+      </div>
+      <div class="case-body">
+        <p>Swiggy has 10 servers. Product team added <code style="color:var(--accent3); font-family: JetBrains Mono; font-size:13px">address</code> field. Servers 1-3 are updated, 4-10 still running old code.</p>
+        <div class="flow">
+          <div class="flow-node highlight">Server 1 (NEW)</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">Saves order WITH address</div>
+        </div>
+        <div class="flow" style="margin-top:8px">
+          <div class="flow-node">Server 5 (OLD)</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">Reads record, updates it</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node" style="border-color:var(--accent2); color:var(--accent2)">address DELETED! 😱</div>
+        </div>
+        <div class="rule-box" style="margin-top:20px">
+          <strong>⚠️ Key Insight</strong>
+          Old code must PRESERVE unknown fields — even if it can't understand them. Ignoring ≠ Deleting.
+        </div>
+      </div>
+    </div>
+
+    <div class="compat-box">
+      <div class="compat-grid">
+        <div class="compat-card backward">
+          <h4>← Backward Compatibility</h4>
+          <p><strong style="color:var(--text)">New code reads OLD data</strong><br><br>
+          Naya server deploy hua, purana data database mein pada hai — naya code usse padhne mein capable hona chahiye.<br><br>
+          <em>Usually easy — tum khud new code likhte ho!</em></p>
+        </div>
+        <div class="compat-card forward">
+          <h4>→ Forward Compatibility</h4>
+          <p><strong style="color:var(--text)">Old code reads NEW data</strong><br><br>
+          Purana server abhi chal raha hai, naya format ka data aa gaya — usse gracefully ignore karna padega.<br><br>
+          <em>Tricky — old code nahi jaanta future fields!</em></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule-box">
+      <strong>💡 Data Outlives Code</strong>
+      Tera code har 2 hafte deploy hota hai. But DB mein 5 saal purana data pada hai. Naya code HAMESHA purana data padhne ke liye ready hona chahiye.
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 2. ENCODING FORMATS OVERVIEW -->
+  <div class="section" id="formats">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2>Encoding Formats — Comparison</h2>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Format</th>
+            <th>Schema?</th>
+            <th>Size (example)</th>
+            <th>Human Readable?</th>
+            <th>Compat Mechanism</th>
+            <th>Use When</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>JSON / XML</td>
+            <td><span class="partial">Optional</span></td>
+            <td>81 bytes</td>
+            <td><span class="yes">✓ Yes</span></td>
+            <td>Field names (fragile)</td>
+            <td><span class="tag tag-purple">Public APIs</span></td>
+          </tr>
+          <tr>
+            <td>Protocol Buffers</td>
+            <td><span class="yes">Required</span></td>
+            <td class="yes">33 bytes</td>
+            <td><span class="no">✗ No</span></td>
+            <td>Field tags (numbers)</td>
+            <td><span class="tag tag-green">Internal Services</span></td>
+          </tr>
+          <tr>
+            <td>Avro</td>
+            <td><span class="yes">Required</span></td>
+            <td class="yes">32 bytes</td>
+            <td><span class="no">✗ No</span></td>
+            <td>Writer + Reader schema</td>
+            <td><span class="tag tag-yellow">Hadoop / Kafka</span></td>
+          </tr>
+          <tr>
+            <td>MessagePack</td>
+            <td><span class="no">No</span></td>
+            <td>66 bytes</td>
+            <td><span class="no">✗ No</span></td>
+            <td>Field names (still included)</td>
+            <td><span class="tag tag-purple">Niche binary JSON</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 3. PROTOBUF -->
+  <div class="section" id="protobuf">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2>Protocol Buffers — Deep Dive</h2>
+    </div>
+
+    <div class="card-grid">
+      <div class="card">
+        <span class="card-icon">🏷️</span>
+        <h3>Field Tags, Not Names</h3>
+        <p>Network pe "userName" string nahi jaata — sirf tag number <code style="color:var(--accent3)">1</code> jaata hai. Field rename karo? Safe. Tag change karo? 💥 Sab data corrupt.</p>
+        <span class="tag tag-purple">33 bytes vs 81 bytes JSON</span>
+      </div>
+      <div class="card">
+        <span class="card-icon">➕</span>
+        <h3>Adding a Field Safely</h3>
+        <p>Naya field add karo with a NEW tag number. Old code: unknown tag dekha → skip. New code: field missing in old data → default value fill in.</p>
+        <span class="tag tag-green">Both directions safe ✓</span>
+      </div>
+      <div class="card">
+        <span class="card-icon">🚫</span>
+        <h3>Never Reuse Tags</h3>
+        <p>Ek baar tag <code style="color:var(--accent3)">3</code> use kiya, fir woh field remove ki — tag 3 <strong>reserve</strong> karo schema mein. Kabhi reuse mat karo.</p>
+        <span class="tag tag-red">Hard Rule</span>
+      </div>
+      <div class="card">
+        <span class="card-icon">⚡</span>
+        <h3>Protobuf Kyun Use Nahi Hota Everywhere?</h3>
+        <p>Binary = not human readable (debug mushkil). Schema likhna padta hai (slow iteration). Browser directly support nahi karta.</p>
+        <span class="tag tag-yellow">Internal only</span>
+      </div>
+    </div>
+
+    <div class="case-study" style="margin-top:24px">
+      <div class="case-header">
+        <span>💻</span>
+        <h3>Swiggy Order — Protobuf Schema Evolution</h3>
+      </div>
+      <div class="case-body">
+        <p>V1 schema — original:</p>
+        <div class="code-block">
+<span class="cm">// V1 — original</span>
+<span class="kw">message</span> Order {
+  <span class="kw">int64</span>  user_id  = <span class="num">1</span>;
+  <span class="kw">string</span> item     = <span class="num">2</span>;
+  <span class="kw">int64</span>  price    = <span class="num">3</span>;
+}
+        </div>
+        <p>V2 — address field add kiya:</p>
+        <div class="code-block">
+<span class="cm">// V2 — address added safely</span>
+<span class="kw">message</span> Order {
+  <span class="kw">int64</span>  user_id  = <span class="num">1</span>;
+  <span class="kw">string</span> item     = <span class="num">2</span>;
+  <span class="kw">int64</span>  price    = <span class="num">3</span>;
+  <span class="kw">string</span> address  = <span class="num">4</span>;  <span class="cm">// ← new tag, safe!</span>
+}
+        </div>
+        <div class="rule-box">
+          <strong>✅ Result</strong>
+          Old server (knows 1,2,3) reads new data → sees tag 4 → ignores it → safe!<br>
+          New server reads old data → address missing → fills "" default → safe!
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 4. AVRO -->
+  <div class="section" id="avro">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2>Apache Avro — The Interesting One</h2>
+    </div>
+
+    <div class="case-study">
+      <div class="case-header">
+        <span>🔮</span>
+        <h3>Avro Magic — No Tags, No Field Names in Binary!</h3>
+      </div>
+      <div class="case-body">
+        <p>Avro binary mein sirf <strong style="color:var(--accent3)">values</strong> hain — koi field name, koi tag number nahi. <strong style="color:var(--accent3)">32 bytes</strong> — sabse compact!</p>
+        <div class="code-block">
+<span class="cm">// Wire pe yeh jaata hai:</span>
+[<span class="num">101</span>][<span class="str">"Biryani"</span>][<span class="num">250</span>]
+
+<span class="cm">// Koi "user_id", koi tag — sirf values!</span>
+        </div>
+        <p>But agar koi identity nahi hai toh decode kaise hoga? Avro uses <strong style="color:var(--accent)">two schemas</strong>:</p>
+        <div class="compat-grid">
+          <div class="compat-card backward">
+            <h4>Writer's Schema</h4>
+            <p>Jis app ne data encode kiya, uska schema. Data ke saath store/send hota hai (version number ke roop mein).</p>
+          </div>
+          <div class="compat-card forward">
+            <h4>Reader's Schema</h4>
+            <p>Jo app data decode kar raha hai, uska schema. Avro dono ko compare karke fields ko <strong>name se match</strong> karta hai.</p>
+          </div>
+        </div>
+        <div class="rule-box" style="margin-top:20px">
+          <strong>🔑 Key Difference from Protobuf</strong>
+          Protobuf = fields matched by TAG NUMBER<br>
+          Avro = fields matched by FIELD NAME<br><br>
+          Avro mein field rename karna possible hai (aliases se) — Protobuf mein nahi!
+        </div>
+      </div>
+    </div>
+
+    <div class="card-grid" style="margin-top:16px">
+      <div class="card">
+        <span class="card-icon">✅</span>
+        <h3>Safe in Avro</h3>
+        <p>Default value wala field add/remove karna. Field rename (using aliases). Datatype change (if Avro can convert).</p>
+        <span class="tag tag-green">Forward + Backward safe</span>
+      </div>
+      <div class="card">
+        <span class="card-icon">💥</span>
+        <h3>Breaks Compatibility</h3>
+        <p>Default value ke bina field add karna. Default value ke bina field remove karna. null use karna without union type.</p>
+        <span class="tag tag-red">Avoid these!</span>
+      </div>
+      <div class="card">
+        <span class="card-icon">🏭</span>
+        <h3>Avro Best For</h3>
+        <p>Dynamically generated schemas! DB schema se automatically Avro schema generate karo. Protobuf mein yeh manually karna padta — Avro mein auto!</p>
+        <span class="tag tag-yellow">Hadoop, Kafka, Analytics</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 5. DATAFLOW -->
+  <div class="section" id="dataflow">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2>3 Modes of Dataflow</h2>
+    </div>
+
+    <!-- DB Dataflow -->
+    <div class="case-study" style="margin-bottom:16px">
+      <div class="case-header">
+        <span>🗄️</span>
+        <h3>Mode 1 — Through Databases</h3>
+      </div>
+      <div class="case-body">
+        <div class="flow">
+          <div class="flow-node highlight">New Code</div>
+          <div class="flow-arrow">writes→</div>
+          <div class="flow-node broker">Database</div>
+          <div class="flow-arrow">→reads</div>
+          <div class="flow-node">Old Code</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node" style="color:var(--accent2)">BOTH compatibilities needed!</div>
+        </div>
+        <p style="margin-top:16px">DB mein ek saath old aur new code access karta hai. Isliye <strong style="color:var(--accent)">both backward AND forward</strong> compatibility chahiye — unlike REST where servers update first.</p>
+        <div class="rule-box">
+          <strong>Remember: Data Outlives Code</strong>
+          5 saal purana data DB mein pada rahega. Code changes — data stays.
+        </div>
+      </div>
+    </div>
+
+    <!-- REST/RPC -->
+    <div class="case-study" style="margin-bottom:16px">
+      <div class="case-header">
+        <span>🌐</span>
+        <h3>Mode 2 — REST & RPC (Services)</h3>
+      </div>
+      <div class="case-body">
+        <div class="flow">
+          <div class="flow-node">Client</div>
+          <div class="flow-arrow">—request→</div>
+          <div class="flow-node highlight">Server (updated first)</div>
+          <div class="flow-arrow">←response—</div>
+          <div class="flow-node">Client (updated later)</div>
+        </div>
+        <p style="margin-top:16px">Servers pehle update hote hain, clients baad mein. Isliye:</p>
+        <div class="compat-grid" style="margin-top:12px">
+          <div class="compat-card backward">
+            <h4>Request — Backward Compat</h4>
+            <p>Old client sends request → new server reads it. Server must handle old format requests.</p>
+          </div>
+          <div class="compat-card forward">
+            <h4>Response — Forward Compat</h4>
+            <p>New server sends response → old client reads it. Old client must ignore new fields gracefully.</p>
+          </div>
+        </div>
+        <div class="rule-box" style="margin-top:16px">
+          <strong>RPC vs REST</strong>
+          RPC: Network call ko local function jaisa dikhata hai → Fundamentally WRONG!<br>
+          Network can timeout, fail, retry (causing duplicates), be slow.<br>
+          REST: Openly treats it as network transfer → Honest approach ✓
+        </div>
+      </div>
+    </div>
+
+    <!-- Message Brokers -->
+    <div class="case-study">
+      <div class="case-header">
+        <span>📨</span>
+        <h3>Mode 3 — Message Brokers (Kafka etc.)</h3>
+      </div>
+      <div class="case-body">
+        <div class="flow">
+          <div class="flow-node">Order Service</div>
+          <div class="flow-arrow">publishes→</div>
+          <div class="flow-node broker">Kafka Topic</div>
+          <div class="flow-arrow">→delivers</div>
+          <div class="flow-node">Notification ✓</div>
+        </div>
+        <div class="flow" style="margin-top:4px; justify-content:flex-end">
+          <div class="flow-node">Restaurant ✓</div>
+          <div class="flow-arrow" style="transform:scaleX(-1)">→</div>
+          <div class="flow-node">Analytics ✓</div>
+        </div>
+        <div class="card-grid" style="margin-top:20px">
+          <div class="card" style="padding:16px">
+            <h3 style="font-size:15px">✅ Message Broker Advantages</h3>
+            <p style="font-size:13px; margin-top:8px">Buffer if recipient is down · Auto-redeliver if crash · No service discovery needed · Multiple subscribers · Sender-receiver decoupled</p>
+          </div>
+          <div class="card" style="padding:16px">
+            <h3 style="font-size:15px">🏗️ FANG Decision Framework</h3>
+            <p style="font-size:13px; margin-top:8px"><span class="highlight-text">Sync + Simple</span> → REST + JSON<br><span class="highlight-text">Internal + Performance</span> → gRPC + Protobuf<br><span class="highlight-text">Async + Decoupled</span> → Kafka + Avro</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 6. INTERVIEW Q&A -->
+  <div class="section" id="interview">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2>🎤 FANG Interview Q&A</h2>
+    </div>
+
+    <div class="interview-box">
+      <div class="interview-q">"How would your microservices communicate with each other?"</div>
+      <div class="interview-a">Internal services mein gRPC + Protobuf use karunga — compact, fast, type-safe. Public APIs ke liye REST + JSON — browser friendly, debug easy. Async workflows ke liye Kafka + Avro — decoupled, buffered, schema-evolved.</div>
+
+      <div class="interview-q">"How do you handle schema changes without downtime?"</div>
+      <div class="interview-a">Rolling upgrades use karunga. Encoding format mein backward + forward compat ensure karunga. Protobuf mein naye fields naye tags se add karunga, purane tags kabhi reuse nahi karunga. Database mein — data outlives code — isliye schema migrations carefully likhna hoga with default values.</div>
+
+      <div class="interview-q">"Protobuf vs Avro — when would you pick which?"</div>
+      <div class="interview-a">Protobuf: static schema, gRPC services, internal microservices. Field tags se compat maintain karna easy hai. Avro: dynamic/generated schemas, Kafka, Hadoop. Avro friendlier hai jab schema automatically DB se generate hoti ho — no manual tag assignment.</div>
+
+      <div class="interview-q">"What's the difference between backward and forward compatibility?"</div>
+      <div class="interview-a">Backward: new code reads old data (new server, old DB records). Forward: old code reads new data (old server running during rolling upgrade, gets new format data). Both needed in DB context. For REST — backward on request, forward on response.</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    DDIA Chapter 5 · Encoding & Evolution · Mission FANG 🚀
+  </div>
+
+</div>
+
+</body>
+</html>

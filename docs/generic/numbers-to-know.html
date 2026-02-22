@@ -1,0 +1,687 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Numbers to Know — System Design Mastery</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container">
+    <a href="../" class="nav-brand">🏗️ <span>SystemDesign</span>Mastery</a>
+    <ul class="nav-links">
+      <li><a href="../">Home</a></li>
+      <li><a href="../projects/">Projects</a></li>
+      <li><a href="../patterns/overview.html">Patterns</a></li>
+      <li><a href="../interview-prep/">Interview Prep</a></li>
+      <li><a href="https://github.com/ashish-bisht/all_about_system_design" target="_blank" rel="noopener">GitHub</a></li>
+    </ul>
+  </div>
+</nav>
+
+    <div class="container">
+
+        <!-- HERO -->
+        <div class="hero">
+            <div class="hero-badge">📐 System Design Interview</div>
+            <h1>Numbers Every Engineer<br>Should Know</h1>
+            <p>Data types, latency, throughput, capacity estimation — sab ek jagah. Yaad karo ek baar, har interview mein lagao. 🧠</p>
+        </div>
+
+        <hr class="divider">
+
+        <!-- ===== SECTION 1: MEMORIZE THESE NUMBERS ===== -->
+        <div class="section">
+            <div class="section-header">
+                <span class="icon">🧮</span>
+                <h2>Step 0 — Pehle Ye Numbers Yaad Karo</h2>
+                <span class="tag">must memorize</span>
+            </div>
+
+            <h3 style="color: var(--accent-blue); margin-bottom: 1rem; font-size: 1.1rem;">Powers of 2 — Har Jagah Kaam Aata Hai</h3>
+            <div class="powers-grid">
+                <div class="power-chip"><span class="power">2<sup>10</sup></span><span class="approx">≈ 1 Thousand (1 KB)</span></div>
+                <div class="power-chip"><span class="power">2<sup>16</sup></span><span class="approx">≈ 65K</span></div>
+                <div class="power-chip"><span class="power">2<sup>20</sup></span><span class="approx">≈ 1 Million (1 MB)</span></div>
+                <div class="power-chip"><span class="power">2<sup>30</sup></span><span class="approx">≈ 1 Billion (1 GB)</span></div>
+                <div class="power-chip"><span class="power">2<sup>32</sup></span><span class="approx">≈ 4 Billion</span></div>
+                <div class="power-chip"><span class="power">2<sup>40</sup></span><span class="approx">≈ 1 Trillion (1 TB)</span></div>
+            </div>
+
+            <h3 style="color: var(--accent-purple); margin: 2rem 0 1rem; font-size: 1.1rem;">Time Constants — Seconds Mein Yaad Karo</h3>
+            <div class="time-grid">
+                <div class="time-chip"><span class="label">1 Day</span><span class="val">~86,400 sec ≈ 10<sup>5</sup></span></div>
+                <div class="time-chip"><span class="label">1 Month</span><span class="val">~2.5 × 10<sup>6</sup> sec</span></div>
+                <div class="time-chip"><span class="label">1 Year</span><span class="val">~3 × 10<sup>7</sup> sec</span></div>
+                <div class="time-chip"><span class="label">5 Years</span><span class="val">~1.5 × 10<sup>8</sup> sec</span></div>
+            </div>
+
+            <div class="tip-box">
+                <div class="tip-title">💡 Pro Tip — Interview Hack</div>
+                <p>1 day ≈ 100K seconds, easy yaad rehta hai. Isse direct QPS nikal lo: <code style="color: var(--accent-cyan);">Daily requests / 100K = Avg QPS</code></p>
+            </div>
+
+            <h3 style="color: var(--accent-orange); margin: 2.5rem 0 1rem; font-size: 1.1rem;">Data Type Sizes — Ye Yaad Hona Chahiye</h3>
+            <table class="estimate-table">
+                <thead>
+                    <tr>
+                        <th>Data Type</th>
+                        <th>Size</th>
+                        <th>Range / Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="metric-name">Boolean</td>
+                        <td class="value">1 Byte</td>
+                        <td class="math">true / false</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Char (ASCII)</td>
+                        <td class="value">1 Byte</td>
+                        <td class="math">a-z, A-Z, 0-9, symbols</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Char (UTF-8)</td>
+                        <td class="value">1-4 Bytes</td>
+                        <td class="math">English=1B, Hindi/Emoji=3-4B</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Short (int16)</td>
+                        <td class="value">2 Bytes</td>
+                        <td class="math">-32K to +32K</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Integer (int32)</td>
+                        <td class="value">4 Bytes</td>
+                        <td class="math">-2.1B to +2.1B (~2 × 10⁹)</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Long (int64)</td>
+                        <td class="value">8 Bytes</td>
+                        <td class="math">-9.2 × 10¹⁸ to +9.2 × 10¹⁸</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Float (float32)</td>
+                        <td class="value">4 Bytes</td>
+                        <td class="math">~7 decimal digits precision</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Double (float64)</td>
+                        <td class="value">8 Bytes</td>
+                        <td class="math">~15 decimal digits precision</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">UUID</td>
+                        <td class="value">16 Bytes</td>
+                        <td class="math">128-bit unique ID (as binary)</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">UUID (string)</td>
+                        <td class="value">36 Bytes</td>
+                        <td class="math">"550e8400-e29b-..." with hyphens</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Timestamp (Unix)</td>
+                        <td class="value">4-8 Bytes</td>
+                        <td class="math">int32 (till 2038) or int64</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">IPv4 Address</td>
+                        <td class="value">4 Bytes</td>
+                        <td class="math">4 octets, ~4.3B addresses</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">IPv6 Address</td>
+                        <td class="value">16 Bytes</td>
+                        <td class="math">128-bit, practically unlimited</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">MD5 Hash</td>
+                        <td class="value">16 Bytes</td>
+                        <td class="math">128-bit (32 hex chars as string)</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">SHA-256 Hash</td>
+                        <td class="value">32 Bytes</td>
+                        <td class="math">256-bit (64 hex chars as string)</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Pointer / Reference</td>
+                        <td class="value">8 Bytes</td>
+                        <td class="math">64-bit system memory address</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="tip-box">
+                <div class="tip-title">💡 Yaad Rakhne Ka Trick</div>
+                <p><code style="color: var(--accent-cyan);">char=1B, int=4B, long=8B, UUID=16B</code> — bus ye 4 yaad karo, baaki derive ho jaata hai. Aur int32 max ≈ 2 Billion — agar IDs 2B se zyada ho sakti hain toh int64 use karo!</p>
+            </div>
+
+            <h3 style="color: var(--accent-red); margin: 2.5rem 0 1rem; font-size: 1.1rem;">Latency Numbers — Every Programmer Should Know</h3>
+            <table class="estimate-table">
+                <thead>
+                    <tr>
+                        <th>Operation</th>
+                        <th>Latency</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="metric-name">L1 Cache Reference</td>
+                        <td class="value">~1 ns</td>
+                        <td class="math">CPU ke andar, fastest</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">L2 Cache Reference</td>
+                        <td class="value">~4 ns</td>
+                        <td class="math">4× slower than L1</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">L3 Cache Reference</td>
+                        <td class="value">~10 ns</td>
+                        <td class="math">Shared across cores</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">RAM Access</td>
+                        <td class="value">~100 ns</td>
+                        <td class="math">Main memory — 100× L1</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Mutex Lock/Unlock</td>
+                        <td class="value">~25 ns</td>
+                        <td class="math">Thread synchronization cost</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Redis GET (local)</td>
+                        <td class="value">~0.5 ms</td>
+                        <td class="math">In-memory, same datacenter</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Memcached GET</td>
+                        <td class="value">~0.5 ms</td>
+                        <td class="math">Similar to Redis for simple ops</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">SSD Random Read</td>
+                        <td class="value">~100 μs</td>
+                        <td class="math">0.1ms — 1000× faster than HDD</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">SSD Sequential Read (1MB)</td>
+                        <td class="value">~1 ms</td>
+                        <td class="math">~1 GB/s throughput</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">HDD Random Read</td>
+                        <td class="value">~10 ms</td>
+                        <td class="math">Mechanical seek — 100× SSD</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">HDD Sequential Read (1MB)</td>
+                        <td class="value">~5 ms</td>
+                        <td class="math">~200 MB/s throughput</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">DB Query (indexed)</td>
+                        <td class="value">~1-5 ms</td>
+                        <td class="math">PostgreSQL/MySQL with index</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">DB Query (no index)</td>
+                        <td class="value">~50-500 ms</td>
+                        <td class="math">Full table scan — AVOID!</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Same Datacenter RTT</td>
+                        <td class="value">~0.5 ms</td>
+                        <td class="math">Network round trip, same DC</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Same City / Zone RTT</td>
+                        <td class="value">~2-5 ms</td>
+                        <td class="math">Cross-AZ in same region</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Cross-Country RTT</td>
+                        <td class="value">~30-50 ms</td>
+                        <td class="math">US East → West coast</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Cross-Continent RTT</td>
+                        <td class="value">~100-200 ms</td>
+                        <td class="math">US → Europe / India</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">TCP Handshake</td>
+                        <td class="value">~1-3 ms</td>
+                        <td class="math">3-way handshake (same DC)</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">TLS Handshake</td>
+                        <td class="value">~5-50 ms</td>
+                        <td class="math">On top of TCP, depends on distance</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">DNS Lookup</td>
+                        <td class="value">~5-50 ms</td>
+                        <td class="math">Cached ~0ms, uncached up to 100ms</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">CDN Hit</td>
+                        <td class="value">~5-20 ms</td>
+                        <td class="math">Edge server, close to user</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">CDN Miss → Origin</td>
+                        <td class="value">~100-500 ms</td>
+                        <td class="math">Cache miss, fetch from origin</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="tip-box">
+                <div class="tip-title">⚡ Latency Hierarchy — Ye Order Yaad Karo</div>
+                <p>
+                    <code style="color: var(--accent-cyan);">L1 (1ns) → RAM (100ns) → SSD (100μs) → Network-DC (0.5ms) → DB (1-5ms) → HDD (10ms) → Cross-continent (150ms)</code><br>
+                    Har level pe roughly <strong style="color: var(--accent-yellow);">10-100× jump</strong> hota hai. Interview mein ye order batao, exact numbers matter nahi karte.
+                </p>
+            </div>
+
+            <h3 style="color: var(--accent-cyan); margin: 2.5rem 0 1rem; font-size: 1.1rem;">Throughput Numbers — Kitna Handle Kar Sakta Hai?</h3>
+            <table class="estimate-table">
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>Throughput</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="metric-name">Redis</td>
+                        <td class="value">100K+ ops/sec</td>
+                        <td class="math">Single instance, simple GET/SET</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Memcached</td>
+                        <td class="value">200K+ ops/sec</td>
+                        <td class="math">Slightly faster, no persistence</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">PostgreSQL</td>
+                        <td class="value">5-10K QPS</td>
+                        <td class="math">Simple queries, indexed. Writes ~1-5K</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">MySQL</td>
+                        <td class="value">5-10K QPS</td>
+                        <td class="math">Similar to Postgres for OLTP</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">MongoDB</td>
+                        <td class="value">10-20K ops/sec</td>
+                        <td class="math">Simple doc reads, single node</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Cassandra</td>
+                        <td class="value">10-50K ops/sec/node</td>
+                        <td class="math">Write-optimized, scales linearly</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Kafka</td>
+                        <td class="value">100K-1M msgs/sec</td>
+                        <td class="math">Per broker, depends on msg size</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Nginx / Load Balancer</td>
+                        <td class="value">50-100K req/sec</td>
+                        <td class="math">Reverse proxy, static content</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Web Server (Node/Go/FastAPI)</td>
+                        <td class="value">5-20K req/sec</td>
+                        <td class="math">Depends on handler complexity</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Elasticsearch</td>
+                        <td class="value">5-10K queries/sec</td>
+                        <td class="math">Single node, depends on index size</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">1 Gbps Network Link</td>
+                        <td class="value">~125 MB/s</td>
+                        <td class="math">Theoretical max, actual ~100 MB/s</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">10 Gbps Network Link</td>
+                        <td class="value">~1.25 GB/s</td>
+                        <td class="math">Modern datacenter standard</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="color: var(--accent-pink); margin: 2.5rem 0 1rem; font-size: 1.1rem;">Availability / SLA Numbers</h3>
+            <table class="estimate-table">
+                <thead>
+                    <tr>
+                        <th>Availability %</th>
+                        <th>Downtime / Year</th>
+                        <th>Downtime / Month</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="metric-name">99% (two 9s)</td>
+                        <td class="value">3.65 days</td>
+                        <td class="math">7.3 hours</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">99.9% (three 9s)</td>
+                        <td class="value">8.76 hours</td>
+                        <td class="math">43.8 minutes</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">99.99% (four 9s)</td>
+                        <td class="value">52.6 minutes</td>
+                        <td class="math">4.38 minutes</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">99.999% (five 9s)</td>
+                        <td class="value">5.26 minutes</td>
+                        <td class="math">26.3 seconds</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="tip-box">
+                <div class="tip-title">🎯 Interview Mein Kab Kya Bolo</div>
+                <p>
+                    Most systems target <strong style="color: var(--accent-cyan);">99.9% (three 9s)</strong>. Payment/banking systems need <strong style="color: var(--accent-cyan);">99.99%+</strong>. 
+                    Five 9s is extremely hard — sirf critical infra (DNS, cloud providers) ke liye. Jab SLA discuss karo, always mention: redundancy, failover, health checks, circuit breakers.
+                </p>
+            </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- ===== SECTION 2: UNIVERSAL SCALE ESTIMATES ===== -->
+        <div class="section">
+            <div class="section-header">
+                <span class="icon">🌍</span>
+                <h2>Step 1 — Universal Scale Estimates</h2>
+                <span class="tag">default assumptions</span>
+            </div>
+
+            <table class="estimate-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Standard Value</th>
+                        <th>How to Remember</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="metric-name">DAU (Daily Active Users)</td>
+                        <td class="value">100 Million</td>
+                        <td class="math">Large-scale app assumption (Twitter/Instagram level)</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Avg QPS</td>
+                        <td class="value">~10,000</td>
+                        <td class="math">1B req / 100K sec = 10K QPS</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Peak QPS</td>
+                        <td class="value">~50,000</td>
+                        <td class="math">5× multiplier for spikes</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Storage / Day</td>
+                        <td class="value">~1 TB</td>
+                        <td class="math">1B req × 1KB payload = 1TB</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Bandwidth</td>
+                        <td class="value">~100 MB/s</td>
+                        <td class="math">1TB / 86400 sec ≈ 12 MB/s avg, peaks ~100</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Read:Write Ratio</td>
+                        <td class="value">10:1 (common)</td>
+                        <td class="math">Most systems are read-heavy</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <hr class="divider">
+
+        <!-- ===== SECTION 3: THE 5-STEP FORMULA ===== -->
+        <div class="section">
+            <div class="section-header">
+                <span class="icon">📐</span>
+                <h2>Step 2 — The 5-Step Formula</h2>
+                <span class="tag">universal framework</span>
+            </div>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Har system design interview mein ye 5 cheezein estimate karo. Same order, same approach.</p>
+
+            <div class="formula-grid">
+                <div class="formula-card green">
+                    <h3>① Traffic / QPS</h3>
+                    <div class="formula-box">
+                        Avg QPS = DAU × (req/user/day) / 86400<br>
+                        Peak QPS = Avg QPS × 5
+                    </div>
+                    <div class="formula-note">Pehle DAU assume karo (10M, 100M, 500M). Phir daily actions per user guess karo (1? 5? 20?). Divide by 86400.</div>
+                </div>
+
+                <div class="formula-card blue">
+                    <h3>② Storage</h3>
+                    <div class="formula-box">
+                        Daily = (writes/day) × (size per write)<br>
+                        5 Years = Daily × 365 × 5
+                    </div>
+                    <div class="formula-note">Typical sizes: URL = 100B, JSON doc = 1-5KB, Image = 500KB, Video = 50MB. Always think about 5-year retention.</div>
+                </div>
+
+                <div class="formula-card purple">
+                    <h3>③ Bandwidth</h3>
+                    <div class="formula-box">
+                        Incoming = (writes/sec) × (write size)<br>
+                        Outgoing = (reads/sec) × (read size)
+                    </div>
+                    <div class="formula-note">Outgoing usually >> Incoming (read-heavy). Images/videos ka bandwidth bahut zyada hota hai.</div>
+                </div>
+
+                <div class="formula-card orange">
+                    <h3>④ Memory / Cache</h3>
+                    <div class="formula-box">
+                        Cache = Daily reads × avg size × 0.2<br>
+                        (80/20 rule: cache 20% hot data)
+                    </div>
+                    <div class="formula-note">80% traffic comes from 20% data. Toh 20% hot data cache karo. Redis typically handles 100K+ ops/sec.</div>
+                </div>
+
+                <div class="formula-card cyan">
+                    <h3>⑤ Servers Needed</h3>
+                    <div class="formula-box">
+                        Servers = Peak QPS / QPS_per_server<br>
+                        (Web server ≈ 10K QPS, DB ≈ 5K QPS)
+                    </div>
+                    <div class="formula-note">Rule of thumb: 1 web server handles ~10K simple QPS. DB is bottleneck — usually need sharding at ~5K+ QPS.</div>
+                </div>
+
+                <div class="formula-card red">
+                    <h3>⑥ Read:Write Ratio</h3>
+                    <div class="formula-box">
+                        Read QPS = Total QPS × (R / R+W)<br>
+                        Write QPS = Total QPS × (W / R+W)
+                    </div>
+                    <div class="formula-note">URL Shortener = 100:1 read-heavy. Social media = 10:1. Chat = ~1:1. This changes your architecture!</div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- ===== SECTION 4: COMMON OBJECT SIZES ===== -->
+        <div class="section">
+            <div class="section-header">
+                <span class="icon">📦</span>
+                <h2>Step 3 — Common Object Sizes</h2>
+                <span class="tag">quick reference</span>
+            </div>
+
+            <table class="estimate-table">
+                <thead>
+                    <tr>
+                        <th>Object</th>
+                        <th>Typical Size</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="metric-name">Short URL entry</td>
+                        <td class="value">~500 Bytes</td>
+                        <td class="math">shortURL(7B) + longURL(200B) + metadata(~300B)</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Tweet / Message</td>
+                        <td class="value">~1 KB</td>
+                        <td class="math">280 chars + metadata + user info</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">JSON API payload</td>
+                        <td class="value">1-5 KB</td>
+                        <td class="math">Typical REST response</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">User profile</td>
+                        <td class="value">~10 KB</td>
+                        <td class="math">Name, email, prefs, settings</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Thumbnail image</td>
+                        <td class="value">~50 KB</td>
+                        <td class="math">150×150 compressed JPEG</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">Full image</td>
+                        <td class="value">~500 KB</td>
+                        <td class="math">1080p compressed</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">1 min video (compressed)</td>
+                        <td class="value">~5 MB</td>
+                        <td class="math">720p H.264</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-name">1 min video (HD)</td>
+                        <td class="value">~50 MB</td>
+                        <td class="math">1080p high bitrate</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <hr class="divider">
+
+        <!-- ===== SECTION 5: INTERVIEW SCRIPT ===== -->
+        <div class="section">
+            <div class="section-header">
+                <span class="icon">🎤</span>
+                <h2>Step 4 — Interview Mein Kaise Bolo?</h2>
+                <span class="tag">script template</span>
+            </div>
+
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">Ye exact words bol — interviewer ko lagega ki tujhe pata hai kya kar raha hai:</p>
+
+            <div class="script-box">
+                <div class="script-line">
+                    <span class="speaker">You: </span>
+                    <span class="dialogue">"Let me do some quick back-of-envelope estimation before we dive into the design."</span>
+                </div>
+                <div class="script-line">
+                    <span class="speaker">You: </span>
+                    <span class="dialogue">"Let's assume we have about [X] million DAU. If each user does roughly [Y] actions per day, that gives us [X×Y] million requests daily."</span>
+                </div>
+                <div class="script-line">
+                    <span class="speaker">You: </span>
+                    <span class="dialogue">"Dividing by 86,400 seconds in a day, our average QPS is about [Z]. With a 5x peak factor, we need to handle around [5Z] QPS."</span>
+                </div>
+                <div class="script-line">
+                    <span class="speaker">You: </span>
+                    <span class="dialogue">"For storage, each [object] is roughly [size]. At [writes/day], that's [daily storage] per day, or about [5-year storage] over 5 years."</span>
+                </div>
+                <div class="script-line">
+                    <span class="speaker">You: </span>
+                    <span class="dialogue">"Given the read-heavy nature ([R:W ratio]), we should focus on caching and read replicas."</span>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <div class="tip-title">🎯 Key Insight</div>
+                <p>Interviewer ko exact number nahi chahiye — they want to see that you CAN reason about scale. Round aggressively. <code style="color: var(--accent-cyan);">86,400 ≈ 100K</code> is totally fine.</p>
+            </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- ===== SECTION: NUMBERS → DESIGN DECISIONS (Generic) ===== -->
+        <div class="section">
+            <div class="section-header">
+                <span class="icon">🧠</span>
+                <h2>Step 5 — Numbers Se Design Decisions Kaise Nikalein?</h2>
+                <span class="tag">the real skill</span>
+            </div>
+
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Estimation sirf numbers ke liye nahi hai — ye tere architecture choices drive karta hai:</p>
+
+            <div class="formula-grid">
+                <div class="formula-card green">
+                    <h3>High Read:Write (>10:1) → Cache Heavy</h3>
+                    <div class="formula-note">Read-heavy = aggressive caching (Redis/Memcached). Multiple read replicas. CDN for static content. 80/20 rule se hot data cache karo.</div>
+                </div>
+                <div class="formula-card blue">
+                    <h3>Billions of Records → Sharding</h3>
+                    <div class="formula-note">Single DB can't hold billions of rows efficiently. Shard by consistent hashing. Partition key carefully choose karo (user_id, entity_id).</div>
+                </div>
+                <div class="formula-card purple">
+                    <h3>High Write QPS (>5K) → Write Optimization</h3>
+                    <div class="formula-note">Async writes, message queues (Kafka), write-behind caching, batch inserts. Multiple write shards or CQRS pattern consider karo.</div>
+                </div>
+                <div class="formula-card orange">
+                    <h3>Peak QPS >50K → Horizontal Scaling</h3>
+                    <div class="formula-note">Load Balancer + multiple stateless app servers. Auto-scaling for peak. Rate limiting. Connection pooling. Stateless design mandatory.</div>
+                </div>
+                <div class="formula-card cyan">
+                    <h3>Storage >10 TB → Distributed Storage</h3>
+                    <div class="formula-note">Object storage (S3) for blobs. Tiered storage (hot/warm/cold). Data partitioning + archival strategy. Compression helps.</div>
+                </div>
+                <div class="formula-card red">
+                    <h3>Low Latency (<100ms) → In-Memory + CDN</h3>
+                    <div class="formula-note">Redis/Memcached for sub-ms reads. CDN for geo-distributed users. Pre-compute where possible. Denormalize data to avoid JOINs.</div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="footer">
+            <p>🏗️ System Design Mastery — Built for learning, one system at a time.</p>
+            <p style="margin-top: 0.5rem;">
+                <a href="https://github.com/ashish-bisht/all_about_system_design" style="color: var(--text-muted);">GitHub</a>
+            </p>
+        </div>
+
+    </div>
+</body>
+</html>

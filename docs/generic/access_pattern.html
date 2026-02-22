@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DB Access Patterns</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="access_pattern.css">
+</head>
+<body class="access-pattern-page">
+
+<nav class="nav">
+  <div class="container">
+    <a href="../" class="nav-brand">🏗️ <span>SystemDesign</span>Mastery</a>
+    <ul class="nav-links">
+      <li><a href="../">Home</a></li>
+      <li><a href="../projects/">Projects</a></li>
+      <li><a href="../patterns/overview.html">Patterns</a></li>
+      <li><a href="../interview-prep/">Interview Prep</a></li>
+      <li><a href="https://github.com/ashish-bisht/all_about_system_design" target="_blank" rel="noopener">GitHub</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main class="ap-page">
+<div class="ap-container">
+
+  <div class="breadcrumb">
+    <a href="../">Home</a>
+    <span>›</span>
+    <a href="../patterns/overview.html">Patterns</a>
+    <span>›</span>
+    <a href="../patterns/database.html">Database Design</a>
+    <span>›</span>
+    <span>Access Patterns</span>
+  </div>
+
+  <header class="ap-header">
+    <div class="eyebrow">Database Design</div>
+    <h1>Access Patterns &<br><span>Storage Strategy</span></h1>
+  </header>
+
+  <!-- Write type clarification -->
+  <div class="write-split">
+    <h2>⚠️ "Write Heavy" ko pehle split karo</h2>
+    <div class="write-types">
+      <div class="write-type update">
+        <span class="tag">Type A</span>
+        <h3>Mostly UPDATEs</h3>
+        <p>Same data baar baar change hoti hai. Price change, inventory count, user status.</p>
+        <div class="example-box">
+          <span class="comment">-- 1 write, done ✓</span><br>
+          <span class="kw">UPDATE</span> products<br>
+          <span class="kw">SET</span> price = 999<br>
+          <span class="kw">WHERE</span> id = 42;
+        </div>
+      </div>
+      <div class="write-type insert">
+        <span class="tag">Type B</span>
+        <h3>Mostly INSERTs</h3>
+        <p>Naya data stream hota rehta hai. Logs, events, transactions, sensor data.</p>
+        <div class="example-box">
+          <span class="comment">-- Har second naya row</span><br>
+          <span class="kw">INSERT INTO</span> sensor_events<br>
+          <span class="kw">VALUES</span> (ts, device_id, val);<br>
+          <span class="comment">-- 10,000 rows/sec</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Write amplification visual -->
+  <div class="problem-section">
+    <div class="amplification-visual">
+      <div class="amp-title">The Real Problem: Write Amplification</div>
+      <div class="amp-sub">Ek logical write → kitni physical disk writes? Index har table pe update hota hai.</div>
+      <div class="amp-compare">
+        <div class="amp-side bad">
+          <div class="amp-side-title">❌ Denormalized (UPDATE scenario)</div>
+          <div class="op-chain">
+            <div class="op-item"><div class="op-dot"></div>UPDATE orders table <span class="op-count">10M rows!</span></div>
+            <div class="op-item"><div class="op-dot"></div>B-tree index rebuild <span class="op-count">+IO</span></div>
+            <div class="op-item"><div class="op-dot"></div>UPDATE order_items <span class="op-count">50M rows!</span></div>
+            <div class="op-item"><div class="op-dot"></div>B-tree index rebuild <span class="op-count">+IO</span></div>
+            <div class="op-item"><div class="op-dot"></div>UPDATE cart_items <span class="op-count">5M rows!</span></div>
+          </div>
+          <div class="total-bar"><span>Total rows touched</span><span>65M+</span></div>
+        </div>
+        <div class="vs-badge">VS</div>
+        <div class="amp-side good">
+          <div class="amp-side-title">✓ Normalized (UPDATE scenario)</div>
+          <div class="op-chain">
+            <div class="op-item"><div class="op-dot"></div>UPDATE products table <span class="op-count">1 row</span></div>
+            <div class="op-item"><div class="op-dot"></div>Index update <span class="op-count">minimal</span></div>
+            <div class="op-item"><div class="op-dot"></div>Orders read price on join <span class="op-count">lazy</span></div>
+            <div class="op-item"><div class="op-dot"></div>— <span class="op-count">—</span></div>
+            <div class="op-item"><div class="op-dot"></div>— <span class="op-count">—</span></div>
+          </div>
+          <div class="total-bar"><span>Total rows touched</span><span>1</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Decision cards -->
+  <p class="section-label">📊 Scenario → Strategy Map</p>
+  <div class="decision-grid">
+
+    <div class="decision-card card-read">
+      <div class="card-icon">📖</div>
+      <div class="card-scenario">Read Heavy</div>
+      <div class="card-title">Denormalize + Cache</div>
+      <div class="card-desc">80%+ reads. JOINs at scale are expensive. Pre-compute what you'll read.</div>
+      <div class="card-strategy">→ Store data as you READ it, not as it logically exists</div>
+      <div class="card-examples">
+        <span class="chip">Social feed</span>
+        <span class="chip">Product catalog</span>
+        <span class="chip">Dashboard</span>
+      </div>
+    </div>
+
+    <div class="decision-card card-write-upd">
+      <div class="card-icon">✏️</div>
+      <div class="card-scenario">Write Heavy — UPDATEs</div>
+      <div class="card-title">Normalize</div>
+      <div class="card-desc">Same data changes frequently. One source of truth → one update. No write amplification.</div>
+      <div class="card-strategy">→ Single row update propagates everywhere via JOIN</div>
+      <div class="card-examples">
+        <span class="chip">Inventory</span>
+        <span class="chip">Pricing</span>
+        <span class="chip">User profile</span>
+      </div>
+    </div>
+
+    <div class="decision-card card-write-ins">
+      <div class="card-icon">➕</div>
+      <div class="card-scenario">Write Heavy — INSERTs</div>
+      <div class="card-title">Append-Only + Few Indexes</div>
+      <div class="card-desc">Naya data stream hota hai. Primary focus: <strong>minimal indexes + partitioning</strong>. Normalize/denorm secondary hai — normalize se row size smaller hoti hai (better cache), but per-insert multi-table writes + FK checks throughput hurt karte hain.</div>
+      <div class="card-strategy">→ Append-only fact table + partitioning. Dimension lookups async/late-binding.</div>
+      <div class="card-examples">
+        <span class="chip">IoT sensors</span>
+        <span class="chip">Event logs</span>
+        <span class="chip">Analytics</span>
+      </div>
+    </div>
+
+    <div class="decision-card card-mixed">
+      <div class="card-icon">⚖️</div>
+      <div class="card-scenario">Mixed — Production Reality</div>
+      <div class="card-title">CQRS + Hybrid Architecture</div>
+      <div class="card-desc">Write path aur Read path alag karo. DB normalize karo (source of truth). Reads ke liye denormalized views async mein sync karo via <strong>Read Replicas / Redis / Elasticsearch</strong>.</div>
+      <div class="card-strategy">→ Write → Normalized DB → async sync → Read Store (Redis/ES/Replica)</div>
+      <div class="card-note">⚠️ Trade-off: <strong>Eventual Consistency</strong> — write ke baad read pe thodi der stale data aa sakta hai</div>
+      <div class="card-examples">
+        <span class="chip">E-commerce</span>
+        <span class="chip">SaaS</span>
+        <span class="chip">Search-heavy apps</span>
+      </div>
+    </div>
+
+    <div class="decision-card card-extreme">
+      <div class="card-icon">🔥</div>
+      <div class="card-scenario">Extreme Write Throughput</div>
+      <div class="card-title">Tune First, Then Engine Change</div>
+      <div class="card-desc">Pehle try karo: <strong>partitioning + batch inserts + minimize indexes + async commit</strong>. Agar phir bhi nahi hua toh LSM-tree engine consider karo.</div>
+      <div class="card-strategy">→ Tune existing DB first → then Cassandra/ScyllaDB/RocksDB</div>
+      <div class="card-note">💡 <strong>Why LSM wins here:</strong> B-Tree = random IO on update (in-place). LSM = sequential append to memtable → flush. No random disk seeks.</div>
+      <div class="card-examples">
+        <span class="chip">Time-series</span>
+        <span class="chip">Clickstream</span>
+        <span class="chip">Metrics</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MVCC Contention Section -->
+  <div class="myth-busting myth-busting-mvcc">
+    <div class="myth-title">🔍 "Locking" ≠ Sirf Read-Write Block</div>
+    <div class="myth-sub">Modern DBs (PostgreSQL, MySQL InnoDB, Oracle) MVCC use karte hain — reads writers ko block nahi karte. Real contention alag jagah hoti hai:</div>
+    <div class="myth-grid">
+      <div class="myth-item wrong">
+        <div class="label">❌ Aam Assumption</div>
+        <p>"Write heavy mein reads block ho jaate hain, isliye slow hai"</p>
+      </div>
+      <div class="myth-item right">
+        <div class="label">✓ MVCC Reality</div>
+        <p>Readers never block writers. Actual bottleneck: <strong>index hot spots + buffer contention + WAL/write-ahead log pressure</strong>.</p>
+      </div>
+      <div class="myth-item wrong myth-hotspot">
+        <div class="label">Index Hot Spot</div>
+        <p>Monotonic keys (auto-increment IDs) → B-tree ke right-hand leaf pe sab inserts pile up → buffer contention badh jaata hai</p>
+      </div>
+      <div class="myth-item right">
+        <div class="label">✓ Fix</div>
+        <p><strong>Hash partitioning</strong> ya <strong>UUID keys</strong> se inserts distribute hote hain across B-tree. Hot block problem solve.</p>
+      </div>
+      <div class="myth-item wrong myth-wal">
+        <div class="label">WAL Pressure</div>
+        <p>Bulk inserts mein Write-Ahead Log writes alag bottleneck hain — normalize/denorm se iska koi lena dena nahi.</p>
+      </div>
+      <div class="myth-item right">
+        <div class="label">✓ Fix</div>
+        <p><strong>Batch inserts + async commit</strong> se throughput kaafi improve hoti hai engine switch karne se pehle.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Myth busting -->
+  <div class="myth-busting">
+    <div class="myth-title">⚠️ Common Myths Busted</div>
+    <div class="myth-sub">Jo log galat bolte hain vs reality</div>
+    <div class="myth-grid">
+      <div class="myth-item wrong">
+        <div class="label">❌ Myth</div>
+        <p>"Write heavy mein hamesha normalize karo"</p>
+      </div>
+      <div class="myth-item right">
+        <div class="label">✓ Reality</div>
+        <p>Sirf UPDATE-heavy mein clearly helpful. INSERT-heavy mein normalize/denorm secondary hai — focus hona chahiye <em>minimal indexes + partitioning</em> pe.</p>
+      </div>
+      <div class="myth-item wrong">
+        <div class="label">❌ Myth</div>
+        <p>"Normalize karo toh indexes ka problem solve ho jaata hai"</p>
+      </div>
+      <div class="myth-item right">
+        <div class="label">✓ Reality</div>
+        <p>Normalize se har table ka index alag update hota hai. Problem solve nahi, distribute hoti hai.</p>
+      </div>
+      <div class="myth-item wrong">
+        <div class="label">❌ Myth</div>
+        <p>"Denormalize karo toh writes expensive ho jaati hain"</p>
+      </div>
+      <div class="myth-item right">
+        <div class="label">✓ Reality</div>
+        <p>INSERT-heavy workload mein denormalized bhi theek hai. UPDATEs ke saath problematic hai.</p>
+      </div>
+      <div class="myth-item wrong">
+        <div class="label">❌ Myth</div>
+        <p>"Ek DB engine sab ke liye kaam karega"</p>
+      </div>
+      <div class="myth-item right">
+        <div class="label">✓ Reality</div>
+        <p>B-tree (PostgreSQL/Oracle) reads ke liye great. LSM-tree (Cassandra) extreme writes ke liye better.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Golden Rule -->
+  <div class="golden-rule">
+    <div class="crown">👑</div>
+    <h3>The Real Mental Model</h3>
+    <p>
+      Pehle pucho: <em>write ka type kya hai?</em><br>
+      UPDATE → Normalize. INSERT-stream → Append-only + partition.<br>
+      Dono hain → <em>CQRS: Normalize writes, async denormalize reads.</em><br>
+      <span class="golden-rule-note">Async read store ka cost = Eventual Consistency. Acceptable hai ya nahi — <em>product decision hai, engineering nahi.</em></span>
+    </p>
+  </div>
+
+</div>
+</div>
+</main>
+</body>
+</html>

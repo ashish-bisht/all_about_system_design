@@ -1,0 +1,284 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>App Server Sizing — FastAPI on OCI</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <span class="tag">System Design — Session Notes</span>
+    <h1>App Server Sizing<br><span>FastAPI on OCI</span></h1>
+    <p class="subtitle">// CPU · Workers · RAM · Replicas · Production Grade</p>
+    <span class="badge">FASTAPI + UVICORN + GUNICORN</span>
+  </header>
+
+  <!-- SECTION 1 -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">01</div>
+      <div class="section-title">CPU-bound vs I/O-bound — Fundamental Distinction</div>
+    </div>
+    <div class="section-body">
+      <p>Ye decision sabse pehle karna padta hai. Teri app kya karti hai zyada?</p>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-label">I/O Bound</div>
+          <div class="card-value" style="color: #00e5ff;">Wait</div>
+          <div class="card-sub">DB calls, network, file reads.<br>CPU idle rehta hai wait mein.<br>→ More workers beneficial</div>
+        </div>
+        <div class="card">
+          <div class="card-label">CPU Bound</div>
+          <div class="card-value" style="color: #ff4d6d;">Compute</div>
+          <div class="card-sub">ML inference, encryption,<br>image processing.<br>→ More cores needed</div>
+        </div>
+      </div>
+      <div class="callout">
+        URL Shortener = Pure I/O bound. DB lookup → redirect.<br>
+        CPU barely touched. 99% time = waiting for DB response.
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2 -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">02</div>
+      <div class="section-title">Python GIL — Why Multiple Workers?</div>
+    </div>
+    <div class="section-body">
+      <p>Python ka <code>GIL (Global Interpreter Lock)</code> — ek process ek time pe sirf ek CPU core use kar sakta hai. Chahe 16 cores hon.</p>
+      <pre>
+# 1 Process = 1 Core at a time (GIL)
+# 8 cores available → 7 cores waste agar 1 worker
+
+Solution:
+Multiple Workers = Multiple Processes = GIL bypass
+Har process apna core use karta hai independently</pre>
+      <p>Workers aapas mein <span class="highlight2">ladte nahi</span> — OS ka scheduler time-slicing se handle karta hai. Jab Worker 1 I/O pe wait kare, Worker 2 core le leta hai.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 3 -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">03</div>
+      <div class="section-title">Workers Formula — Aur Iska Sach</div>
+    </div>
+    <div class="section-body">
+      <pre>
+Workers = (2 × CPU cores) + 1   ← Gunicorn default formula</pre>
+      <div class="callout">
+        ⚠️  Ye formula sirf ek starting point hai.<br>
+        Blindly follow mat karo. Service ki nature pe depend karta hai.
+      </div>
+
+      <p><span class="highlight">Service type se workers decide karo:</span></p>
+
+      <table>
+        <tr>
+          <th>Service Type</th>
+          <th>Workers Strategy</th>
+          <th>Reason</th>
+        </tr>
+        <tr>
+          <td>Pure I/O (CRUD, URL shortener)</td>
+          <td>Zyada workers rakh sakte ho</td>
+          <td>CPU idle rehta hai I/O wait mein</td>
+        </tr>
+        <tr>
+          <td>CPU Heavy (ML, image processing)</td>
+          <td>Workers = cores ya kam</td>
+          <td>Zyada workers = context switching overhead</td>
+        </tr>
+        <tr>
+          <td>Mixed workload</td>
+          <td>Benchmark karo</td>
+          <td>Koi fixed formula nahi</td>
+        </tr>
+      </table>
+
+      <p><span class="highlight3">Sahi approach:</span> Load test karo (Locust/k6), workers badhao, RPS measure karo, jahan plateau aaye wahi optimal.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 4 -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">04</div>
+      <div class="section-title">OCI Setup — Production Grade</div>
+    </div>
+    <div class="section-body">
+      <p>OCI pe deploy karte waqt yaad rakh: <code>1 OCPU = 2 vCPU</code></p>
+
+      <table>
+        <tr>
+          <th>Shape</th>
+          <th>OCPU</th>
+          <th>vCPU</th>
+          <th>RAM</th>
+          <th>Use Case</th>
+        </tr>
+        <tr>
+          <td>E4.Flex</td>
+          <td>2</td>
+          <td>4</td>
+          <td>8GB</td>
+          <td>Dev / Staging</td>
+        </tr>
+        <tr>
+          <td>E4.Flex</td>
+          <td>4</td>
+          <td>8</td>
+          <td>16GB</td>
+          <td>Production start ✅</td>
+        </tr>
+        <tr>
+          <td>E4.Flex</td>
+          <td>8</td>
+          <td>16</td>
+          <td>32GB</td>
+          <td>High traffic</td>
+        </tr>
+      </table>
+
+      <p>4 OCPU instance pe workers:</p>
+      <pre>
+Workers = (2 × 8 vCPU) + 1 = 17 workers
+Capacity ≈ 17 × 500 RPS = ~8,500 RPS (conservative, I/O bound)</pre>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-label">RAM Breakdown (per instance)</div>
+          <div class="card-sub" style="margin-top: 0.8rem; line-height: 2;">
+            17 workers × ~150MB = ~2.5GB<br>
+            OS + system = ~1GB<br>
+            DB connection pool = ~500MB<br>
+            Cache + buffer = ~4GB<br>
+            <span style="color: var(--accent2);">Total recommended = 16GB</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-label">Little's Law</div>
+          <div class="card-sub" style="margin-top: 0.8rem; line-height: 2;">
+            RPS = Concurrency / Latency(sec)<br><br>
+            1000 concurrent, 100ms latency:<br>
+            <span style="color: var(--accent2);">RPS = 1000 / 0.1 = 10,000</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 5 -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">05</div>
+      <div class="section-title">Replicas — Minimum 3, Kyun?</div>
+    </div>
+    <div class="section-body">
+
+      <div class="arch-box">
+        Load Balancer (OCI LB)<br>
+        │<br>
+        ┌──────┴──────┐<br>
+        │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+        VM1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VM2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VM3<br>
+        4 OCPU&nbsp;&nbsp;4 OCPU&nbsp;&nbsp;4 OCPU<br>
+        16GB&nbsp;&nbsp;&nbsp;&nbsp;16GB&nbsp;&nbsp;&nbsp;&nbsp;16GB<br>
+        │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+        └──────┬──────┘<br>
+        │<br>
+        DB + Redis Cache
+      </div>
+
+      <p>Teen replicas kyun — mathematical enough hone ke bawajood:</p>
+
+      <table>
+        <tr>
+          <th>Reason</th>
+          <th>Explanation</th>
+        </tr>
+        <tr>
+          <td>High Availability</td>
+          <td>Ek gaya toh 2 serve karte rehte hain</td>
+        </tr>
+        <tr>
+          <td>Rolling Deployment</td>
+          <td>Bina downtime ke deploy ho sakta hai</td>
+        </tr>
+        <tr>
+          <td>Spike Buffer</td>
+          <td>Sudden traffic pe headroom</td>
+        </tr>
+      </table>
+
+      <pre>
+3 instances × 8,500 RPS = ~25,500 RPS capacity
+Required: 10,000 RPS
+Safety margin: 2.5x  ✅</pre>
+    </div>
+  </div>
+
+  <!-- SECTION 6 - Warning -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">⚠</div>
+      <div class="section-title">0.5 CPU Production Pe — What Actually Happens</div>
+    </div>
+    <div class="section-body">
+      <div class="danger">
+        0.5 CPU production pe = OS sirf 50% time deta hai app ko.<br>
+        Workers: (2 × 0.5) + 1 = 2 workers only.<br>
+        Spike aaya → CPU throttle → latency shoot up → timeouts → 💀
+      </div>
+      <p>2 workers matlab sirf 2 requests practically ek time pe. 10 log ek saath aaye toh 8 log queue mein wait karenge. Production mein ye unacceptable hai.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 7 - Global State -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">⚡</div>
+      <div class="section-title">Bonus: Global State — FastAPI Mein Never</div>
+    </div>
+    <div class="section-body">
+      <pre>
+# ❌ WRONG — global user_id, request_id
+user_id = None  # global
+request_id = None  # global
+
+@app.get("/user")
+async def get_user():
+    user_id = get_from_token()  # Race condition!
+    # Concurrent request aaya → user_id overwrite
+    # Ek user ka data doosre ko → Data Breach 💀</pre>
+
+      <pre>
+# ✅ CORRECT — request scoped
+from fastapi import Request
+
+@app.get("/user")
+async def get_user(request: Request):
+    user_id = request.state.user_id  # Per-request ✅</pre>
+
+      <div class="callout">
+        Multiple workers = multiple processes.<br>
+        Global state har process mein alag hota hai — shared nahi.<br>
+        Concurrent requests pe race conditions guaranteed with globals.
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>// FastAPI System Design Notes</span>
+    <span>Session — App Server Sizing</span>
+  </footer>
+
+</div>
+</body>
+</html>

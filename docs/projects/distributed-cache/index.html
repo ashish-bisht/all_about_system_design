@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,85 +14,786 @@
     <a href="../../" class="nav-brand">🏗️ <span>SystemDesign</span>Mastery</a>
     <ul class="nav-links">
       <li><a href="../../">Home</a></li>
-      <li><a href="../../projects/">Projects</a></li>
+      <li><a href="../">Projects</a></li>
       <li><a href="../../patterns/overview.html">Patterns</a></li>
       <li><a href="../../interview-prep/">Interview Prep</a></li>
+      <li><a href="https://github.com/ashish-bisht/all_about_system_design" target="_blank" rel="noopener">GitHub</a></li>
     </ul>
   </div>
 </nav>
 
 <div class="container">
-  <div class="breadcrumb">
-    <a href="../../">Home</a>
-    <span>›</span>
-    <a href="../../projects/">Projects</a>
-    <span>›</span>
-    <span>Distributed Cache</span>
-  </div>
 
-  <div class="page-content">
-    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
-      <span class="card-badge medium">medium</span>
-      <span class="card-tag">infrastructure</span>
-      <span style="color: var(--text-muted); font-family: var(--font-mono); font-size: 0.85rem;">#18</span>
+    <!-- NAV -->
+    <div class="top-nav">
+        <div class="breadcrumb">
+            <a href="../../">🏗️ SystemDesignMastery</a>
+            <span>›</span>
+            <a href="../">Projects</a>
+            <span>›</span>
+            <span style="color: var(--text-primary);">Distributed Cache</span>
+        </div>
     </div>
 
-    <h1>Distributed Cache</h1>
-    <p style="font-size: 1.15rem; color: var(--text-secondary); margin-bottom: 2rem;">Design a distributed caching layer like Memcached</p>
+    <!-- ===== HERO ===== -->
+    <div class="hero">
+        <div class="hero-badges">
+            <span class="badge badge-num">#18</span>
+            <span class="badge badge-medium">🟡 Medium</span>
+            <span class="badge badge-infra">Infrastructure</span>
+        </div>
+        <h1>Distributed Cache</h1>
+        <p class="subtitle">
+            Design a distributed caching system like <strong>Memcached</strong> or <strong>Redis Cluster</strong>.
+            Multiple machines pe data cache karo, <strong>sub-millisecond latency</strong> do,
+            aur lakhs of requests per second handle karo — while being fault-tolerant and horizontally scalable.
+        </p>
+        <div class="pattern-tags">
+            <span class="pattern-tag">⚡ Scaling Reads</span>
+            <span class="pattern-tag">🔄 Consistent Hashing</span>
+            <span class="pattern-tag">💾 Eviction Policies</span>
+            <span class="pattern-tag">🏗️ Infrastructure</span>
+        </div>
+    </div>
 
-    <h2>📋 Requirements</h2>
-    <h3>Functional Requirements</h3>
-    <ul>
-      <li>TODO: Add functional requirements</li>
-    </ul>
-    <h3>Non-Functional Requirements</h3>
-    <ul>
-      <li>TODO: Latency, throughput, availability targets</li>
-    </ul>
+    <!-- ===== TOC ===== -->
+    <div class="toc">
+        <div class="toc-title">📑 Table of Contents</div>
+        <div class="toc-grid">
+            <a href="#requirements"><span class="num">01</span> Requirements</a>
+            <a href="#capacity"><span class="num">02</span> Capacity Estimation</a>
+            <a href="#architecture"><span class="num">03</span> High-Level Architecture</a>
+            <a href="#consistent-hashing"><span class="num">04</span> Consistent Hashing</a>
+            <a href="#eviction"><span class="num">05</span> Eviction Policies</a>
+            <a href="#cache-patterns"><span class="num">06</span> Cache Patterns</a>
+            <a href="#api"><span class="num">07</span> API Design</a>
+            <a href="#data-model"><span class="num">08</span> Data Model</a>
+            <a href="#deep-dive"><span class="num">09</span> Deep Dive</a>
+            <a href="#replication"><span class="num">10</span> Replication & Fault Tolerance</a>
+            <a href="#tradeoffs"><span class="num">11</span> Trade-offs</a>
+            <a href="#interview"><span class="num">12</span> Interview Questions</a>
+        </div>
+    </div>
 
-    <h2>📊 Capacity Estimation</h2>
-    <p>TODO: Add back-of-envelope calculations — QPS, storage, bandwidth.</p>
+    <!-- ===== 1. REQUIREMENTS ===== -->
+    <div class="section" id="requirements">
+        <div class="section-header">
+            <span class="section-icon">📋</span>
+            <h2>Requirements</h2>
+            <span class="tag">step 1</span>
+        </div>
 
-    <h2>🏛️ High-Level Architecture</h2>
-    <pre><code>┌─────────┐     ┌──────────┐     ┌──────────┐
-│  Client  │────▶│  API GW  │────▶│  Service │
-└─────────┘     └──────────┘     └────┬─────┘
-                                      │
-                                 ┌────▼─────┐
-                                 │    DB     │
-                                 └──────────┘</code></pre>
-    <p>TODO: Replace with actual architecture diagram</p>
+        <div class="card-grid">
+            <div class="card c-green">
+                <h3 style="color: var(--accent-green);">✅ Functional Requirements</h3>
+                <div class="desc">
+                    <strong>Core Operations:</strong><br>
+                    → <code>PUT(key, value, ttl)</code> — store with optional expiry<br>
+                    → <code>GET(key)</code> — retrieve (sub-ms latency)<br>
+                    → <code>DELETE(key)</code> — explicitly remove<br><br>
+                    <strong>Must Have:</strong><br>
+                    → Automatic eviction when memory full (LRU/LFU)<br>
+                    → TTL-based expiration<br>
+                    → Data distributed across multiple nodes<br>
+                    → Automatic key routing to correct node
+                </div>
+            </div>
 
-    <h2>🔧 API Design</h2>
-    <p>TODO: Define REST/gRPC endpoints</p>
+            <div class="card c-blue">
+                <h3 style="color: var(--accent-blue);">⚡ Non-Functional Requirements</h3>
+                <div class="desc">
+                    <strong>Performance:</strong><br>
+                    → Read latency: <code>&lt;1ms</code> (p99 &lt;5ms)<br>
+                    → Throughput: <code>100K+ ops/sec</code> per node<br><br>
+                    <strong>Availability:</strong><br>
+                    → 99.99% uptime (4 nines)<br>
+                    → No single point of failure<br><br>
+                    <strong>Scalability:</strong><br>
+                    → Horizontal scaling (add nodes = more capacity)<br>
+                    → Linear throughput increase with nodes
+                </div>
+            </div>
+        </div>
 
-    <h2>💾 Data Model</h2>
-    <p>TODO: Define database schema and data access patterns</p>
+        <div class="callout callout-tip">
+            <div class="callout-title">💡 Interview Mein Pehle Ye Bolo</div>
+            <p>"Cache is a <strong>performance optimization layer</strong>. I'll design a general-purpose distributed cache providing sub-millisecond reads, horizontal scalability, and graceful node failure handling."</p>
+        </div>
+    </div>
 
-    <h2>⚡ Deep Dive</h2>
-    <p>TODO: Walk through the most interesting technical challenges</p>
+    <!-- ===== 2. CAPACITY ESTIMATION ===== -->
+    <div class="section" id="capacity">
+        <div class="section-header">
+            <span class="section-icon">📊</span>
+            <h2>Capacity Estimation</h2>
+            <span class="tag">step 2</span>
+        </div>
 
-    <h2>📈 Scaling</h2>
-    <p>TODO: How to scale from 1K to 1M to 1B users</p>
+        <div class="code-block"><span class="cmt">// Assumptions</span>
+<span class="hl">Total data to cache</span>       = <span class="res">~300 GB</span>     <span class="cmt">// 20% hot data from ~1.5TB DB</span>
+<span class="hl">Avg value size</span>             = <span class="res">~1 KB</span>      <span class="cmt">// typical JSON / small blob</span>
+<span class="hl">Avg key size</span>               = <span class="res">~50 Bytes</span>  <span class="cmt">// "user:12345:profile"</span>
+<span class="hl">Total cached objects</span>       = 300GB / 1KB = <span class="res">~300 Million</span>
 
-    <h2>🧪 Implementation</h2>
-    <p>Working code: <a href="https://github.com/yourusername../../tree/main/projects/18-med-distributed-cache">projects/18-med-distributed-cache/</a></p>
+<span class="cmt">// Traffic</span>
+<span class="hl">Read QPS</span>                   = <span class="res">~500K QPS</span>  <span class="cmt">// 95% reads</span>
+<span class="hl">Write QPS</span>                  = <span class="res">~25K QPS</span>   <span class="cmt">// updates/invalidations</span>
+<span class="hl">Peak Read QPS</span>              = 500K × 3 = <span class="res">~1.5M QPS</span>
 
-    <h2>📝 Key Learnings</h2>
-    <ul>
-      <li>TODO: Add learnings after implementation</li>
-    </ul>
-  </div>
+<span class="cmt">// Node Planning</span>
+<span class="hl">Per node memory</span>            = <span class="res">64 GB</span>      <span class="cmt">// standard Redis instance</span>
+<span class="hl">Usable (70%)</span>               = <span class="res">~45 GB</span>     <span class="cmt">// metadata + fragmentation overhead</span>
+<span class="hl">Nodes for storage</span>          = 300 / 45 ≈ <span class="res">7 nodes</span>
+<span class="hl">Per node throughput</span>        = <span class="res">~100K ops/sec</span>
+<span class="hl">Nodes for throughput</span>       = 500K / 100K = <span class="res">5 nodes</span>
+
+<span class="cmt">// Final = max(storage, throughput) + replication</span>
+<span class="hl">Primary nodes</span>              = <span class="res">7 nodes</span>
+<span class="hl">With 1 replica each</span>        = <span class="res">14 nodes total</span></div>
+
+        <div class="callout callout-info">
+            <div class="callout-title">📐 Rule of Thumb</div>
+            <p>Cache 20% of hot data (80/20 rule). Each Redis node ≈ 45GB usable → <strong>ceil(cache_size / 45GB)</strong> primary nodes. Double for replicas.</p>
+        </div>
+    </div>
+
+    <!-- ===== 3. HIGH-LEVEL ARCHITECTURE ===== -->
+    <div class="section" id="architecture">
+        <div class="section-header">
+            <span class="section-icon">🏛️</span>
+            <h2>High-Level Architecture</h2>
+            <span class="tag">step 3</span>
+        </div>
+
+        <!-- Architecture as HTML flow instead of ASCII -->
+        <div class="flow-container">
+            <!-- Layer 1: Clients -->
+            <div class="flow-group">
+                <div class="flow-section-label">Application Layer</div>
+                <div class="flow-row">
+                    <div class="flow-box green">
+                        <div class="flow-icon">🖥️</div>
+                        <div class="flow-label">App Server 1</div>
+                    </div>
+                    <div class="flow-box green">
+                        <div class="flow-icon">🖥️</div>
+                        <div class="flow-label">App Server 2</div>
+                    </div>
+                    <div class="flow-box green">
+                        <div class="flow-icon">🖥️</div>
+                        <div class="flow-label">App Server N</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-vertical-arrow">▼</div>
+
+            <!-- Layer 2: Client Library -->
+            <div class="flow-group">
+                <div class="flow-section-label">Cache Client Library (embedded in each app)</div>
+                <div class="flow-row">
+                    <div class="flow-box blue">
+                        <div class="flow-icon">🔄</div>
+                        <div class="flow-label">Consistent Hash Ring</div>
+                        <div class="flow-sub">Route key → node</div>
+                    </div>
+                    <div class="flow-arrow">+</div>
+                    <div class="flow-box blue">
+                        <div class="flow-icon">🔌</div>
+                        <div class="flow-label">Connection Pool</div>
+                        <div class="flow-sub">Reuse TCP conns</div>
+                    </div>
+                    <div class="flow-arrow">+</div>
+                    <div class="flow-box blue">
+                        <div class="flow-icon">🔁</div>
+                        <div class="flow-label">Retry + Fallback</div>
+                        <div class="flow-sub">Handle failures</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-vertical-arrow">▼</div>
+
+            <!-- Layer 3: Cache Nodes -->
+            <div class="flow-group">
+                <div class="flow-section-label">Cache Cluster (7 Primary + 7 Replica = 14 nodes)</div>
+                <div class="flow-row">
+                    <div class="flow-box purple" style="min-width: 160px;">
+                        <div class="flow-icon">💾</div>
+                        <div class="flow-label">Node 1 (Primary)</div>
+                        <div class="flow-sub">Slots 0-5460 · HashMap+LRU</div>
+                    </div>
+                    <div class="flow-box purple" style="min-width: 160px;">
+                        <div class="flow-icon">💾</div>
+                        <div class="flow-label">Node 2 (Primary)</div>
+                        <div class="flow-sub">Slots 5461-10922 · HashMap+LRU</div>
+                    </div>
+                    <div class="flow-box purple" style="min-width: 160px;">
+                        <div class="flow-icon">💾</div>
+                        <div class="flow-label">Node 3 (Primary)</div>
+                        <div class="flow-sub">Slots 10923-16383 · HashMap+LRU</div>
+                    </div>
+                </div>
+                <div style="text-align: center; color: var(--text-muted); font-size: 0.72rem; margin-top: 0.5rem;">↕ Async replication to standby replicas</div>
+            </div>
+
+            <div class="flow-vertical-arrow">▼</div>
+
+            <!-- Layer 4: Config -->
+            <div class="flow-group">
+                <div class="flow-section-label">Configuration & Discovery</div>
+                <div class="flow-row">
+                    <div class="flow-box orange">
+                        <div class="flow-icon">⚙️</div>
+                        <div class="flow-label">ZooKeeper / Etcd</div>
+                        <div class="flow-sub">Membership · Hash ring config · Health checks</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p class="prose">Architecture ke 3 layers hain: <strong>Client Library</strong> (consistent hashing + routing — har app server mein embedded), <strong>Cache Nodes</strong> (actual in-memory data store with eviction), aur <strong>Config Service</strong> (node discovery + health monitoring). Client library sabse important hai — ye decide karta hai ki kaunsa key kaunse node pe jaayega.</p>
+    </div>
+
+    <!-- ===== 4. CONSISTENT HASHING ===== -->
+    <div class="section" id="consistent-hashing">
+        <div class="section-header">
+            <span class="section-icon">🔄</span>
+            <h2>Consistent Hashing — The Core Idea</h2>
+            <span class="tag">key concept</span>
+        </div>
+
+        <p class="prose"><strong>Problem:</strong> Simple <code>hash(key) % N</code> mein jab bhi node add/remove hota hai, almost ALL keys re-map ho jaate hain → <strong>cache stampede</strong>. Consistent hashing mein sirf <code>K/N</code> keys move hoti hain.</p>
+
+        <!-- SVG Hash Ring Diagram -->
+        <div class="diagram-wrapper">
+            <svg viewBox="0 0 520 420" width="520" height="420" xmlns="http://www.w3.org/2000/svg" style="font-family: 'Outfit', sans-serif;">
+                <!-- Ring -->
+                <circle cx="220" cy="190" r="130" fill="none" stroke="#1e3050" stroke-width="2.5" stroke-dasharray="6 4"/>
+
+                <!-- Nodes on ring -->
+                <circle cx="220" cy="60" r="14" fill="#5eaaff" opacity="0.9"/>
+                <text x="220" y="64" text-anchor="middle" fill="#06090f" font-size="10" font-weight="700">A</text>
+                <text x="220" y="42" text-anchor="middle" fill="#8fa3c0" font-size="9">pos: 1000</text>
+
+                <circle cx="340" cy="140" r="14" fill="#2dd4a0" opacity="0.9"/>
+                <text x="340" y="144" text-anchor="middle" fill="#06090f" font-size="10" font-weight="700">B</text>
+                <text x="380" y="128" text-anchor="start" fill="#8fa3c0" font-size="9">pos: 4000</text>
+
+                <circle cx="220" cy="320" r="14" fill="#f87171" opacity="0.9"/>
+                <text x="220" y="324" text-anchor="middle" fill="#06090f" font-size="10" font-weight="700">C</text>
+                <text x="220" y="350" text-anchor="middle" fill="#8fa3c0" font-size="9">pos: 8000</text>
+
+                <circle cx="100" cy="140" r="14" fill="#a78bfa" opacity="0.9"/>
+                <text x="100" y="144" text-anchor="middle" fill="#06090f" font-size="10" font-weight="700">D</text>
+                <text x="60" y="128" text-anchor="end" fill="#8fa3c0" font-size="9">pos: 12000</text>
+
+                <!-- Key markers -->
+                <circle cx="290" cy="82" r="5" fill="#fbbf24"/>
+                <text x="308" y="78" fill="#fbbf24" font-size="8.5" font-weight="600">key "user:42"</text>
+                <text x="308" y="90" fill="#5a7090" font-size="8">hash=2500 → Node B ✓</text>
+
+                <circle cx="152" cy="280" r="5" fill="#fbbf24"/>
+                <text x="40" y="292" fill="#fbbf24" font-size="8.5" font-weight="600">key "order:99"</text>
+                <text x="40" y="304" fill="#5a7090" font-size="8">hash=9500 → Node D ✓</text>
+
+                <!-- Clockwise arrow hint -->
+                <path d="M 260 65 A 50 50 0 0 1 295 90" fill="none" stroke="#2dd4a0" stroke-width="1.5" marker-end="url(#arrowG)"/>
+                <defs>
+                    <marker id="arrowG" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="#2dd4a0"/></marker>
+                </defs>
+
+                <!-- Legend box -->
+                <rect x="370" y="220" width="145" height="110" rx="8" fill="#111a2e" stroke="#1e3050" stroke-width="1"/>
+                <text x="385" y="242" fill="#f87171" font-size="9" font-weight="700">Node C dies?</text>
+                <text x="385" y="260" fill="#8fa3c0" font-size="8">Keys 4000-8000</text>
+                <text x="385" y="274" fill="#8fa3c0" font-size="8">→ remap to Node D</text>
+                <line x1="385" y1="284" x2="500" y2="284" stroke="#1e3050" stroke-width="1"/>
+                <text x="385" y="300" fill="#2dd4a0" font-size="8">Other keys?</text>
+                <text x="385" y="314" fill="#2dd4a0" font-size="8" font-weight="700">Untouched! ✓</text>
+            </svg>
+        </div>
+
+        <div class="card-grid">
+            <div class="card c-blue">
+                <h3>Virtual Nodes (Vnodes)</h3>
+                <p class="desc"><strong>Problem:</strong> Real nodes pe data unevenly distribute hota hai. <strong>Solution:</strong> Har physical node ke 100-200 virtual nodes banao ring pe. Even distribution ensure hoti hai. Node add/remove pe load evenly spread hota hai.</p>
+            </div>
+            <div class="card c-green">
+                <h3>Hash Function Choice</h3>
+                <p class="desc">Use <code>MurmurHash3</code> or <code>xxHash</code> — fast + uniform distribution. MD5/SHA overkill hain (cryptographic, slower). Har GET/PUT pe hash compute hota hai, so speed matters.</p>
+            </div>
+        </div>
+
+        <div class="callout callout-warn">
+            <div class="callout-title">⚠️ Common Interview Mistake</div>
+            <p>"Consistent hashing" bol dete hain but explain nahi karte <strong>WHY</strong> simple modular hashing fails. Interviewer sunna chahta hai: "When N changes, <code>hash % N</code> remaps almost all keys → cache stampede. Consistent hashing limits remapping to <code>K/N</code> keys."</p>
+        </div>
+    </div>
+
+    <!-- ===== 5. EVICTION POLICIES ===== -->
+    <div class="section" id="eviction">
+        <div class="section-header">
+            <span class="section-icon">🗑️</span>
+            <h2>Eviction Policies</h2>
+            <span class="tag">core design</span>
+        </div>
+
+        <p class="prose">Jab memory full ho jaaye toh kaunsa data hataayein? Wrong eviction = frequent cache misses = DB overloaded.</p>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Policy</th>
+                    <th>Full Form</th>
+                    <th>How It Works</th>
+                    <th>Best For</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="label" style="color: var(--accent-green);">LRU</td>
+                    <td>Least Recently Used</td>
+                    <td>Jo sabse lamba time se access nahi hua</td>
+                    <td class="note">General purpose ✅</td>
+                </tr>
+                <tr>
+                    <td class="label" style="color: var(--accent-blue);">LFU</td>
+                    <td>Least Frequently Used</td>
+                    <td>Jo sabse kam baar access hua</td>
+                    <td class="note">CDN, popular content</td>
+                </tr>
+                <tr>
+                    <td class="label" style="color: var(--accent-purple);">FIFO</td>
+                    <td>First In, First Out</td>
+                    <td>Jo pehle aaya, pehle hataao</td>
+                    <td class="note">Simple, sessions</td>
+                </tr>
+                <tr>
+                    <td class="label" style="color: var(--accent-orange);">TTL</td>
+                    <td>Time To Live</td>
+                    <td>Expiry ke baad auto-delete</td>
+                    <td class="note">Tokens, rate limits</td>
+                </tr>
+                <tr>
+                    <td class="label" style="color: var(--accent-cyan);">Random</td>
+                    <td>Random Eviction</td>
+                    <td>Random item hataao</td>
+                    <td class="note">Uniform access patterns</td>
+                </tr>
+                <tr>
+                    <td class="label" style="color: var(--accent-yellow);">W-TinyLFU</td>
+                    <td>Window Tiny LFU</td>
+                    <td>LRU window + frequency sketch</td>
+                    <td class="note">Best hit rate 🏆 (Caffeine)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="callout callout-success">
+            <div class="callout-title">✅ LRU Implementation — Interview Favorite</div>
+            <p><code>HashMap</code> + <code>Doubly Linked List</code>. HashMap → O(1) lookup. DLL → access order (GET pe move to head, eviction pe remove tail). Result: <strong>O(1) GET, PUT, EVICT</strong>. Redis uses approximated LRU — samples random keys, evicts least recent from sample.</p>
+        </div>
+    </div>
+
+    <!-- ===== 6. CACHE PATTERNS ===== -->
+    <div class="section" id="cache-patterns">
+        <div class="section-header">
+            <span class="section-icon">📐</span>
+            <h2>Cache Patterns — Read & Write Strategies</h2>
+            <span class="tag">critical</span>
+        </div>
+
+        <div class="card-grid card-grid-3">
+            <div class="card c-green">
+                <h3>Cache-Aside (Lazy Loading) ✅</h3>
+                <div class="desc">
+                    <strong>Read:</strong> App → cache miss → DB → write cache<br>
+                    <strong>Write:</strong> App → DB → invalidate cache<br><br>
+                    ✅ Simple, caches only needed data<br>
+                    ❌ First request slow (miss)<br><br>
+                    <em style="color: var(--accent-green);">Most common pattern 🏆</em>
+                </div>
+            </div>
+            <div class="card c-blue">
+                <h3>Read-Through</h3>
+                <div class="desc">
+                    <strong>Read:</strong> App → cache (cache loads DB on miss)<br>
+                    <strong>Write:</strong> Same as cache-aside<br><br>
+                    ✅ App code simpler<br>
+                    ❌ Cache tightly coupled to DB<br><br>
+                    <em style="color: var(--accent-blue);">Cache manages DB loading</em>
+                </div>
+            </div>
+            <div class="card c-purple">
+                <h3>Write-Through</h3>
+                <div class="desc">
+                    <strong>Write:</strong> App → cache → cache writes DB (sync)<br>
+                    <strong>Read:</strong> Always from cache (fresh)<br><br>
+                    ✅ Cache always consistent<br>
+                    ❌ Slower writes (2× write)<br><br>
+                    <em style="color: var(--accent-purple);">Strong consistency needed</em>
+                </div>
+            </div>
+            <div class="card c-orange">
+                <h3>Write-Behind (Write-Back)</h3>
+                <div class="desc">
+                    <strong>Write:</strong> App → cache → async batch DB write<br>
+                    <strong>Read:</strong> Always from cache<br><br>
+                    ✅ Fastest writes, DB batching<br>
+                    ❌ <strong style="color: var(--accent-red);">Data loss risk</strong> on crash<br><br>
+                    <em style="color: var(--accent-orange);">Write-heavy workloads</em>
+                </div>
+            </div>
+            <div class="card c-cyan">
+                <h3>Write-Around</h3>
+                <div class="desc">
+                    <strong>Write:</strong> App → DB directly (skip cache)<br>
+                    <strong>Read:</strong> Cache-aside on read<br><br>
+                    ✅ No cache pollution<br>
+                    ❌ Recent writes = cache miss<br><br>
+                    <em style="color: var(--accent-cyan);">Write-once, read-rarely</em>
+                </div>
+            </div>
+            <div class="card c-red">
+                <h3>Refresh-Ahead</h3>
+                <div class="desc">
+                    <strong>How:</strong> Async refresh before TTL expires<br>
+                    <strong>When:</strong> TTL &lt;20% + recently accessed<br><br>
+                    ✅ Zero miss for hot data<br>
+                    ❌ Complex, wastes resources<br><br>
+                    <em style="color: var(--accent-red);">Low-latency critical paths</em>
+                </div>
+            </div>
+        </div>
+
+        <div class="callout callout-tip">
+            <div class="callout-title">🎯 Interview Mein Kya Bolo?</div>
+            <p>"For most cases → <strong>Cache-Aside</strong> (simple, caches on demand). Write-heavy → <strong>Write-Behind</strong> with durable queue. Strong consistency → <strong>Write-Through</strong>."</p>
+        </div>
+    </div>
+
+    <!-- ===== 7. API DESIGN ===== -->
+    <div class="section" id="api">
+        <div class="section-header">
+            <span class="section-icon">🔌</span>
+            <h2>API Design</h2>
+            <span class="tag">interface</span>
+        </div>
+
+        <div class="code-block"><span class="cmt"># Core Cache Operations (Redis-like)</span>
+
+<span class="fn">GET</span> <span class="str">key</span>                              → <span class="res">value</span> | <span class="num">NULL</span>    <span class="cmt">// O(1)</span>
+
+<span class="fn">SET</span> <span class="str">key</span> <span class="str">value</span> [<span class="kw">EX</span> <span class="num">sec</span>] [<span class="kw">NX</span>|<span class="kw">XX</span>]     → <span class="res">OK</span> | <span class="num">NULL</span>
+    <span class="cmt">// EX: expire in sec | NX: set if NOT exists | XX: set if exists</span>
+
+<span class="fn">DEL</span> <span class="str">key</span> [<span class="str">key2</span> ...]                     → <span class="res">count deleted</span>
+
+<span class="fn">MGET</span> <span class="str">key1</span> <span class="str">key2</span> <span class="str">key3</span>                    → <span class="res">[val1, val2, NULL]</span>  <span class="cmt">// batch</span>
+
+<span class="fn">MSET</span> <span class="str">k1</span> <span class="str">v1</span> <span class="str">k2</span> <span class="str">v2</span>                      → <span class="res">OK</span>  <span class="cmt">// atomic multi-set</span>
+
+<span class="fn">TTL</span> <span class="str">key</span>                               → <span class="res">seconds remaining</span>  <span class="cmt">// -1 no expiry, -2 not found</span>
+
+<span class="fn">EXISTS</span> <span class="str">key</span>                            → <span class="res">1</span> | <span class="num">0</span>
+
+<span class="cmt"># Admin</span>
+<span class="fn">PING</span>  → <span class="res">PONG</span>    <span class="fn">INFO</span>  → stats    <span class="fn">DBSIZE</span>  → total keys</div>
+    </div>
+
+    <!-- ===== 8. DATA MODEL ===== -->
+    <div class="section" id="data-model">
+        <div class="section-header">
+            <span class="section-icon">💾</span>
+            <h2>Data Model — Internal Storage</h2>
+            <span class="tag">internals</span>
+        </div>
+
+        <p class="prose">Har cache node ek in-memory hash table hai. Entry mein key, value + metadata (TTL, access time, frequency count) store hota hai.</p>
+
+        <div class="code-block"><span class="kw">struct</span> <span class="fn">CacheEntry</span> {
+    <span class="str">key</span>:           String       <span class="cmt">// "user:12345:profile"</span>
+    <span class="str">value</span>:         Bytes        <span class="cmt">// serialized (JSON, protobuf)</span>
+    <span class="str">created_at</span>:    Timestamp    <span class="cmt">// creation time</span>
+    <span class="str">last_access</span>:   Timestamp    <span class="cmt">// LRU tracking</span>
+    <span class="str">access_count</span>:  uint32       <span class="cmt">// LFU tracking</span>
+    <span class="str">ttl</span>:           uint32       <span class="cmt">// seconds (0 = no expiry)</span>
+    <span class="str">expire_at</span>:     Timestamp    <span class="cmt">// absolute expiry</span>
+}
+
+<span class="kw">struct</span> <span class="fn">CacheNode</span> {
+    <span class="str">store</span>:         HashMap&lt;String, CacheEntry&gt;     <span class="cmt">// O(1) lookup</span>
+    <span class="str">lru_list</span>:      DoublyLinkedList&lt;*Entry&gt;        <span class="cmt">// eviction order</span>
+    <span class="str">max_memory</span>:    uint64                          <span class="cmt">// e.g. 64GB</span>
+    <span class="str">used_memory</span>:   uint64                          <span class="cmt">// current usage</span>
+    <span class="str">hash_slots</span>:    Range(start, end)               <span class="cmt">// owned slots</span>
+}</div>
+
+        <table class="data-table">
+            <thead>
+                <tr><th>Component</th><th>Structure</th><th>Why?</th></tr>
+            </thead>
+            <tbody>
+                <tr><td class="label">Primary Store</td><td class="val">HashMap</td><td class="note">O(1) GET/SET</td></tr>
+                <tr><td class="label">Eviction Tracker</td><td class="val">Doubly Linked List</td><td class="note">O(1) move-to-head, remove-tail for LRU</td></tr>
+                <tr><td class="label">TTL Expiry</td><td class="val">Lazy + Periodic</td><td class="note">Lazy: check on access. Periodic: random scan every 100ms</td></tr>
+                <tr><td class="label">Slot Mapping</td><td class="val">Hash Slot Table</td><td class="note">16384 slots (Redis Cluster style) mapped to nodes</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ===== 9. DEEP DIVE ===== -->
+    <div class="section" id="deep-dive">
+        <div class="section-header">
+            <span class="section-icon">🔬</span>
+            <h2>Deep Dive — Key Challenges</h2>
+            <span class="tag">advanced</span>
+        </div>
+
+        <div class="deep-step">
+            <div class="deep-step-num blue">1</div>
+            <h4>Cache Stampede / Thundering Herd</h4>
+            <p><strong>Problem:</strong> Popular key expires → 1000s of concurrent requests hit DB → DB crashes.</p>
+            <div class="code-block"><span class="hl">1. Locking (Mutex)</span>
+   First request gets lock → fetches DB → populates cache
+   Others wait or get stale data
+   Use: <span class="fn">SET lock_key:user:42 1 NX EX 5</span>
+
+<span class="hl">2. Early Expiration (Refresh-Ahead)</span>
+   TTL remaining &lt; 20%? → background refresh before actual expiry
+
+<span class="hl">3. Never Expire + Background Update</span>
+   Cache never expires, background job updates periodically
+   Stale data possible, but zero stampede</div>
+        </div>
+
+        <div class="deep-step">
+            <div class="deep-step-num green">2</div>
+            <h4>Hot Key Problem</h4>
+            <p><strong>Problem:</strong> Ek key (trending tweet) itna popular ki single node overwhelm ho jaaye.</p>
+            <div class="code-block"><span class="fn">1. Local Cache (L1)</span>
+   App server pe in-process cache (Guava/Caffeine)
+   Hot keys locally cached → no network call → short TTL (5-10s)
+
+<span class="fn">2. Key Replication</span>
+   "celeb:123" → "celeb:123#1", "celeb:123#2", ...
+   Client randomly picks suffix → load distributed across nodes
+
+<span class="fn">3. Read Replicas</span>
+   Hot node ke replicas banao → reads split</div>
+        </div>
+
+        <div class="deep-step">
+            <div class="deep-step-num purple">3</div>
+            <h4>Cache Invalidation — "The Hard Problem"</h4>
+            <p><strong>Phil Karlton:</strong> "There are only two hard things in CS: cache invalidation and naming things."</p>
+            <div class="code-block"><span class="fn">1. TTL-based</span> <span class="cmt">// simplest, good for 90% cases</span>
+   Set expiry. Data stale for max TTL duration.
+
+<span class="fn">2. Event-driven Invalidation</span> <span class="cmt">// most accurate</span>
+   DB write → Kafka/CDC event → cache subscriber deletes key
+
+<span class="fn">3. Write-through Invalidation</span>
+   On DB write → immediately delete/update cache
+
+<span class="hl">⚠️ Race Condition:</span>
+   Thread A: READ cache (miss) → READ DB (<span class="num">old</span>)
+   Thread B: WRITE DB (<span class="res">new</span>) → DELETE cache
+   Thread A: SET cache (<span class="num">old</span>) → <span style="color: #f87171;">STALE!</span>
+
+<span class="hl">Fix:</span> Always "delete" not "update" on write + short TTL safety net</div>
+        </div>
+
+        <div class="deep-step">
+            <div class="deep-step-num orange">4</div>
+            <h4>Large Value Handling</h4>
+            <p><strong>Problem:</strong> Values >1MB → network congestion, slow serialization, memory fragmentation.</p>
+            <div class="code-block">→ Compress values (gzip/lz4) → 50-70% savings
+→ Split into chunks: <span class="str">"key:part1"</span>, <span class="str">"key:part2"</span>
+→ Store pointer in cache, actual data in S3
+→ Set max value size limit (e.g. 512KB)</div>
+        </div>
+    </div>
+
+    <!-- ===== 10. REPLICATION & FAULT TOLERANCE ===== -->
+    <div class="section" id="replication">
+        <div class="section-header">
+            <span class="section-icon">🛡️</span>
+            <h2>Replication & Fault Tolerance</h2>
+            <span class="tag">reliability</span>
+        </div>
+
+        <div class="card-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+            <div class="card c-blue">
+                <h3>Primary-Replica Model</h3>
+                <div class="desc">
+                    Each primary → 1-2 replicas. Writes to primary → async replicate. On failure, replica promoted. This is <strong>Redis Cluster</strong> model.<br><br>
+                    <strong>Trade-off:</strong> Async replication = fast writes but small data loss window on failover.
+                </div>
+            </div>
+            <div class="card c-green">
+                <h3>Failure Detection</h3>
+                <div class="desc">
+                    <strong>Gossip Protocol:</strong> Nodes periodically ping each other. No response → PFAIL. Majority agrees → FAIL → trigger failover.<br><br>
+                    <strong>Config Service:</strong> ZooKeeper/Etcd monitors health, triggers rebalancing.
+                </div>
+            </div>
+            <div class="card c-orange">
+                <h3>Node Add/Remove</h3>
+                <div class="desc">
+                    <strong>Add:</strong> New node gets hash slots. Data migrated live, slot by slot, zero downtime.<br><br>
+                    <strong>Remove:</strong> Slots redistributed to remaining nodes before shutdown. Consistent hashing → minimal data movement.
+                </div>
+            </div>
+        </div>
+
+        <div class="callout callout-info">
+            <div class="callout-title">📌 Cache Is NOT Durable Storage</div>
+            <p>Cache is best-effort. Node dies, data lost — <strong>that's okay!</strong> Source of truth = database. Cache failure = increased latency (DB reads), not data loss. Design so system <strong>degrades gracefully</strong> without cache.</p>
+        </div>
+    </div>
+
+    <!-- ===== 11. TRADE-OFFS ===== -->
+    <div class="section" id="tradeoffs">
+        <div class="section-header">
+            <span class="section-icon">⚖️</span>
+            <h2>Key Trade-offs</h2>
+            <span class="tag">decisions</span>
+        </div>
+
+        <table class="data-table">
+            <thead>
+                <tr><th>Decision</th><th>Option A</th><th>Option B</th><th>When?</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="label">Consistency vs Speed</td>
+                    <td>Write-Through</td>
+                    <td>Cache-Aside</td>
+                    <td class="note">Payments → WT. Social → CA</td>
+                </tr>
+                <tr>
+                    <td class="label">Memory vs Hit Rate</td>
+                    <td>LRU (simple)</td>
+                    <td>LFU/W-TinyLFU (better)</td>
+                    <td class="note">General → LRU. CDN → LFU</td>
+                </tr>
+                <tr>
+                    <td class="label">Availability vs Consistency</td>
+                    <td>Async replication</td>
+                    <td>Sync replication</td>
+                    <td class="note">Cache → always async (ok to lose)</td>
+                </tr>
+                <tr>
+                    <td class="label">Routing</td>
+                    <td>Client-side (smart)</td>
+                    <td>Proxy-based (dumb)</td>
+                    <td class="note">Client: less latency. Proxy: simpler</td>
+                </tr>
+                <tr>
+                    <td class="label">Embedded vs Standalone</td>
+                    <td>In-process (Caffeine)</td>
+                    <td>Remote (Redis)</td>
+                    <td class="note">Best: L1 local + L2 remote</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Redis vs Memcached -->
+        <h3 style="margin: 2rem 0 1rem; font-size: 1.1rem;">Redis vs Memcached</h3>
+
+        <div class="vs-container">
+            <div class="vs-side">
+                <h4 style="color: var(--accent-red);">Redis</h4>
+                <ul>
+                    <li>Rich data structures (lists, sets, sorted sets, hashes)</li>
+                    <li>Persistence (RDB + AOF)</li>
+                    <li>Pub/Sub, Lua scripting</li>
+                    <li>Built-in clustering (Redis Cluster)</li>
+                    <li>Single-threaded (no lock contention)</li>
+                </ul>
+            </div>
+            <div class="vs-center">VS</div>
+            <div class="vs-side">
+                <h4 style="color: var(--accent-green);">Memcached</h4>
+                <ul>
+                    <li>Simple key-value only</li>
+                    <li>Multi-threaded (better CPU use)</li>
+                    <li>Slightly faster for simple ops</li>
+                    <li>Lower memory overhead per key</li>
+                    <li>No persistence (pure cache)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="callout callout-tip">
+            <div class="callout-title">🎯 Quick Answer</div>
+            <p><strong>Redis</strong> → complex data structures (leaderboards, sessions, queues). <strong>Memcached</strong> → simple caching, max throughput. Default: Redis (more versatile).</p>
+        </div>
+    </div>
+
+    <!-- ===== 12. INTERVIEW Q&A ===== -->
+    <div class="section" id="interview">
+        <div class="section-header">
+            <span class="section-icon">🎤</span>
+            <h2>Interview Questions & Answers</h2>
+            <span class="tag">prep</span>
+        </div>
+
+        <div class="qa-block">
+            <div class="qa-q">❓ What happens when a cache node goes down?</div>
+            <div class="qa-a">Consistent hashing se sirf us node ki keys affected hoti hain (~1/N of total). Replica promote hota hai primary pe. Un keys ke requests temporarily DB pe jaate hain jab tak new node warm nahi ho jaata. Other nodes completely unaffected.</div>
+        </div>
+
+        <div class="qa-block">
+            <div class="qa-q">❓ How do you handle cache warming after restart?</div>
+            <div class="qa-a"><strong>1) Lazy:</strong> Requests naturally populate cache (simple, slow). <strong>2) Pre-warm:</strong> Load hot-keys list from DB on startup. <strong>3) Snapshot:</strong> Redis RDB restore. <strong>4) Replica promotion:</strong> Already warm replica becomes primary.</div>
+        </div>
+
+        <div class="qa-block">
+            <div class="qa-q">❓ How to prevent cache penetration?</div>
+            <div class="qa-a"><strong>Cache penetration</strong> = queries for keys that will NEVER exist (invalid IDs). Every request misses → hits DB. <strong>Fix:</strong> 1) Cache null results with short TTL (~60s). 2) Bloom filter — O(1) check "definitely not in set" or "probably in set" → prevents unnecessary DB queries.</div>
+        </div>
+
+        <div class="qa-block">
+            <div class="qa-q">❓ How to implement distributed lock with cache?</div>
+            <div class="qa-a">Redis <code>SET key value NX EX timeout</code>. NX = atomic "set if not exists". EX = auto-expire (prevents deadlock). Distributed: <strong>Redlock</strong> — acquire lock on majority (N/2+1) Redis instances. Always set TTL to prevent permanent locks from crashed clients.</div>
+        </div>
+
+        <div class="qa-block">
+            <div class="qa-q">❓ How does Redis achieve high performance single-threaded?</div>
+            <div class="qa-a"><strong>I/O multiplexing</strong> (epoll/kqueue) — one thread handles thousands of connections. All in-memory (no disk I/O on reads). Optimized data structures (ziplist, skip list). No context switching, no locks. Redis 6+ uses I/O threads for network while keeping command execution single-threaded.</div>
+        </div>
+
+        <div class="qa-block">
+            <div class="qa-q">❓ When should you NOT use cache?</div>
+            <div class="qa-a"><strong>1)</strong> Write-heavy with low read reuse (constant invalidation). <strong>2)</strong> Strongly consistent data (banking). <strong>3)</strong> Data too large for memory. <strong>4)</strong> Completely random access (no hot data, low hit rate). <strong>5)</strong> System already fast enough — added complexity not worth it.</div>
+        </div>
+    </div>
+
+    <!-- ===== SUMMARY ===== -->
+    <div class="callout callout-success" style="margin-top: 3rem;">
+        <div class="callout-title">🔑 Interview Summary — Ye Zaroor Bolo</div>
+        <p>
+            <strong>1. Core:</strong> Distributed in-memory KV store, sub-ms latency, 100K+ ops/sec per node.<br>
+            <strong>2. Distribution:</strong> Consistent hashing + virtual nodes for even data spread.<br>
+            <strong>3. Eviction:</strong> LRU (HashMap + DLL) with TTL expiration.<br>
+            <strong>4. Pattern:</strong> Cache-Aside default. Write-Through for consistency.<br>
+            <strong>5. Reliability:</strong> Primary-Replica, async replication, gossip failure detection.<br>
+            <strong>6. Challenges:</strong> Stampede (locks), hot keys (L1 cache), invalidation (events + TTL).<br>
+            <strong>7. Key insight:</strong> Cache is not durable — system must work without it, just slower.
+        </p>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <p>🏗️ System Design Mastery — Built for learning, one system at a time.</p>
+        <p style="margin-top: 0.5rem;">
+            <a href="https://github.com/ashish-bisht/all_about_system_design" style="color: var(--text-muted);">GitHub</a>
+        </p>
+    </div>
+
 </div>
-
-<footer class="footer">
-  <div class="container">
-    <p>🏗️ System Design Mastery — Built for learning, one system at a time.</p>
-    <p style="margin-top: 0.5rem;">
-      <a href="https://github.com/yourusername/system-design-mastery" style="color: var(--text-muted);">GitHub</a>
-    </p>
-  </div>
-</footer>
-
 </body>
 </html>

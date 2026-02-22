@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 7: Sharding — Mission FANG</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #11111a;
+    --surface2: #1a1a28;
+    --border: #2a2a40;
+    --accent: #7c6cfc;
+    --accent2: #fc6c8f;
+    --accent3: #6cfcca;
+    --accent4: #fcc96c;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --font-head: 'Syne', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(124,108,252,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,108,252,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* ===== HERO ===== */
+  .hero {
+    padding: 80px 0 60px;
+    text-align: center;
+    position: relative;
+  }
+
+  .hero-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, rgba(124,108,252,0.2), rgba(252,108,143,0.2));
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 6px 20px;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 24px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .hero h1 {
+    font-family: var(--font-head);
+    font-size: clamp(42px, 7vw, 80px);
+    font-weight: 800;
+    line-height: 1.05;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  .hero h1 span {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    margin-top: 16px;
+    color: var(--muted);
+    font-size: 14px;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  /* ===== FIRST PRINCIPLES BOX ===== */
+  .first-principles {
+    background: linear-gradient(135deg, rgba(124,108,252,0.12), rgba(108,252,202,0.08));
+    border: 1px solid rgba(124,108,252,0.4);
+    border-radius: 16px;
+    padding: 36px 40px;
+    margin: 48px 0;
+    animation: fadeUp 0.6s 0.3s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .first-principles::before {
+    content: '⚡';
+    position: absolute;
+    right: 32px;
+    top: 24px;
+    font-size: 48px;
+    opacity: 0.15;
+  }
+
+  .first-principles h2 {
+    font-family: var(--font-head);
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent3);
+    margin-bottom: 24px;
+  }
+
+  .principles-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .principle-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+
+  .principle-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+  }
+
+  .principle-num {
+    font-size: 32px;
+    font-weight: 800;
+    font-family: var(--font-head);
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .principle-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 6px 0 4px;
+    font-family: var(--font-head);
+  }
+
+  .principle-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* ===== SECTION ===== */
+  .section {
+    margin: 56px 0;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .section-num {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px 12px;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+  }
+
+  .section h2 {
+    font-family: var(--font-head);
+    font-size: 26px;
+    font-weight: 700;
+  }
+
+  /* ===== CARDS GRID ===== */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .cards-grid.three { grid-template-columns: repeat(3, 1fr); }
+  .cards-grid.full { grid-template-columns: 1fr; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .card-tag {
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 100px;
+    margin-bottom: 12px;
+    font-family: var(--font-mono);
+  }
+
+  .tag-green { background: rgba(108,252,202,0.12); color: var(--accent3); border: 1px solid rgba(108,252,202,0.3); }
+  .tag-red { background: rgba(252,108,143,0.12); color: var(--accent2); border: 1px solid rgba(252,108,143,0.3); }
+  .tag-yellow { background: rgba(252,201,108,0.12); color: var(--accent4); border: 1px solid rgba(252,201,108,0.3); }
+  .tag-purple { background: rgba(124,108,252,0.12); color: var(--accent); border: 1px solid rgba(124,108,252,0.3); }
+
+  .card h3 {
+    font-family: var(--font-head);
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .card p, .card li {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  .card ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .card ul li::before {
+    content: '→ ';
+    color: var(--accent);
+  }
+
+  /* ===== STRATEGY TABLE ===== */
+  .strategy-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .strategy-table th {
+    background: var(--surface2);
+    color: var(--accent);
+    font-family: var(--font-head);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 14px 20px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .strategy-table td {
+    background: var(--surface);
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+    vertical-align: top;
+  }
+
+  .strategy-table tr:last-child td { border-bottom: none; }
+  .strategy-table tr:hover td { background: var(--surface2); }
+
+  .strategy-table td:first-child {
+    color: var(--text);
+    font-weight: 700;
+    font-family: var(--font-head);
+  }
+
+  /* ===== FLOW DIAGRAM ===== */
+  .flow {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .flow-step {
+    flex: 1;
+    padding: 24px 20px;
+    text-align: center;
+    position: relative;
+    border-right: 1px solid var(--border);
+    transition: background 0.2s;
+  }
+
+  .flow-step:last-child { border-right: none; }
+  .flow-step:hover { background: var(--surface2); }
+
+  .flow-icon {
+    font-size: 28px;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .flow-label {
+    font-family: var(--font-head);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .flow-desc {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* ===== ROUTING APPROACHES ===== */
+  .routing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .routing-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .routing-card:hover {
+    border-color: var(--accent2);
+    transform: translateY(-3px);
+  }
+
+  .routing-num {
+    font-size: 40px;
+    font-weight: 800;
+    font-family: var(--font-head);
+    background: linear-gradient(135deg, var(--accent2), var(--accent4));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ===== INDEX COMPARISON ===== */
+  .index-compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .index-card {
+    border-radius: 12px;
+    padding: 28px;
+    border: 1px solid var(--border);
+  }
+
+  .index-card.local { background: linear-gradient(135deg, rgba(108,252,202,0.06), rgba(108,252,202,0.02)); }
+  .index-card.global { background: linear-gradient(135deg, rgba(252,108,143,0.06), rgba(252,108,143,0.02)); }
+
+  .index-card h3 {
+    font-family: var(--font-head);
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+
+  .index-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size: 13px;
+  }
+
+  .index-row:last-child { border-bottom: none; }
+  .index-row .label { color: var(--muted); }
+  .index-row .val-good { color: var(--accent3); font-weight: 700; }
+  .index-row .val-bad { color: var(--accent2); font-weight: 700; }
+
+  /* ===== MULTITENANCY ===== */
+  .tenancy-visual {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .region-card {
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .region-card.india { background: linear-gradient(135deg, rgba(252,201,108,0.1), rgba(252,108,143,0.05)); border-color: rgba(252,201,108,0.3); }
+  .region-card.eu { background: linear-gradient(135deg, rgba(108,252,202,0.1), rgba(124,108,252,0.05)); border-color: rgba(108,252,202,0.3); }
+  .region-card.us { background: linear-gradient(135deg, rgba(124,108,252,0.1), rgba(252,108,143,0.05)); border-color: rgba(124,108,252,0.3); }
+
+  .region-flag { font-size: 40px; margin-bottom: 8px; }
+  .region-name { font-family: var(--font-head); font-weight: 700; font-size: 16px; margin-bottom: 4px; }
+  .region-law { font-size: 11px; color: var(--accent); letter-spacing: 1px; }
+  .region-desc { font-size: 11px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+
+  /* ===== FANG QA ===== */
+  .qa-list { list-style: none; }
+
+  .qa-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .qa-item:hover { border-color: var(--accent); }
+
+  .qa-q {
+    padding: 16px 20px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: var(--font-head);
+    user-select: none;
+  }
+
+  .qa-q::after {
+    content: '▾';
+    color: var(--accent);
+    transition: transform 0.2s;
+    font-size: 16px;
+  }
+
+  .qa-item.open .qa-q::after { transform: rotate(180deg); }
+
+  .qa-a {
+    display: none;
+    padding: 0 20px 16px;
+    font-size: 13px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+    line-height: 1.8;
+  }
+
+  .qa-item.open .qa-a { display: block; }
+
+  .qa-a strong { color: var(--accent3); }
+
+  /* ===== HOT SPOT BOX ===== */
+  .hotspot-box {
+    background: linear-gradient(135deg, rgba(252,108,143,0.1), rgba(252,201,108,0.05));
+    border: 1px solid rgba(252,108,143,0.3);
+    border-radius: 12px;
+    padding: 28px;
+  }
+
+  /* ===== QUICK REFERENCE ===== */
+  .quick-ref {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+
+  .qr-group h4 {
+    font-family: var(--font-head);
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  .qr-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .qr-item .k { color: var(--muted); }
+  .qr-item .v { color: var(--text); font-weight: 700; }
+
+  /* ===== DIVIDER ===== */
+  .divider {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 48px 0;
+  }
+
+  /* ===== FOOTER ===== */
+  .footer {
+    text-align: center;
+    padding: 40px 0;
+    border-top: 1px solid var(--border);
+    margin-top: 60px;
+  }
+
+  .footer-text {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .footer-badge {
+    display: inline-block;
+    margin-top: 12px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-size: 18px;
+  }
+
+  /* ===== INLINE CODE ===== */
+  code {
+    background: rgba(124,108,252,0.15);
+    border: 1px solid rgba(124,108,252,0.3);
+    border-radius: 4px;
+    padding: 1px 8px;
+    font-size: 12px;
+    color: var(--accent);
+    font-family: var(--font-mono);
+  }
+
+  /* ===== HIGHLIGHT ===== */
+  .hl { color: var(--accent3); font-weight: 700; }
+  .hl-yellow { color: var(--accent4); font-weight: 700; }
+  .hl-red { color: var(--accent2); font-weight: 700; }
+  .hl-purple { color: var(--accent); font-weight: 700; }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 700px) {
+    .principles-grid, .cards-grid.three, .routing-grid, .tenancy-visual { grid-template-columns: 1fr; }
+    .cards-grid, .index-compare, .quick-ref { grid-template-columns: 1fr; }
+    .flow { flex-direction: column; }
+    .flow-step { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+
+  /* ===== TOC ===== */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin: 32px 0 48px;
+    animation: fadeUp 0.6s 0.25s ease both;
+  }
+
+  .toc h3 {
+    font-family: var(--font-head);
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .toc-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .toc-link {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 5px 14px;
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .toc-link:hover { color: var(--accent); border-color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-badge">DDIA · Chapter 7 · Mission FANG</div>
+    <h1>Sharding<br><span>Deep Dive</span></h1>
+    <p class="hero-sub">Designing for India • Clarity over Complexity • FAANG-Ready</p>
+  </div>
+
+  <!-- TOC -->
+  <nav class="toc">
+    <h3>Contents</h3>
+    <div class="toc-links">
+      <a href="#principles" class="toc-link">First Principles</a>
+      <a href="#what" class="toc-link">What is Sharding</a>
+      <a href="#strategies" class="toc-link">Sharding Strategies</a>
+      <a href="#hotspot" class="toc-link">Hot Spots</a>
+      <a href="#rebalancing" class="toc-link">Rebalancing</a>
+      <a href="#routing" class="toc-link">Request Routing</a>
+      <a href="#secondary" class="toc-link">Secondary Indexes</a>
+      <a href="#multitenancy" class="toc-link">Multitenancy</a>
+      <a href="#fang" class="toc-link">FANG Q&A</a>
+    </div>
+  </nav>
+
+  <!-- FIRST PRINCIPLES -->
+  <div class="first-principles" id="principles">
+    <h2>⚡ First Principles — Sab Kuch Yahan Se Aata Hai</h2>
+    <div class="principles-grid">
+      <div class="principle-card">
+        <div class="principle-num">01</div>
+        <div class="principle-title">Data Tod Do</div>
+        <div class="principle-desc">Ek machine handle nahi kar sakti? Data ko shards mein tod ke alag nodes pe rakho. Baki sab isi se nikalta hai.</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">02</div>
+        <div class="principle-title">Dhundo Kaise</div>
+        <div class="principle-desc">Jab data dhundhna ho, pata hona chahiye kahan hai. Routing layer, ZooKeeper, client-aware — sab isi problem ke solutions hain.</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">03</div>
+        <div class="principle-title">Evenly Baanto</div>
+        <div class="principle-desc">Koi ek node overload na ho. Hot spots avoid karo. Rebalancing, consistent hashing — sab isi ke liye hai.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- WHAT IS SHARDING -->
+  <div class="section" id="what">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2>Sharding Kya Hai?</h2>
+    </div>
+
+    <div class="flow" style="margin-bottom:20px">
+      <div class="flow-step">
+        <span class="flow-icon">🗄️</span>
+        <div class="flow-label">Single Node</div>
+        <div class="flow-desc">Sab data ek hi machine pe. Simple hai, lekin scale nahi hota.</div>
+      </div>
+      <div class="flow-step">
+        <span class="flow-icon">⚡</span>
+        <div class="flow-label">Overflow!</div>
+        <div class="flow-desc">Data ya writes itne zyada ho gaye ki ek machine handle na kar sake.</div>
+      </div>
+      <div class="flow-step">
+        <span class="flow-icon">✂️</span>
+        <div class="flow-label">Shard Karo</div>
+        <div class="flow-desc">Data ko pieces mein todo. Har shard ek alag node pe.</div>
+      </div>
+      <div class="flow-step">
+        <span class="flow-icon">🔁</span>
+        <div class="flow-label">+ Replication</div>
+        <div class="flow-desc">Har shard ke copies bhi rakho — fault tolerance ke liye.</div>
+      </div>
+    </div>
+
+    <div class="cards-grid">
+      <div class="card">
+        <span class="card-tag tag-green">Kab Use Karein</span>
+        <h3>Sharding vs Replication</h3>
+        <ul>
+          <li>Read throughput problem → <strong>Replication</strong> use karo</li>
+          <li>Write throughput problem → <strong>Sharding</strong> use karo</li>
+          <li>Data volume too large → <strong>Sharding</strong> use karo</li>
+          <li>Fault tolerance chahiye → <strong>Replication</strong> use karo</li>
+          <li>Production mein dono saath use hote hain</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-red">Dhyan Rakho</span>
+        <h3>Sharding Ke Nuksan</h3>
+        <ul>
+          <li>Complexity badh jaati hai</li>
+          <li>Partition key choose karna mushkil</li>
+          <li>Secondary indexes complicated ho jaate hain</li>
+          <li>Distributed transactions slow hote hain</li>
+          <li>Cross-shard joins mushkil hain</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- SHARDING STRATEGIES -->
+  <div class="section" id="strategies">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2>Sharding Strategies</h2>
+    </div>
+
+    <table class="strategy-table" style="margin-bottom:20px">
+      <thead>
+        <tr>
+          <th>Strategy</th>
+          <th>Kaise Kaam Karta Hai</th>
+          <th>Faida</th>
+          <th>Nuksan</th>
+          <th>Used In</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Key Range</td>
+          <td>Keys sort order mein range-wise assign</td>
+          <td>Range queries efficient</td>
+          <td>Hot shard risk (e.g. timestamp)</td>
+          <td>HBase, MongoDB, Bigtable</td>
+        </tr>
+        <tr>
+          <td>Hash of Key</td>
+          <td>key ka hash nikalo, phir assign karo</td>
+          <td>Even distribution</td>
+          <td>Range queries inefficient</td>
+          <td>MongoDB, Cassandra</td>
+        </tr>
+        <tr>
+          <td>Hash + Range</td>
+          <td>Partition key pe hash, baki pe sort</td>
+          <td>Best of both worlds</td>
+          <td>Slightly complex</td>
+          <td>DynamoDB, YugabyteDB</td>
+        </tr>
+        <tr>
+          <td>Consistent Hashing</td>
+          <td>Hash ring pe keys map karo</td>
+          <td>Minimal data movement on rebalance</td>
+          <td>Uneven distribution possible</td>
+          <td>Cassandra, ScyllaDB, Riak</td>
+        </tr>
+        <tr>
+          <td>Fixed Shards</td>
+          <td>Pehle se zyada shards banao, nodes pe assign karo</td>
+          <td>Easy rebalancing</td>
+          <td>Wrong initial count = expensive resharding</td>
+          <td>Elasticsearch, Couchbase, Riak</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="cards-grid">
+      <div class="card">
+        <span class="card-tag tag-yellow">Example</span>
+        <h3>Key Range — Encyclopedia Analogy</h3>
+        <p>Jaise encyclopedia mein Volume 1 = A-B, Volume 2 = C-D... har volume ek shard hai. Boundaries evenly spaced nahi hoti — data distribution ke hisaab se adjust hoti hain.</p>
+        <br>
+        <p><span class="hl-red">⚠️ Timestamp Problem:</span> Agar key timestamp hai, to saare writes current month ke shard pe jaayenge — hot shard ban jaayega.</p>
+        <br>
+        <p><span class="hl">✅ Fix:</span> Key ko <code>sensor_id + timestamp</code> banao. Writes sab sensors mein spread ho jaayenge.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-purple">Hash Sharding</span>
+        <h3>Mod N Problem</h3>
+        <p><code>hash(key) % N</code> simple hai lekin problem yeh hai ki jab N change hota hai (node add/remove), almost <span class="hl-red">saare keys move</span> hote hain naye nodes pe.</p>
+        <br>
+        <p><span class="hl">✅ Fix — Fixed Shards:</span> 10 nodes hain to 1000 shards banao. Node add karne pe sirf kuch shards move honge. Shards ki count change nahi hoti, sirf assignment change hoti hai.</p>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- HOT SPOTS -->
+  <div class="section" id="hotspot">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2>Hot Spots & Skew</h2>
+    </div>
+
+    <div class="hotspot-box">
+      <div class="cards-grid three">
+        <div>
+          <div style="font-size:11px;letter-spacing:2px;color:var(--accent2);text-transform:uppercase;margin-bottom:10px">Problem</div>
+          <p style="font-size:13px;color:var(--muted)">Koi ek key bahut zyada load le rahi hai. Jaise celebrity ka post viral ho gaya — uss user ID pe lakho reads/writes aa rahe hain. <span class="hl-red">Hot key = hot shard = bottleneck.</span></p>
+        </div>
+        <div>
+          <div style="font-size:11px;letter-spacing:2px;color:var(--accent4);text-transform:uppercase;margin-bottom:10px">Write Fix</div>
+          <p style="font-size:13px;color:var(--muted)">Hot key ke aage <span class="hl-yellow">random 2 digits</span> add karo. <code>user_123</code> → <code>user_123_47</code>, <code>user_123_12</code>... 100 keys ban jaate hain, writes 100 shards mein spread. Lekin reads ko sab 100 se combine karna padega.</p>
+        </div>
+        <div>
+          <div style="font-size:11px;letter-spacing:2px;color:var(--accent3);text-transform:uppercase;margin-bottom:10px">Cloud Solution</div>
+          <p style="font-size:13px;color:var(--muted)">Amazon ka <span class="hl">Adaptive Capacity / Heat Management</span> — automatically detect karta hai hot shards aur unhe split karta hai ya rebalance karta hai without manual intervention.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- REBALANCING -->
+  <div class="section" id="rebalancing">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2>Rebalancing</h2>
+    </div>
+
+    <div class="cards-grid">
+      <div class="card">
+        <span class="card-tag tag-green">Automatic</span>
+        <h3>Auto Rebalancing</h3>
+        <ul>
+          <li>Shard size threshold cross kare to split (HBase default: 10GB)</li>
+          <li>Write throughput too high → split</li>
+          <li>DynamoDB: minutes mein scale in/out</li>
+          <li><span class="hl-red">Risk:</span> Slow node ko dead samajh ke rebalance shuru kar do → cascading failure</li>
+          <li><span class="hl-red">Risk:</span> Split karna expensive hai — already overloaded shard pe aur load</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-yellow">Manual</span>
+        <h3>Manual Rebalancing</h3>
+        <ul>
+          <li>Admin decide karta hai kab split/move karein</li>
+          <li>Couchbase/Riak: auto suggest karo, human approve kare</li>
+          <li>Predictable events ke liye useful — Cyber Monday, World Cup ticket sale</li>
+          <li>Slower than auto lekin safer</li>
+          <li>Vitess (MySQL sharding): manual key-range boundaries</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;background:linear-gradient(135deg,rgba(124,108,252,0.08),rgba(108,252,202,0.04))">
+      <span class="card-tag tag-purple">Key Insight</span>
+      <h3>Shards Manage Karne Ke 2 Options</h3>
+      <p style="font-size:13px;color:var(--muted)">
+        Jab data distributed ho, ek <span class="hl">coordinator</span> chahiye hoga — shard-to-node mapping track karne ke liye.
+        <br><br>
+        <strong style="color:var(--text)">Option 1 — External:</strong> ZooKeeper / etcd use karo (HBase, SolrCloud, Kubernetes). Battle-tested, lekin ek aur moving part.<br><br>
+        <strong style="color:var(--text)">Option 2 — Built-in:</strong> Raft protocol andar hi implement karo (Kafka, TiDB, YugabyteDB, ScyllaDB). Ek kam dependency.<br><br>
+        <strong style="color:var(--text)">Option 3 — Gossip:</strong> No central coordinator, nodes aapas mein baat karte hain (Riak). Weak consistency, possible split brain. Leaderless DBs ke liye okay.
+      </p>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- REQUEST ROUTING -->
+  <div class="section" id="routing">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2>Request Routing</h2>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:24px">Problem: Key X ke liye konse node pe jaana hai? Yeh routing problem hai — service discovery ka distributed DB version.</p>
+
+    <div class="routing-grid">
+      <div class="routing-card">
+        <div class="routing-num">1</div>
+        <div class="flow-label" style="margin:8px 0">Any Node → Forward</div>
+        <div class="flow-desc">Client kisi bhi node pe jaaye. Wo node check kare — agar uske paas hai to serve kare, nahi to sahi node pe forward kare.<br><br><span style="color:var(--accent)">Used: Riak, Cassandra</span></div>
+      </div>
+      <div class="routing-card">
+        <div class="routing-num">2</div>
+        <div class="flow-label" style="margin:8px 0">Routing Tier</div>
+        <div class="flow-desc">Ek dedicated routing layer jo shard mapping jaanti hai. Client pehle routing tier pe jaata hai, jo sahi node pe forward karta hai.<br><br><span style="color:var(--accent)">Used: MongoDB (mongos), many cloud DBs</span></div>
+      </div>
+      <div class="routing-card">
+        <div class="routing-num">3</div>
+        <div class="flow-label" style="margin:8px 0">Client Aware</div>
+        <div class="flow-desc">Client khud jaanta hai ki kaunsa key kahan hai. Seedha sahi node pe connect karta hai. Sab se efficient lekin client ko update rakhna padta hai.<br><br><span style="color:var(--accent)">Used: Cassandra drivers</span></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- SECONDARY INDEXES -->
+  <div class="section" id="secondary">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2>Secondary Indexes & Sharding</h2>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:24px">Problem: Sharding partition key pe based hoti hai. Lekin secondary indexes (color, make, user_id) kahan rakho?</p>
+
+    <div class="index-compare">
+      <div class="index-card local">
+        <h3>🏠 Local Secondary Index</h3>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Har shard apna index khud maintain karta hai — sirf apne records ka.</p>
+        <div class="index-row">
+          <span class="label">Write Speed</span>
+          <span class="val-good">Fast ✓</span>
+        </div>
+        <div class="index-row">
+          <span class="label">Read (secondary)</span>
+          <span class="val-bad">Slow — all shards ✗</span>
+        </div>
+        <div class="index-row">
+          <span class="label">Pattern</span>
+          <span class="label">Scatter-Gather</span>
+        </div>
+        <div class="index-row">
+          <span class="label">Used In</span>
+          <span class="label">MongoDB, Cassandra, Elasticsearch</span>
+        </div>
+        <div style="margin-top:14px;font-size:12px;color:var(--muted)">
+          <span class="hl">Example:</span> Red cars dhundho → har shard pe query bhejo → results combine karo. <span style="color:var(--accent2)">Tail latency amplification risk.</span>
+        </div>
+      </div>
+
+      <div class="index-card global">
+        <h3>🌍 Global Secondary Index</h3>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Index khud alag shard pe hota hai — indexed value ke hisaab se sharded.</p>
+        <div class="index-row">
+          <span class="label">Write Speed</span>
+          <span class="val-bad">Slow — multiple shards ✗</span>
+        </div>
+        <div class="index-row">
+          <span class="label">Read (secondary)</span>
+          <span class="val-good">Fast — 1 shard ✓</span>
+        </div>
+        <div class="index-row">
+          <span class="label">Consistency</span>
+          <span class="label">Often async (stale reads possible)</span>
+        </div>
+        <div class="index-row">
+          <span class="label">Used In</span>
+          <span class="label">CockroachDB, TiDB, DynamoDB</span>
+        </div>
+        <div style="margin-top:14px;font-size:12px;color:var(--muted)">
+          <span class="hl">Example:</span> color:red shard pe jaao, wahan se IDs lo, phir primary key shards pe jaao. <span style="color:var(--accent2)">Write complexity zyada.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- MULTITENANCY -->
+  <div class="section" id="multitenancy">
+    <div class="section-header">
+      <span class="section-num">07</span>
+      <h2>Multitenancy & Data Residency</h2>
+    </div>
+
+    <div class="tenancy-visual">
+      <div class="region-card india">
+        <div class="region-flag">🇮🇳</div>
+        <div class="region-name">India Shard</div>
+        <div class="region-law">DPDPA</div>
+        <div class="region-desc">Indian users ka data India mein hi rahega. Mumbai/Pune data center.</div>
+      </div>
+      <div class="region-card eu">
+        <div class="region-flag">🇪🇺</div>
+        <div class="region-name">Europe Shard</div>
+        <div class="region-law">GDPR</div>
+        <div class="region-desc">EU citizens ka data EU mein rahega. Right to erasure — sirf is shard ko delete karo.</div>
+      </div>
+      <div class="region-card us">
+        <div class="region-flag">🇺🇸</div>
+        <div class="region-name">US Shard</div>
+        <div class="region-law">CCPA</div>
+        <div class="region-desc">US users ka data US mein rahega. Schema same, data alag.</div>
+      </div>
+    </div>
+
+    <div class="cards-grid three">
+      <div class="card">
+        <span class="card-tag tag-green">Faida 1</span>
+        <h3>Resource Isolation</h3>
+        <p>Ek tenant ka heavy operation doosre tenants ko affect nahi karta agar wo alag shard pe hain.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-purple">Faida 2</span>
+        <h3>Cell-Based Architecture</h3>
+        <p>Services + storage ko ek cell mein group karo. Ek cell mein fault aaye to baaki cells safe rahti hain.</p>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-yellow">Challenge</span>
+        <h3>User Migration</h3>
+        <p>Agar user India se Europe shift ho jaaye — uska data ek shard se doosre mein move karna padega. Non-trivial operation!</p>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- QUICK REFERENCE -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">08</span>
+      <h2>Quick Reference — Kaun Kya Use Karta Hai</h2>
+    </div>
+
+    <div class="quick-ref">
+      <div class="qr-group">
+        <h4>Key Range Sharding</h4>
+        <div class="qr-item"><span class="k">HBase</span><span class="v">Auto split at 10GB</span></div>
+        <div class="qr-item"><span class="k">Bigtable</span><span class="v">Auto range sharding</span></div>
+        <div class="qr-item"><span class="k">MongoDB</span><span class="v">Range option</span></div>
+        <div class="qr-item"><span class="k">CockroachDB</span><span class="v">Auto splitting</span></div>
+        <div class="qr-item"><span class="k">Vitess</span><span class="v">Manual key-range</span></div>
+      </div>
+      <div class="qr-group">
+        <h4>Hash / Consistent Hashing</h4>
+        <div class="qr-item"><span class="k">Cassandra / ScyllaDB</span><span class="v">Murmur3 hash</span></div>
+        <div class="qr-item"><span class="k">DynamoDB</span><span class="v">Hash + Range</span></div>
+        <div class="qr-item"><span class="k">YugabyteDB</span><span class="v">Hash + Range</span></div>
+        <div class="qr-item"><span class="k">MongoDB</span><span class="v">MD5 hash option</span></div>
+        <div class="qr-item"><span class="k">Elasticsearch</span><span class="v">Fixed shards</span></div>
+      </div>
+      <div class="qr-group">
+        <h4>Coordinator / Metadata</h4>
+        <div class="qr-item"><span class="k">ZooKeeper</span><span class="v">HBase, SolrCloud</span></div>
+        <div class="qr-item"><span class="k">etcd</span><span class="v">Kubernetes</span></div>
+        <div class="qr-item"><span class="k">Raft built-in</span><span class="v">Kafka, TiDB, YugabyteDB</span></div>
+        <div class="qr-item"><span class="k">Gossip</span><span class="v">Riak (weak consistency)</span></div>
+        <div class="qr-item"><span class="k">mongos daemon</span><span class="v">MongoDB routing</span></div>
+      </div>
+      <div class="qr-group">
+        <h4>Secondary Indexes</h4>
+        <div class="qr-item"><span class="k">Local</span><span class="v">MongoDB, Cassandra, ES</span></div>
+        <div class="qr-item"><span class="k">Global</span><span class="v">CockroachDB, TiDB</span></div>
+        <div class="qr-item"><span class="k">Both</span><span class="v">DynamoDB</span></div>
+        <div class="qr-item"><span class="k">Per-CPU sharding</span><span class="v">Redis, VoltDB, FoundationDB</span></div>
+        <div class="qr-item"><span class="k">Citus</span><span class="v">Fixed shards for Postgres</span></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- FANG QA -->
+  <div class="section" id="fang">
+    <div class="section-header">
+      <span class="section-num">09</span>
+      <h2>FANG Interview Q&A</h2>
+    </div>
+
+    <ul class="qa-list">
+      <li class="qa-item">
+        <div class="qa-q">Sharding aur Replication mein kya fark hai?</div>
+        <div class="qa-a">
+          <strong>Replication</strong> — same data multiple nodes pe store karo. Read scaling aur fault tolerance ke liye.<br><br>
+          <strong>Sharding</strong> — alag data alag nodes pe. Write scaling aur huge data volume ke liye.<br><br>
+          Production mein dono saath use hote hain — har shard ki replicas hoti hain.
+        </div>
+      </li>
+      <li class="qa-item">
+        <div class="qa-q">Hot Spot kya hota hai aur kaise fix karein?</div>
+        <div class="qa-a">
+          Jab ek shard pe disproportionately high load aa jaaye — ya to data volume zyada hai ya request rate zyada hai. Celebrity post viral hona iska real example hai.<br><br>
+          <strong>Fix 1:</strong> Hot key ke saath random suffix add karo — <code>user_123_47</code>. Writes 100 keys mein spread honge. Reads ko sab 100 se combine karna padega.<br><br>
+          <strong>Fix 2:</strong> Cloud solutions — Amazon Adaptive Capacity automatically hot shards ko split/rebalance karta hai.<br><br>
+          <strong>Fix 3:</strong> Hot key ko dedicated shard/machine dedo.
+        </div>
+      </li>
+      <li class="qa-item">
+        <div class="qa-q">Consistent Hashing kya hai?</div>
+        <div class="qa-a">
+          Ek hashing algorithm jo 2 properties guarantee karta hai:<br><br>
+          1. Har shard pe roughly equal keys mapped hote hain.<br>
+          2. Jab shard count change ho, minimum keys move karein.<br><br>
+          Yeh "consistent" word consistency (ACID/replica) se related nahi hai — yahan consistent matlab hai ki key ko usi shard mein rehna chahiye jab bhi possible ho.<br><br>
+          Variants: Rendezvous hashing (highest random weight), Jump consistent hashing, Cassandra's vnodes.
+        </div>
+      </li>
+      <li class="qa-item">
+        <div class="qa-q">Local vs Global Secondary Index — kab kaunsa choose karein?</div>
+        <div class="qa-a">
+          <strong>Local index choose karo jab:</strong> Write throughput zyada important hai. Reads mein thodi latency acceptable hai. MongoDB, Cassandra use cases.<br><br>
+          <strong>Global index choose karo jab:</strong> Read throughput zyada important hai (reads > writes). Postings lists badi nahi honi chahiye. Staleness acceptable hai (async updates). DynamoDB, CockroachDB use cases.<br><br>
+          Yad rakho: local = fast write, slow read (scatter-gather). Global = slow write, fast read (single shard postings list).
+        </div>
+      </li>
+      <li class="qa-item">
+        <div class="qa-q">Design a global app with data residency requirements (GDPR, DPDPA)?</div>
+        <div class="qa-a">
+          <strong>Approach — Geo-Based Sharding:</strong><br><br>
+          1. Shard by region/country. India users → India shard, EU users → EU shard, US users → US shard.<br>
+          2. Schema same hogi sab jagah, sirf data alag.<br>
+          3. GDPR right to erasure → sirf EU shard pe delete operation — doosre tenants unaffected.<br>
+          4. Cell-based architecture use karo — har region ek self-contained cell. Ek cell fail ho to baaki safe.<br><br>
+          <strong>Challenge:</strong> User migration (India se EU shift) — non-trivial shard migration operation.<br>
+          <strong>Challenge:</strong> Cross-region features (global leaderboard, etc.) — cross-shard joins needed.
+        </div>
+      </li>
+      <li class="qa-item">
+        <div class="qa-q">Auto vs Manual Rebalancing — kaunsa prefer karein?</div>
+        <div class="qa-a">
+          <strong>Auto rebalancing pros:</strong> Koi manual work nahi, DynamoDB-style cloud DBs minutes mein scale in/out.<br><br>
+          <strong>Auto rebalancing risks:</strong> Slow node ko dead samajh ke rebalance shuru karo → cascading failure. Already overloaded shard split karna aur load badha deta hai.<br><br>
+          <strong>Manual pros:</strong> Predictable events ke liye preemptive rebalancing (Cyber Monday, World Cup).<br><br>
+          <strong>Best of both — Middle ground:</strong> Couchbase/Riak style — auto suggest karo, human approve kare. Production mein yahi safer hai.
+        </div>
+      </li>
+      <li class="qa-item">
+        <div class="qa-q">Kab sharding avoid karni chahiye?</div>
+        <div class="qa-a">
+          Jab tak ek single machine data aur write throughput handle kar sake — sharding avoid karo.<br><br>
+          Single machine aajkal bahut powerful hoti hai. Sharding add karne se:<br>
+          — Partition key choose karni padti hai<br>
+          — Schema change mushkil ho jaata hai<br>
+          — Cross-shard transactions slow hote hain<br>
+          — Secondary indexes complicated ho jaate hain<br><br>
+          Rule of thumb: Read scaling chahiye? Replication use karo. Write scaling / huge data? Tab sharding.
+        </div>
+      </li>
+      <li class="qa-item">
+        <div class="qa-q">ZooKeeper kya karta hai sharding mein?</div>
+        <div class="qa-a">
+          ZooKeeper ek coordination service hai jo <strong>shard-to-node mapping</strong> track karta hai.<br><br>
+          — Har node apne aap ko ZooKeeper mein register karta hai<br>
+          — ZooKeeper authoritative mapping maintain karta hai<br>
+          — Routing tier / clients ZooKeeper subscribe karte hain changes ke liye<br>
+          — Shard move ho to ZooKeeper routing tier ko notify karta hai<br><br>
+          Consensus algorithm use karta hai (Paxos/ZAB) — fault tolerant, split brain se protection.<br><br>
+          Alternative: etcd (Kubernetes), Raft built-in (Kafka, TiDB), Gossip (Riak — weak).
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-text">DDIA Chapter 7 · Designed for Mission FANG · All concepts covered</div>
+    <div class="footer-badge">Mission FANG 🚀</div>
+  </div>
+
+</div>
+
+<script>
+  // Accordion QA
+  document.querySelectorAll('.qa-q').forEach(q => {
+    q.addEventListener('click', () => {
+      const item = q.parentElement;
+      const wasOpen = item.classList.contains('open');
+      document.querySelectorAll('.qa-item').forEach(i => i.classList.remove('open'));
+      if (!wasOpen) item.classList.add('open');
+    });
+  });
+
+  // Staggered fade-in for sections
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        entry.target.style.animationDelay = '0.1s';
+        entry.target.style.animation = 'fadeUp 0.5s ease both';
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.section').forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

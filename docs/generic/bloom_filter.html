@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bloom Filter — System Design Mastery</title>
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    .bf-header { border-left: 3px solid var(--accent-green); padding-left: 1rem; margin-bottom: 2.5rem; }
+    .bf-tag { font-size: 0.72rem; letter-spacing: 0.4rem; text-transform: uppercase; color: var(--accent-green); display: block; margin-bottom: 0.5rem; }
+    .bf-title { font-family: var(--font-display); font-size: clamp(2.2rem, 6vw, 3.8rem); line-height: 1.1; }
+    .bf-title span { color: var(--accent-green); }
+    .bf-hero { margin-top: 0.75rem; color: var(--text-secondary); font-size: 0.95rem; line-height: 1.8; }
+    .bf-section { background: var(--surface); border: var(--border); border-radius: var(--radius); padding: 2rem; margin-bottom: 1.8rem; position: relative; overflow: hidden; }
+    .bf-section::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, var(--accent-green), transparent); opacity: 0.7; }
+    .bf-section-title { font-size: 0.8rem; color: var(--accent-green); letter-spacing: 0.35rem; text-transform: uppercase; margin-bottom: 1.5rem; }
+    .bf-bit-array-wrap { overflow-x: auto; padding-bottom: 1rem; }
+    .bf-bit-array { display: flex; gap: 0.4rem; min-width: max-content; }
+    .bf-bit-cell { width: 44px; height: 54px; border: 1.5px solid rgba(255,255,255,0.08); border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 1rem; font-weight: 700; position: relative; background: var(--bg); transition: all 0.3s ease; }
+    .bf-bit-cell span { font-size: 0.65rem; color: var(--text-muted); position: absolute; top: 2px; }
+    .bf-bit-cell.active { border-color: var(--accent-green); color: var(--accent-green); box-shadow: 0 0 18px rgba(0,255,136,0.25); }
+    .bf-bit-cell.highlight { border-color: var(--accent-red); color: var(--accent-red); box-shadow: 0 0 18px rgba(255,51,102,0.25); }
+    .bf-bit-cell.check-hit { border-color: var(--accent-blue); color: var(--accent-blue); box-shadow: 0 0 18px rgba(59,130,246,0.25); }
+    .bf-control-row { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.5rem; }
+    .bf-input { flex: 1; min-width: 200px; background: var(--bg); border: 1.5px solid rgba(255,255,255,0.1); border-radius: var(--radius-sm); padding: 0.85rem 1rem; color: var(--text); font-family: var(--font-mono); font-size: 0.95rem; }
+    .bf-input:focus { border-color: var(--accent-green); outline: none; box-shadow: 0 0 0 3px rgba(0,255,136,0.15); }
+    .bf-btn { border-radius: 999px; padding: 0.75rem 1.4rem; font-size: 0.9rem; font-family: var(--font-mono); font-weight: 600; border: 1px solid transparent; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+    .bf-btn-add { background: var(--accent-green); color: #001a10; }
+    .bf-btn-add:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,255,136,0.25); }
+    .bf-btn-check { background: transparent; border-color: var(--accent-blue); color: var(--accent-blue); }
+    .bf-btn-reset { background: transparent; border-color: rgba(255,255,255,0.15); color: var(--text-muted); }
+    .bf-hash-pills { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+    .bf-hash-pill { padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.75rem; border: 1px solid; opacity: 0; transition: opacity 0.2s; }
+    .bf-hash-pill.show { opacity: 1; }
+    .bf-result { margin-top: 1.5rem; padding: 1rem 1.25rem; border-radius: var(--radius-sm); border-left: 3px solid transparent; display: none; }
+    .bf-result.show { display: block; }
+    .bf-result.success { border-color: var(--accent-green); background: rgba(0,255,136,0.08); color: var(--accent-green); }
+    .bf-result.warn { border-color: var(--accent-blue); background: rgba(59,130,246,0.08); color: var(--accent-blue); }
+    .bf-added-list { margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .bf-added-tag { padding: 0.35rem 0.9rem; border-radius: 999px; font-size: 0.78rem; background: rgba(0,255,136,0.08); border: 1px solid rgba(0,255,136,0.2); color: var(--accent-green); }
+    .bf-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+    .bf-card { background: var(--bg); border: var(--border); border-radius: var(--radius); padding: 1.2rem; }
+    .bf-card .icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .bf-card .label { font-family: var(--font-display); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.2rem; color: var(--accent-green); margin-bottom: 0.35rem; }
+    .bf-card p { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; }
+    .bf-table { width: 100%; border-collapse: collapse; }
+    .bf-table th, .bf-table td { padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 0.9rem; }
+    .bf-table th { color: var(--text-muted); font-weight: 400; letter-spacing: 0.1rem; text-transform: uppercase; font-size: 0.75rem; }
+    .bf-log { margin-top: 0.75rem; max-height: 160px; overflow-y: auto; font-size: 0.82rem; color: var(--text-muted); line-height: 1.8; }
+    .bf-log-entry { border-bottom: 1px solid rgba(255,255,255,0.05); padding: 0.35rem 0; }
+    .bf-log-entry .ts { color: var(--accent-green); margin-right: 0.5rem; }
+    .bf-log-entry .action { color: var(--text-secondary); }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="breadcrumb">
+    <a href="../">Home</a>
+    <span>›</span>
+    <a href="./">Generic Guides</a>
+    <span>›</span>
+    <span>Bloom Filter</span>
+  </div>
+
+  <div class="bf-header">
+    <span class="bf-tag">Probabilistic Data Structure</span>
+    <h1 class="bf-title">Bloom<br><span>Filter</span></h1>
+    <p class="bf-hero">Ek probabilistic data structure jo log ko instantly batata hai — “pakka nahi hai” ya “shayad hai”. False negatives kabhi nahi. False positives kabhi kabhi, wo bhi tunable.</p>
+  </div>
+
+  <div class="bf-section">
+    <div class="bf-section-title">◦ interactive demo</div>
+    <div class="bf-control-row">
+      <input id="bf-input" class="bf-input" placeholder="e.g. ashish" maxlength="20" />
+      <button class="bf-btn bf-btn-add" onclick="bfAdd()">+ Add</button>
+      <button class="bf-btn bf-btn-check" onclick="bfCheck()">? Check</button>
+      <button class="bf-btn bf-btn-reset" onclick="bfReset()">Reset</button>
+    </div>
+    <div class="bf-bit-array-wrap">
+      <div id="bf-array" class="bf-bit-array"></div>
+    </div>
+    <div class="bf-hash-pills">
+      <div id="bf-h1" class="bf-hash-pill"></div>
+      <div id="bf-h2" class="bf-hash-pill"></div>
+      <div id="bf-h3" class="bf-hash-pill"></div>
+    </div>
+    <div id="bf-result" class="bf-result"></div>
+    <div class="bf-added-list" id="bf-added"></div>
+  </div>
+
+  <div class="bf-section">
+    <div class="bf-section-title">◦ how it works</div>
+    <div class="bf-grid">
+      <div class="bf-card">
+        <div class="icon">🔢</div>
+        <div class="label">HASH</div>
+        <p>Element ko multiple hash functions se pass karo → bit array positions milti hain.</p>
+      </div>
+      <div class="bf-card">
+        <div class="icon">🟢</div>
+        <div class="label">SET</div>
+        <p>Un positions pe bit 0→1. Actual element store nahi hota, sirf bits.</p>
+      </div>
+      <div class="bf-card">
+        <div class="icon">🔍</div>
+        <div class="label">CHECK</div>
+        <p>Teeno bits 1? "Shayad hai". Koi 0? "Pakka nahi" → DB hit skip karo.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bf-section">
+    <div class="bf-section-title">◦ guarantees</div>
+    <div class="bf-grid">
+      <div class="bf-card">
+        <div class="icon">✅</div>
+        <div class="label">NO FALSE NEGATIVE</div>
+        <p>Agar element add hua hai to Bloom filter kabhi "nahi hai" nahi kahega.</p>
+      </div>
+      <div class="bf-card">
+        <div class="icon">⚠️</div>
+        <div class="label">FALSE POSITIVE</div>
+        <p>"Shayad hai" bol sakta hai jab actual mein nahi hota. Ye probability aap tune kar sakte ho.</p>
+      </div>
+      <div class="bf-card">
+        <div class="icon">🗑️</div>
+        <div class="label">NO DELETE</div>
+        <p>Bits shared hoti hain, isliye deletion directly possible nahi. Counting Bloom filters alag topic hai.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bf-section">
+    <div class="bf-section-title">◦ kitna space lagta hai?</div>
+    <div class="bf-bit-array-wrap">
+      <table class="bf-table">
+        <thead>
+          <tr><th>Elements</th><th>False Positive</th><th>Bloom Filter</th><th>HashSet</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>10 lakh</td><td>1%</td><td style="color:var(--accent-green);font-weight:600;">~1.2 MB</td><td>~50 MB</td></tr>
+          <tr><td>1 crore</td><td>1%</td><td style="color:var(--accent-green);font-weight:600;">~12 MB</td><td>~500 MB</td></tr>
+          <tr><td>1 crore</td><td>0.1%</td><td style="color:var(--accent-green);font-weight:600;">~18 MB</td><td>~500 MB</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="bf-hero" style="margin-top:1rem;">Rule of thumb: ~10 bits per element @ 1% FP rate. Ek string store karne se kahin zyada compact.</p>
+  </div>
+
+  <div class="bf-section">
+    <div class="bf-section-title">◦ real world use cases</div>
+    <div class="bf-grid">
+      <div class="bf-card">
+        <div class="icon">🗄️</div>
+        <div class="label">CASSANDRA / ROCKSDB</div>
+        <p>Disk read expensive hai. Bloom filter batata hai "pakka nahi" to disk seek skip.</p>
+      </div>
+      <div class="bf-card">
+        <div class="icon">🌐</div>
+        <div class="label">CHROME SAFE BROWSING</div>
+        <p>Malicious URLs local Bloom filter se check, "shayad" ayega to network call karte hain.</p>
+      </div>
+      <div class="bf-card">
+        <div class="icon">⚡</div>
+        <div class="label">CACHE PENETRATION</div>
+        <p>Redis + DB ke saamne Bloom filter rakho, fake keys DB tak reach hi nahi karte.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bf-section">
+    <div class="bf-section-title">◦ activity log</div>
+    <div id="bf-log" class="bf-log"><div>kuch karo upar — yahan log dikhega...</div></div>
+  </div>
+
+  <div class="bf-section">
+    <div class="bf-section-title">◦ interview line</div>
+    <div class="bf-card">
+      <p>"Bloom filter is a space-efficient probabilistic structure — no false negatives, tunable false positives. Perfect for avoiding expensive lookups when an element definitely doesn't exist (like Cassandra SSTables or cache penetration defenses)."</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const BF_SIZE = 20;
+  let bfBits = new Array(BF_SIZE).fill(0);
+  let bfAdded = [];
+
+  const hashFns = [
+    str => {
+      let h = 0;
+      for (let i = 0; i < str.length; ++i) h = (h * 31 + str.charCodeAt(i)) % BF_SIZE;
+      return h;
+    },
+    str => {
+      let h = 5381;
+      for (let i = 0; i < str.length; ++i) h = ((h << 5) + h + str.charCodeAt(i)) % BF_SIZE;
+      return Math.abs(h) % BF_SIZE;
+    },
+    str => {
+      let h = 2166136261;
+      for (let i = 0; i < str.length; ++i) {
+        h ^= str.charCodeAt(i);
+        h = (h * 16777619) % BF_SIZE;
+      }
+      return Math.abs(h) % BF_SIZE;
+    }
+  ];
+
+  const pills = [document.getElementById('bf-h1'), document.getElementById('bf-h2'), document.getElementById('bf-h3')];
+  const arrayEl = document.getElementById('bf-array');
+  const resultEl = document.getElementById('bf-result');
+  const addedEl = document.getElementById('bf-added');
+  const logEl = document.getElementById('bf-log');
+
+  function renderArray(highlight = [], hit = []) {
+    arrayEl.innerHTML = '';
+    for (let i = 0; i < BF_SIZE; ++i) {
+      const cell = document.createElement('div');
+      cell.className = 'bf-bit-cell';
+      cell.innerHTML = `<span>${i}</span>${bfBits[i]}`;
+      if (highlight.includes(i)) cell.classList.add('highlight');
+      else if (hit.includes(i)) cell.classList.add('check-hit');
+      else if (bfBits[i]) cell.classList.add('active');
+      arrayEl.appendChild(cell);
+    }
+  }
+
+  function showHashes(word, positions) {
+    ['hash1','hash2','hash3'].forEach((label, idx) => {
+      pills[idx].textContent = `${label}("${word}") = ${positions[idx]}`;
+      pills[idx].classList.add('show');
+    });
+  }
+
+  function hideHashes() {
+    pills.forEach(p => p.classList.remove('show'));
+  }
+
+  function log(action) {
+    const ts = new Date().toLocaleTimeString();
+    const entry = document.createElement('div');
+    entry.className = 'bf-log-entry';
+    entry.innerHTML = `<span class="ts">${ts}</span><span class="action">${action}</span>`;
+    logEl.prepend(entry);
+  }
+
+  function showResult(text, variant) {
+    resultEl.textContent = text;
+    resultEl.className = `bf-result show ${variant}`;
+  }
+
+  function updateAdded() {
+    addedEl.innerHTML = bfAdded.length ? bfAdded.map(x => `<span class="bf-added-tag">${x}</span>`).join('') : '<span style="color:var(--text-muted);font-size:0.8rem;">kuch nahi abhi</span>';
+  }
+
+  function positionsFor(word) {
+    return hashFns.map(fn => fn(word));
+  }
+
+  function readInput() {
+    const input = document.getElementById('bf-input');
+    const word = input.value.trim().toLowerCase();
+    input.value = '';
+    return word;
+  }
+
+  window.bfAdd = function () {
+    const word = readInput();
+    if (!word) return;
+    const pos = positionsFor(word);
+    pos.forEach(p => bfBits[p] = 1);
+    renderArray(pos);
+    showHashes(word, pos);
+    showResult(`"${word}" add kiya gaya — bits ${pos.join(', ')} = 1.`, 'success');
+    if (!bfAdded.includes(word)) bfAdded.push(word);
+    updateAdded();
+    log(`ADD "${word}" @ [${pos.join(', ')}]`);
+  }
+
+  window.bfCheck = function () {
+    const word = readInput();
+    if (!word) return;
+    const pos = positionsFor(word);
+    const allSet = pos.every(p => bfBits[p] === 1);
+    showHashes(word, pos);
+    if (allSet) {
+      renderArray([], pos);
+      showResult(`⚠ "${word}" — teeno bits 1 (positions ${pos.join(', ')}). Shayad present.`, 'warn');
+      log(`CHECK "${word}" → MAYBE (bits ${pos.join(', ')})`);
+    } else {
+      renderArray();
+      const missing = pos.filter(p => bfBits[p] === 0);
+      showResult(`✓ "${word}" — position ${missing[0]} pe 0. Pakka nahi hai.`, 'success');
+      log(`CHECK "${word}" → NOT present (bit ${missing[0]} = 0)`);
+    }
+  }
+
+  window.bfReset = function () {
+    bfBits.fill(0);
+    bfAdded = [];
+    renderArray();
+    hideHashes();
+    updateAdded();
+    resultEl.className = 'bf-result';
+    resultEl.textContent = '';
+    logEl.innerHTML = '<div>reset ho gaya...</div>';
+  }
+
+  renderArray();
+  updateAdded();
+</script>
+
+</body>
+</html>

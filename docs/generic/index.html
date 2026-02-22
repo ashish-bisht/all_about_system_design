@@ -1,0 +1,219 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generic Guides — System Design Mastery</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container">
+    <a href="../" class="nav-brand">🏗️ <span>SystemDesign</span>Mastery</a>
+    <ul class="nav-links">
+      <li><a href="../">Home</a></li>
+      <li><a href="../projects/">Projects</a></li>
+      <li><a href="../patterns/overview.html">Patterns</a></li>
+      <li><a href="../interview-prep/">Interview Prep</a></li>
+      <li><a href="https://github.com/ashish-bisht/all_about_system_design" target="_blank" rel="noopener">GitHub</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="container">
+
+    <!-- NAV -->
+    <div class="top-nav">
+        <div class="breadcrumb">
+            <a href="../../">🏗️ SystemDesignMastery</a>
+            <span>›</span>
+            <a href="../">Interview Prep</a>
+            <span>›</span>
+            <span style="color: var(--text-primary);">Generic Guides</span>
+        </div>
+    </div>
+
+    <!-- HERO -->
+    <div class="hero">
+        <div class="hero-badge">📚 Reusable Knowledge Base</div>
+        <h1>Generic System Design Guides</h1>
+        <p>Har interview mein kaam aane wale universal concepts — ek baar padho, har jagah lagao. Ye kisi ek project se tied nahi hain.</p>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row">
+        <div class="stat">
+            <div class="stat-value">1</div>
+            <div class="stat-label">Ready</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">8</div>
+            <div class="stat-label">Planned</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">∞</div>
+            <div class="stat-label">Reusable</div>
+        </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- ===== FUNDAMENTALS ===== -->
+    <div class="category">
+        <div class="category-header">
+            <span class="icon">🧮</span>
+            <h2>Fundamentals & Numbers</h2>
+            <span class="count">1 guide</span>
+        </div>
+
+        <div class="guides-grid">
+            <!-- READY -->
+            <a href="numbers-to-know.html" class="guide-card green">
+                <div class="card-icon">📐</div>
+                <h3>Numbers Every Engineer Should Know</h3>
+                <div class="card-desc">Data type sizes, latency hierarchy, throughput benchmarks, availability SLAs, capacity estimation formulas, aur interview script — sab ek page mein.</div>
+                <div class="card-tags">
+                    <span class="tag">latency</span>
+                    <span class="tag">throughput</span>
+                    <span class="tag">estimation</span>
+                    <span class="tag">data types</span>
+                </div>
+            </a>
+
+            <!-- COMING SOON -->
+            <div class="guide-card blue coming-soon">
+                <div class="card-icon">📊</div>
+                <h3>Back-of-Envelope Estimation Templates</h3>
+                <div class="card-desc">Ready-made estimation templates for common systems — URL shortener, social media, messaging, video streaming. Plug in your numbers and go.</div>
+                <div class="card-tags">
+                    <span class="tag">templates</span>
+                    <span class="tag">qps</span>
+                    <span class="tag">storage</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== DATA & STORAGE ===== -->
+    <div class="category">
+        <div class="category-header">
+            <span class="icon">💾</span>
+            <h2>Data & Storage</h2>
+            <span class="count">coming soon</span>
+        </div>
+
+        <div class="guides-grid">
+            <div class="guide-card purple coming-soon">
+                <div class="card-icon">🗄️</div>
+                <h3>Database Selection Guide</h3>
+                <div class="card-desc">SQL vs NoSQL vs NewSQL vs Graph — kab kya use karo? PostgreSQL, MongoDB, Cassandra, DynamoDB, Neo4j ka comparison with use cases.</div>
+                <div class="card-tags">
+                    <span class="tag">sql</span>
+                    <span class="tag">nosql</span>
+                    <span class="tag">selection</span>
+                </div>
+            </div>
+
+            <div class="guide-card cyan coming-soon">
+                <div class="card-icon">⚡</div>
+                <h3>Caching Patterns & Strategies</h3>
+                <div class="card-desc">Cache-Aside, Write-Through, Write-Behind, Refresh-Ahead. LRU vs LFU. Redis vs Memcached. Cache stampede, hot keys, invalidation.</div>
+                <div class="card-tags">
+                    <span class="tag">redis</span>
+                    <span class="tag">eviction</span>
+                    <span class="tag">patterns</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== COMMUNICATION & MESSAGING ===== -->
+    <div class="category">
+        <div class="category-header">
+            <span class="icon">📡</span>
+            <h2>Communication & Messaging</h2>
+            <span class="count">coming soon</span>
+        </div>
+
+        <div class="guides-grid">
+            <div class="guide-card orange coming-soon">
+                <div class="card-icon">📬</div>
+                <h3>Messaging & Queue Patterns</h3>
+                <div class="card-desc">Kafka vs RabbitMQ vs SQS vs Redis Streams. Pub/Sub, message ordering, exactly-once delivery, dead letter queues, backpressure.</div>
+                <div class="card-tags">
+                    <span class="tag">kafka</span>
+                    <span class="tag">rabbitmq</span>
+                    <span class="tag">async</span>
+                </div>
+            </div>
+
+            <div class="guide-card teal coming-soon">
+                <div class="card-icon">🔌</div>
+                <h3>API Design Patterns</h3>
+                <div class="card-desc">REST vs gRPC vs GraphQL. Pagination, rate limiting, versioning, idempotency, authentication. WebSocket vs SSE vs Long Polling.</div>
+                <div class="card-tags">
+                    <span class="tag">rest</span>
+                    <span class="tag">grpc</span>
+                    <span class="tag">websocket</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== SCALING & RELIABILITY ===== -->
+    <div class="category">
+        <div class="category-header">
+            <span class="icon">📈</span>
+            <h2>Scaling & Reliability</h2>
+            <span class="count">coming soon</span>
+        </div>
+
+        <div class="guides-grid">
+            <div class="guide-card red coming-soon">
+                <div class="card-icon">🏗️</div>
+                <h3>Scaling Patterns Master Guide</h3>
+                <div class="card-desc">Horizontal vs Vertical scaling, sharding strategies, consistent hashing, read replicas, CQRS, event sourcing, load balancing algorithms.</div>
+                <div class="card-tags">
+                    <span class="tag">sharding</span>
+                    <span class="tag">replicas</span>
+                    <span class="tag">cqrs</span>
+                </div>
+            </div>
+
+            <div class="guide-card yellow coming-soon">
+                <div class="card-icon">🛡️</div>
+                <h3>Reliability & Fault Tolerance</h3>
+                <div class="card-desc">Circuit breakers, retries with backoff, bulkhead pattern, health checks, graceful degradation, chaos engineering basics.</div>
+                <div class="card-tags">
+                    <span class="tag">resilience</span>
+                    <span class="tag">circuit-breaker</span>
+                    <span class="tag">failover</span>
+                </div>
+            </div>
+
+            <div class="guide-card pink coming-soon">
+                <div class="card-icon">⚖️</div>
+                <h3>Load Balancing Deep Dive</h3>
+                <div class="card-desc">L4 vs L7, round robin, least connections, consistent hashing, health checks. Nginx, HAProxy, ALB/NLB comparison.</div>
+                <div class="card-tags">
+                    <span class="tag">nginx</span>
+                    <span class="tag">l4-vs-l7</span>
+                    <span class="tag">algorithms</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <p>🏗️ System Design Mastery — Built for learning, one system at a time.</p>
+        <p style="margin-top: 0.5rem;">
+            <a href="https://github.com/ashish-bisht/all_about_system_design" style="color: var(--text-muted);">GitHub</a>
+        </p>
+    </div>
+
+</div>
+</body>
+</html>

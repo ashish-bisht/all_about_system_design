@@ -1,0 +1,1959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Storage & Retrieval — MedSearch Deep Dive</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #0f0f18;
+    --bg3: #13131f;
+    --surface: #1a1a2e;
+    --surface2: #1e1e35;
+    --border: #2a2a45;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --accent3: #10b981;
+    --accent4: #f59e0b;
+    --accent5: #ef4444;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --glow: rgba(0, 212, 255, 0.15);
+    --glow2: rgba(124, 58, 237, 0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Noise texture */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    padding: 60px 0 40px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 60px;
+  }
+
+  .header-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .header-tag::before {
+    content: '';
+    width: 20px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(36px, 5vw, 60px);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -2px;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 16px;
+  }
+
+  .header-sub {
+    color: var(--text2);
+    font-size: 13px;
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--accent);
+  }
+
+  /* TOC */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 24px 28px;
+    margin-bottom: 60px;
+    border-radius: 4px;
+  }
+
+  .toc-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  .toc-list {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 8px;
+  }
+
+  .toc-list a {
+    color: var(--text2);
+    text-decoration: none;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 3px;
+    transition: all 0.2s;
+  }
+
+  .toc-list a:hover {
+    color: var(--accent);
+    background: var(--glow);
+  }
+
+  .toc-list .num {
+    color: var(--text3);
+    font-size: 10px;
+    width: 20px;
+  }
+
+  /* Section */
+  .section {
+    margin-bottom: 80px;
+    animation: fadeIn 0.5s ease forwards;
+    opacity: 0;
+  }
+
+  @keyframes fadeIn {
+    to { opacity: 1; }
+  }
+
+  .section:nth-child(1) { animation-delay: 0.1s; }
+  .section:nth-child(2) { animation-delay: 0.2s; }
+  .section:nth-child(3) { animation-delay: 0.3s; }
+  .section:nth-child(4) { animation-delay: 0.4s; }
+
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 48px;
+    font-weight: 800;
+    color: var(--border);
+    line-height: 1;
+    min-width: 60px;
+  }
+
+  .section-title-wrap {}
+
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+
+  h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--accent);
+    margin: 32px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  h3::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  p {
+    color: var(--text2);
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+
+  /* Code blocks */
+  .code-block {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 16px 0;
+    position: relative;
+  }
+
+  .code-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .code-lang {
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .code-dots {
+    display: flex;
+    gap: 5px;
+  }
+
+  .code-dots span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+  }
+
+  pre {
+    padding: 20px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.8;
+    color: var(--text);
+  }
+
+  .c-comment { color: var(--text3); }
+  .c-key { color: var(--accent); }
+  .c-val { color: var(--accent3); }
+  .c-bad { color: var(--accent5); }
+  .c-warn { color: var(--accent4); }
+  .c-good { color: var(--accent3); }
+  .c-purple { color: #a78bfa; }
+
+  /* Concept cards */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .card:hover {
+    border-color: var(--accent);
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+  }
+
+  .card.blue::before { background: var(--accent); }
+  .card.purple::before { background: var(--accent2); }
+  .card.green::before { background: var(--accent3); }
+  .card.yellow::before { background: var(--accent4); }
+  .card.red::before { background: var(--accent5); }
+
+  .card-icon {
+    font-size: 24px;
+    margin-bottom: 12px;
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+
+  .card-body {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+
+  /* Flow diagram */
+  .flow {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 24px;
+    margin: 20px 0;
+  }
+
+  .flow-title {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 20px;
+  }
+
+  .flow-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .flow-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    position: relative;
+  }
+
+  .flow-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 32px;
+    bottom: -8px;
+    width: 2px;
+    background: var(--border);
+  }
+
+  .flow-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 2px solid var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .flow-content {
+    padding: 4px 0 24px;
+  }
+
+  .flow-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+
+  .flow-desc {
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  /* Comparison table */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 12px;
+  }
+
+  .compare-table th {
+    background: var(--surface);
+    padding: 12px 16px;
+    text-align: left;
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text2);
+    border: 1px solid var(--border);
+  }
+
+  .compare-table th:first-child { color: var(--accent); }
+
+  .compare-table td {
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    color: var(--text2);
+    vertical-align: top;
+  }
+
+  .compare-table tr:hover td {
+    background: var(--surface);
+  }
+
+  .tag-good {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--accent3);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    display: inline-block;
+  }
+
+  .tag-bad {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--accent5);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    display: inline-block;
+  }
+
+  .tag-med {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--accent4);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    display: inline-block;
+  }
+
+  /* Callout */
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--glow);
+    padding: 16px 20px;
+    margin: 20px 0;
+    border-radius: 0 6px 6px 0;
+  }
+
+  .callout.warning {
+    border-left-color: var(--accent4);
+    background: rgba(245, 158, 11, 0.08);
+  }
+
+  .callout.success {
+    border-left-color: var(--accent3);
+    background: rgba(16, 185, 129, 0.08);
+  }
+
+  .callout.danger {
+    border-left-color: var(--accent5);
+    background: rgba(239, 68, 68, 0.08);
+  }
+
+  .callout-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .callout.warning .callout-title { color: var(--accent4); }
+  .callout.success .callout-title { color: var(--accent3); }
+  .callout.danger .callout-title { color: var(--accent5); }
+
+  .callout p { margin: 0; font-size: 12px; }
+
+  /* Analogy box */
+  .analogy {
+    background: var(--surface2);
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .analogy strong {
+    color: var(--accent4);
+    font-family: 'Syne', sans-serif;
+  }
+
+  /* Interview box */
+  .interview-box {
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(0, 212, 255, 0.05));
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    border-radius: 8px;
+    padding: 24px;
+    margin: 24px 0;
+  }
+
+  .interview-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .interview-title::before {
+    content: '⚡';
+    font-size: 14px;
+  }
+
+  .interview-q {
+    font-size: 13px;
+    color: #fff;
+    margin-bottom: 12px;
+    font-style: italic;
+  }
+
+  .interview-a {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.7;
+  }
+
+  /* Divider */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 48px 0;
+  }
+
+  /* Summary box */
+  .summary {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px;
+    margin: 32px 0;
+  }
+
+  .summary-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  .summary-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .summary-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .summary-list li::before {
+    content: '→';
+    color: var(--accent);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* Glow effect on headers */
+  .glow-text {
+    text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .card-grid { grid-template-columns: 1fr; }
+    .section-num { font-size: 32px; }
+    h2 { font-size: 22px; }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <div class="header-tag">MedSearch Pro — Storage Deep Dive</div>
+    <h1 class="glow-text">Storage &<br>Retrieval</h1>
+    <div class="header-sub">
+      <span class="badge">Part 1 — LSM Trees</span>
+      <span class="badge">Part 2 — B-Trees</span>
+      <span class="badge">Part 3 — Trade-offs</span>
+      <span class="badge">Part 4 — Indexes</span>
+    </div>
+  </header>
+
+  <!-- TOC -->
+  <div class="toc">
+    <div class="toc-title">Contents</div>
+    <ul class="toc-list">
+      <li><a href="#lsm"><span class="num">01</span>LSM Trees — Write Path</a></li>
+      <li><a href="#memtable"><span class="num">02</span>Memtable vs WAL</a></li>
+      <li><a href="#compaction"><span class="num">03</span>Compaction Strategies</a></li>
+      <li><a href="#bloom"><span class="num">04</span>Bloom Filters</a></li>
+      <li><a href="#btree"><span class="num">05</span>B-Trees — Read Path</a></li>
+      <li><a href="#wal"><span class="num">06</span>WAL & Crash Recovery</a></li>
+      <li><a href="#tradeoffs"><span class="num">07</span>LSM vs B-Tree Trade-offs</a></li>
+      <li><a href="#indexes"><span class="num">08</span>Secondary & Covering Indexes</a></li>
+    </ul>
+  </div>
+
+  <!-- PART 1: LSM Trees -->
+  <section class="section" id="lsm">
+    <div class="section-header">
+      <div class="section-num">01</div>
+      <div class="section-title-wrap">
+        <div class="section-label">Part 1 — Write Path</div>
+        <h2>LSM Trees</h2>
+      </div>
+    </div>
+
+    <p>MedSearch pe <strong style="color:#fff">10,000 doctors</strong> hain. Har doctor din mein 100+ records likhta hai — <strong style="color: var(--accent)">~1 million writes/day.</strong> LSM (Log-Structured Merge-Tree) is workload ke liye designed hai.</p>
+
+    <h3>Full Write Path</h3>
+
+    <div class="flow">
+      <div class="flow-title">Doctor writes patient record → disk tak ka safar</div>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="flow-dot">1</div>
+          <div class="flow-content">
+            <div class="flow-label">WAL (Write Ahead Log) — Disk</div>
+            <div class="flow-desc">Pehle disk pe append hota hai — crash recovery ke liye. Unsorted, sequential append. O(1) write.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-dot">2</div>
+          <div class="flow-content">
+            <div class="flow-label">Memtable — RAM</div>
+            <div class="flow-desc">Sorted in-memory data structure (Red-Black tree / Skip list). Latest value automatically maintained. Fast reads O(log n).</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-dot">3</div>
+          <div class="flow-content">
+            <div class="flow-label">SSTable — Disk (jab ~4MB full)</div>
+            <div class="flow-desc">Memtable disk pe flush hoti hai sorted SSTable ke roop mein. Immutable — kabhi modify nahi hoti. Nayi memtable shuru.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-dot">4</div>
+          <div class="flow-content">
+            <div class="flow-label">Compaction — Background</div>
+            <div class="flow-desc">Multiple SSTables merge hoti hain. Purane overwritten values delete hote hain. Read performance improve hoti hai.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Write Flow</span>
+        <div class="code-dots"><span></span><span></span><span></span></div>
+      </div>
+      <pre><span class="c-comment">-- Doctor writes patient vitals</span>
+<span class="c-key">Write:</span> <span class="c-val">patient_001</span> → {bp: "120/80", diagnosis: "hypertension"}
+
+<span class="c-comment">-- Step 1: WAL pe likho (disk, unsorted)</span>
+WAL: <span class="c-val">[ts] patient_001 → {bp: "120/80"}</span>   <span class="c-comment">← durability ✅</span>
+
+<span class="c-comment">-- Step 2: Memtable mein add karo (RAM, sorted)</span>
+Memtable: <span class="c-val">patient_001 → {bp: "120/80"}</span>   <span class="c-comment">← fast reads ✅</span>
+
+<span class="c-comment">-- Step 3: 4MB ho gayi → flush to SSTable</span>
+SSTable_3.sst: <span class="c-good">sorted, immutable, compressed</span>
+
+<span class="c-comment">-- Step 4: Background compaction</span>
+SSTable_1 + SSTable_2 + SSTable_3 → <span class="c-good">merged_SSTable.sst</span></pre>
+    </div>
+
+    <div id="memtable">
+      <h3>Memtable vs WAL — Dono Kyun?</h3>
+
+      <div class="card-grid">
+        <div class="card blue">
+          <div class="card-icon">📝</div>
+          <div class="card-title">WAL — Durability</div>
+          <div class="card-body">Disk pe append-only log. Unsorted. Crash ho jaye toh memtable yahan se reconstruct hoti hai. Ye ek rough notebook hai.</div>
+        </div>
+        <div class="card purple">
+          <div class="card-icon">⚡</div>
+          <div class="card-title">Memtable — Performance</div>
+          <div class="card-body">RAM mein sorted structure. Latest values maintained. Fast reads O(log n). Ye ek organized whiteboard hai.</div>
+        </div>
+      </div>
+
+      <div class="callout warning">
+        <div class="callout-title">⚠️ Crash Scenario</div>
+        <p>Light gayi → Memtable (RAM) GONE 💀 → WAL se reconstruct karo → Sorted memtable wapas ready ✅. Isliye WAL pehle likhte hain, memtable baad mein.</p>
+      </div>
+
+      <div class="analogy">
+        <strong>Analogy:</strong> WAL = Rough notebook (jo bhi aaya, fast likho). Memtable = Organized whiteboard (sorted, latest values, easy to read). Dono ka kaam alag!
+      </div>
+    </div>
+
+    <div id="bloom">
+      <h3>Bloom Filters — Read Optimization</h3>
+
+      <p>10 SSTables hain. Patient_001 dhundna hai. Worst case — 10 disk reads! Bloom filter is problem ko solve karta hai.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Read Path with Bloom Filter</span>
+          <div class="code-dots"><span></span><span></span><span></span></div>
+        </div>
+        <pre><span class="c-comment">-- Search order: newest to oldest</span>
+<span class="c-key">Step 1:</span> Memtable check → <span class="c-bad">not found</span>
+<span class="c-key">Step 2:</span> SSTable_10 Bloom Filter → <span class="c-good">"patient_001 nahi hai" → SKIP ✅</span>
+<span class="c-key">Step 3:</span> SSTable_9  Bloom Filter → <span class="c-good">"patient_001 nahi hai" → SKIP ✅</span>
+<span class="c-key">Step 4:</span> SSTable_8  Bloom Filter → <span class="c-good">"patient_001 nahi hai" → SKIP ✅</span>
+...
+<span class="c-key">Step N:</span> SSTable_1  Bloom Filter → <span class="c-warn">"patient_001 hai!" → Read karo</span>
+         Sparse index → block location → data found ✅
+
+<span class="c-comment">-- False positive case (no problem!)</span>
+Bloom Filter: <span class="c-warn">"patient_001 hai"</span>
+Actual SSTable: <span class="c-bad">nahi hai</span> → false positive
+Result: <span class="c-comment">thoda extra work, but koi corruption nahi ✅</span></pre>
+      </div>
+
+      <div class="callout success">
+        <div class="callout-title">✅ Key Property</div>
+        <p>Bloom filter kabhi false negative nahi deta — agar bolta hai "nahi hai" toh <strong>guaranteed nahi hai.</strong> False positive ho sakta hai (bolega "hai" but nahi hoga) — that's acceptable.</p>
+      </div>
+    </div>
+
+    <div id="compaction">
+      <h3>Compaction Strategies</h3>
+
+      <table class="compare-table">
+        <tr>
+          <th>Strategy</th>
+          <th>Kaise Kaam Karta Hai</th>
+          <th>Write Heavy</th>
+          <th>Read Heavy</th>
+          <th>Disk Space</th>
+        </tr>
+        <tr>
+          <td style="color:#fff;font-weight:600">Size-Tiered</td>
+          <td>Chhoti SSTables → ek badi SSTable</td>
+          <td><span class="tag-good">✅ Best</span></td>
+          <td><span class="tag-bad">😬 Slow</span></td>
+          <td><span class="tag-bad">😬 Zyada</span></td>
+        </tr>
+        <tr>
+          <td style="color:#fff;font-weight:600">Leveled</td>
+          <td>Fixed size, key-range partitioned levels</td>
+          <td><span class="tag-bad">😬 More work</span></td>
+          <td><span class="tag-good">✅ Best</span></td>
+          <td><span class="tag-good">✅ Kam</span></td>
+        </tr>
+        <tr>
+          <td style="color:#fff;font-weight:600">Hybrid</td>
+          <td>Recent → Size-tiered, Old → Leveled</td>
+          <td><span class="tag-good">✅ Good</span></td>
+          <td><span class="tag-good">✅ Good</span></td>
+          <td><span class="tag-med">⚡ Medium</span></td>
+        </tr>
+      </table>
+
+      <div class="callout">
+        <div class="callout-title">MedSearch Decision</div>
+        <p>1M writes/day (write heavy) + doctor history reads → <strong style="color:var(--accent)">Hybrid compaction.</strong> Cassandra aur RocksDB exactly yehi karte hain!</p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- PART 2: B-Trees -->
+  <section class="section" id="btree">
+    <div class="section-header">
+      <div class="section-num">02</div>
+      <div class="section-title-wrap">
+        <div class="section-label">Part 2 — Read Path</div>
+        <h2>B-Trees</h2>
+      </div>
+    </div>
+
+    <p>Senior doctor subah aata hai — <strong style="color:#fff">500 patient records</strong> review karta hai. Predictable, fast reads chahiye. Postgres ka default index structure yehi hai.</p>
+
+    <h3>Structure — Page-Based Tree</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">B-Tree Lookup — patient_id = 251</span>
+        <div class="code-dots"><span></span><span></span><span></span></div>
+      </div>
+      <pre><span class="c-comment">-- Tree structure (Postgres: 8KB pages)</span>
+                    [<span class="c-val">200</span>, <span class="c-val">400</span>]           ← Root page
+                   /       |       \
+          [<span class="c-val">100</span>,<span class="c-val">150</span>]   [<span class="c-val">250</span>,<span class="c-val">350</span>]   [<span class="c-val">450</span>,<span class="c-val">500</span>]   ← Internal pages
+              |           |            |
+          [<span class="c-good">leaf</span>]       [<span class="c-good">leaf</span>]       [<span class="c-good">leaf</span>]     ← Leaf pages
+
+<span class="c-comment">-- Lookup: patient_id = 251</span>
+<span class="c-key">1.</span> Root → "251 is between 200-400" → follow pointer
+<span class="c-key">2.</span> Internal → "251 is between 250-350" → follow pointer
+<span class="c-key">3.</span> Leaf → <span class="c-good">patient_251 found! ✅</span>
+
+<span class="c-comment">-- Only 3 page reads = O(log n) ✅</span>
+<span class="c-comment">-- 4-level tree can store up to 250TB!</span></pre>
+    </div>
+
+    <h3>Page Split — Insert Operation</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Inserting patient_334 — Page Full!</span>
+        <div class="code-dots"><span></span><span></span><span></span></div>
+      </div>
+      <pre><span class="c-comment">-- Target page for range 333-345 is FULL 😬</span>
+Before: [<span class="c-bad">333, 335, 337, 339, 341, 343, 345</span>]  ← full page
+
+<span class="c-comment">-- Step 1: Split into two pages</span>
+Page A: [<span class="c-good">333, 334, 335, 337</span>]
+Page B: [<span class="c-good">339, 341, 343, 345</span>]
+
+<span class="c-comment">-- Step 2: Update parent with new boundary</span>
+Parent: [..., <span class="c-val">337</span> → PageA, <span class="c-val">338</span> → PageB, ...]
+
+<span class="c-comment">-- Step 3: If parent also full → split propagates up</span>
+<span class="c-comment">-- Can reach root → new root created!</span></pre>
+    </div>
+
+    <div id="wal">
+      <h3>WAL & Crash Recovery</h3>
+
+      <p>Page split = multiple disk overwrites. Crash beech mein → corrupt tree! WAL protect karta hai:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">B-Tree WAL Flow</span>
+          <div class="code-dots"><span></span><span></span><span></span></div>
+        </div>
+        <pre><span class="c-comment">-- Inserting patient_334</span>
+<span class="c-key">Step 1:</span> WAL mein likho → <span class="c-good">"going to split page X, create Y, update parent Z"</span>
+<span class="c-key">Step 2:</span> Actual pages overwrite karo
+<span class="c-key">Step 3:</span> WAL entry mark as complete
+
+<span class="c-comment">-- Crash ho gaya after Step 1</span>
+Restart: WAL padho → operation incomplete tha
+         → Rollback ya re-apply → <span class="c-good">consistent state ✅</span>
+
+<span class="c-comment">-- Torn page problem</span>
+8KB page adha likha, adha nahi → <span class="c-bad">corrupt! 💀</span>
+WAL se detect karo → recover karo → <span class="c-good">safe ✅</span></pre>
+      </div>
+
+      <div class="card-grid">
+        <div class="card blue">
+          <div class="card-icon">🔒</div>
+          <div class="card-title">LSM Crash Recovery</div>
+          <div class="card-body">Easy — SSTables immutable hain. Adha likha hua SSTable delete karo, WAL se memtable reconstruct karo. Simple!</div>
+        </div>
+        <div class="card purple">
+          <div class="card-icon">⚙️</div>
+          <div class="card-title">B-Tree Crash Recovery</div>
+          <div class="card-body">Complex — pages in-place overwrite hoti hain. WAL ke bina partial writes possible. Postgres WAL directory: <code>/pg_wal</code></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- PART 3: Trade-offs -->
+  <section class="section" id="tradeoffs">
+    <div class="section-header">
+      <div class="section-num">03</div>
+      <div class="section-title-wrap">
+        <div class="section-label">Part 3 — Decision Framework</div>
+        <h2>LSM vs B-Tree</h2>
+      </div>
+    </div>
+
+    <h3>Write Amplification Comparison</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">1 logical write → how many disk writes?</span>
+        <div class="code-dots"><span></span><span></span><span></span></div>
+      </div>
+      <pre><span class="c-comment">-- B-Tree: patient_334 insert</span>
+WAL write          → <span class="c-bad">1 disk write</span>
+Page split (page 1) → <span class="c-bad">1 disk write</span>
+Page split (page 2) → <span class="c-bad">1 disk write</span>
+Parent update       → <span class="c-bad">1 disk write</span>
+Index update        → <span class="c-bad">1 disk write</span>
+Total:              → <span class="c-bad">5 disk writes for 1 logical write! 😬</span>
+
+<span class="c-comment">-- LSM: same insert</span>
+WAL write           → <span class="c-good">1 disk write</span>
+Memtable (RAM)      → <span class="c-good">0 disk writes!</span>
+Total immediate:    → <span class="c-good">1 disk write ✅</span>
+<span class="c-comment">-- (Compaction later, but amortized over many writes)</span></pre>
+    </div>
+
+    <h3>Full Comparison Table</h3>
+
+    <table class="compare-table">
+      <tr>
+        <th>Dimension</th>
+        <th>LSM Tree</th>
+        <th>B-Tree (Postgres)</th>
+      </tr>
+      <tr>
+        <td style="color:#fff">Write Speed</td>
+        <td><span class="tag-good">✅ Fast (append)</span></td>
+        <td><span class="tag-bad">😬 Slow (page splits)</span></td>
+      </tr>
+      <tr>
+        <td style="color:#fff">Read Speed</td>
+        <td><span class="tag-bad">😬 Multiple SSTables</span></td>
+        <td><span class="tag-good">✅ O(log n) predictable</span></td>
+      </tr>
+      <tr>
+        <td style="color:#fff">Write Amplification</td>
+        <td><span class="tag-med">⚡ Medium (compaction)</span></td>
+        <td><span class="tag-bad">😬 High (WAL + pages)</span></td>
+      </tr>
+      <tr>
+        <td style="color:#fff">Crash Recovery</td>
+        <td><span class="tag-good">✅ Easy (immutable)</span></td>
+        <td><span class="tag-bad">😬 Complex (torn pages)</span></td>
+      </tr>
+      <tr>
+        <td style="color:#fff">Range Queries</td>
+        <td><span class="tag-med">⚡ Parallel scan needed</span></td>
+        <td><span class="tag-good">✅ Natural (sorted tree)</span></td>
+      </tr>
+      <tr>
+        <td style="color:#fff">Disk Space</td>
+        <td><span class="tag-good">✅ Compressed SSTables</span></td>
+        <td><span class="tag-bad">😬 Fragmentation possible</span></td>
+      </tr>
+      <tr>
+        <td style="color:#fff">Hot Data Reads</td>
+        <td><span class="tag-med">⚡ Bloom filter helps</span></td>
+        <td><span class="tag-good">✅ Buffer pool cache</span></td>
+      </tr>
+    </table>
+
+    <h3>MedSearch Final Architecture</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">MedSearch Storage Decision</span>
+        <div class="code-dots"><span></span><span></span><span></span></div>
+      </div>
+      <pre><span class="c-comment">-- MedSearch workload analysis</span>
+Writes: <span class="c-val">~12 writes/second</span>  (1M/day ÷ 86400)
+Reads:  <span class="c-val">ICU patients read every 5 min</span>
+Scale:  <span class="c-val">10,000 doctors, 1500 prod users</span>
+
+<span class="c-comment">-- Postgres handles this easily!</span>
+Postgres capacity: <span class="c-good">10,000+ writes/second ✅</span>
+
+<span class="c-comment">-- No need for Cassandra at this scale</span>
+<span class="c-comment">-- Over-engineering = bad engineering</span>
+
+<span class="c-comment">-- Recommended architecture</span>
+<span class="c-key">Primary:</span>    <span class="c-good">Postgres (B-Tree)</span>
+<span class="c-key">Hot data:</span>   <span class="c-good">Buffer Pool (shared_buffers = 4GB)</span>
+<span class="c-key">Scaling:</span>    <span class="c-good">Read replicas if needed</span>
+<span class="c-key">Analytics:</span>  <span class="c-good">Separate OLAP DB (Part 6)</span>
+
+<span class="c-comment">-- Cassandra kab chahiye?</span>
+WhatsApp: <span class="c-bad">100M msgs/sec → yes</span>
+IoT:      <span class="c-bad">1M devices/sec → yes</span>
+MedSearch:<span class="c-good">12 writes/sec → Postgres kaafi! ✅</span></pre>
+    </div>
+
+    <div class="interview-box">
+      <div class="interview-title">Interview Answer — "LSM vs B-Tree kab use karein?"</div>
+      <div class="interview-q">"Your system has 1M writes/day and frequent reads of same records. What storage engine would you choose?"</div>
+      <div class="interview-a">
+        "At 12 writes/second, Postgres with B-tree is more than sufficient. B-trees give predictable O(log n) reads, and for hot data like ICU patients, the buffer pool handles caching automatically. I'd choose LSM (like Cassandra/RocksDB) only if writes exceeded ~50,000/second or we needed global multi-region writes. Prematurely distributed systems add operational complexity without benefit at this scale."
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- PART 4: Indexes -->
+  <section class="section" id="indexes">
+    <div class="section-header">
+      <div class="section-num">04</div>
+      <div class="section-title-wrap">
+        <div class="section-label">Part 4 — Index Layer</div>
+        <h2>Secondary & Covering Indexes</h2>
+      </div>
+    </div>
+
+    <p>Primary key se dhundna easy hai. But doctor poochhe <code style="color:var(--accent)">"all diabetes patients"</code> — primary key index kaam nahi karega!</p>
+
+    <h3>Secondary Index — Double Lookup Problem</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Secondary Index Internals</span>
+        <div class="code-dots"><span></span><span></span><span></span></div>
+      </div>
+      <pre><span class="c-comment">-- Creating secondary index</span>
+<span class="c-purple">CREATE INDEX</span> idx_disease <span class="c-purple">ON</span> patients(disease);
+
+<span class="c-comment">-- What idx_disease stores internally:</span>
+<span class="c-comment">-- disease → primary_key reference (NOT actual data!)</span>
+'diabetes'     → [patient_id: 001, patient_id: 045, patient_id: 089]
+'hypertension' → [patient_id: 012, patient_id: 067]
+
+<span class="c-comment">-- Query execution:</span>
+<span class="c-purple">SELECT</span> * <span class="c-purple">FROM</span> patients <span class="c-purple">WHERE</span> disease = 'diabetes';
+
+<span class="c-key">Step 1:</span> idx_disease B-Tree → disease='diabetes' → [001, 045, 089]
+<span class="c-key">Step 2:</span> Heap fetch for patient_001 → actual row 😬
+<span class="c-key">Step 3:</span> Heap fetch for patient_045 → actual row 😬
+<span class="c-key">Step 4:</span> Heap fetch for patient_089 → actual row 😬
+
+<span class="c-comment">-- This is called "Double Lookup" or "Heap Fetch"</span>
+<span class="c-comment">-- 2 trips for every row — expensive at scale!</span></pre>
+    </div>
+
+    <h3>Covering Index — Eliminate Heap Fetch</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Covering Index — Store Extra Columns in Index</span>
+        <div class="code-dots"><span></span><span></span><span></span></div>
+      </div>
+      <pre><span class="c-comment">-- Normal secondary index</span>
+idx_disease: disease → patient_id
+<span class="c-bad">Needs heap fetch to get age 😬</span>
+
+<span class="c-comment">-- Covering index (store age inside index too)</span>
+<span class="c-purple">CREATE INDEX</span> idx_covering <span class="c-purple">ON</span> patients(disease, age);
+
+<span class="c-comment">-- What idx_covering stores:</span>
+'diabetes' → [patient_id: 001, <span class="c-good">age: 45</span>]
+'diabetes' → [patient_id: 045, <span class="c-good">age: 32</span>]
+
+<span class="c-comment">-- Query now answered entirely from index!</span>
+<span class="c-purple">SELECT</span> patient_id, disease, age <span class="c-purple">FROM</span> patients
+<span class="c-purple">WHERE</span> disease = 'diabetes';
+
+<span class="c-key">Step 1:</span> idx_covering → disease='diabetes' → {id, age} <span class="c-good">✅</span>
+<span class="c-key">Step 2:</span> <span class="c-good">Done! No heap fetch needed! ✅</span>
+
+<span class="c-comment">-- EXPLAIN ANALYZE will show: "Index Only Scan" ← golden!</span></pre>
+    </div>
+
+    <div class="analogy">
+      <strong>Analogy:</strong> Normal index = Table of contents (chapter number milta hai, book mein jaake padhna padta hai). Covering index = Table of contents with summary (summary wahi pe hai, book open karne ki zarurat nahi!)
+    </div>
+
+    <h3>Index Types — When to Use What</h3>
+
+    <table class="compare-table">
+      <tr>
+        <th>Index Type</th>
+        <th>Use Case</th>
+        <th>Pro</th>
+        <th>Con</th>
+      </tr>
+      <tr>
+        <td style="color:#fff">Primary Key Index</td>
+        <td>patient_id lookup</td>
+        <td><span class="tag-good">Clustered (data = index)</span></td>
+        <td><span class="tag-bad">Only 1 per table</span></td>
+      </tr>
+      <tr>
+        <td style="color:#fff">Secondary Index</td>
+        <td>disease, doctor_id search</td>
+        <td><span class="tag-good">Fast lookup</span></td>
+        <td><span class="tag-bad">Double lookup</span></td>
+      </tr>
+      <tr>
+        <td style="color:#fff">Covering Index</td>
+        <td>Frequently queried columns</td>
+        <td><span class="tag-good">No heap fetch</span></td>
+        <td><span class="tag-bad">Larger index size</span></td>
+      </tr>
+      <tr>
+        <td style="color:#fff">Composite Index</td>
+        <td>(disease, doctor_id) together</td>
+        <td><span class="tag-good">Multi-column fast</span></td>
+        <td><span class="tag-bad">Order matters!</span></td>
+      </tr>
+    </table>
+
+    <div class="callout warning">
+      <div class="callout-title">⚠️ Index Tradeoff</div>
+      <p>Har index = faster reads + slower writes + more disk space. MedSearch pe sirf <strong>frequently queried columns</strong> pe index banao. Unnecessary indexes write throughput kill karte hain!</p>
+    </div>
+
+    <div class="interview-box">
+      <div class="interview-title">Interview Answer — "Query slow hai, kaise debug karoge?"</div>
+      <div class="interview-q">"SELECT * FROM patients WHERE disease = 'diabetes' is taking 5 seconds. How do you fix it?"</div>
+      <div class="interview-a">
+        "First I'd run EXPLAIN ANALYZE to see if it's doing a Sequential Scan (no index) or Index Scan. If sequential, I'd add CREATE INDEX idx_disease ON patients(disease). If the query only needs specific columns like disease and age, I'd use a covering index CREATE INDEX idx_covering ON patients(disease, age) — this enables Index Only Scan, eliminating heap fetch entirely. Finally, I'd check if VACUUM has run recently, as stale statistics can cause poor query plans."
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- PART 5: Advanced Additions -->
+  <section class="section" id="advanced">
+    <div class="section-header">
+      <div class="section-num">05</div>
+      <div class="section-title-wrap">
+        <div class="section-label">Principal Engineer Additions</div>
+        <h2>Deeper Insights</h2>
+      </div>
+    </div>
+
+    <p>Ye concepts <strong style="color:#fff">API wrapper</strong> aur <strong style="color:var(--accent)">System Architect</strong> ke beech ka farq hain. FAANG interviews mein yehi differentiate karta hai.</p>
+
+    <!-- Tombstones -->
+    <h3>Tombstones — LSM Deletes</h3>
+
+    <p>Tune socha hoga — "LSM mein delete kaise hota hai? SSTables toh immutable hain!" Yehi Tombstone concept hai.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Delete in LSM — Tombstone Flow</span>
+        <div class="code-dots"><span></span><span></span><span></span></div>
+      </div>
+      <pre><span class="c-comment">-- Patient record delete karna hai</span>
+<span class="c-bad">DELETE FROM patients WHERE patient_id = 001;</span>
+
+<span class="c-comment">-- SSTable immutable hai — direct delete impossible!</span>
+<span class="c-comment">-- Solution: Write a Tombstone marker</span>
+
+Memtable: <span class="c-bad">patient_001 → [TOMBSTONE]</span>   ← special delete marker
+WAL:      <span class="c-bad">[ts] patient_001 → DELETED</span>
+
+<span class="c-comment">-- Flush hoti hai SSTable mein:</span>
+SSTable_5: <span class="c-bad">patient_001 → [TOMBSTONE]</span>
+SSTable_1: <span class="c-val">patient_001 → {bp: "120/80"}</span>   ← old record still exists!
+
+<span class="c-comment">-- Read karo abhi:</span>
+Search newest first → SSTable_5 mein TOMBSTONE mila
+→ <span class="c-good">Return: record does not exist ✅</span>
+→ SSTable_1 tak jaane ki zarurat nahi
+
+<span class="c-comment">-- Compaction ke baad:</span>
+SSTable_5 (tombstone) + SSTable_1 (old record)
+→ Compaction engine: tombstone dekha → <span class="c-good">dono discard! ✅</span>
+→ Data permanently gone</pre>
+    </div>
+
+    <div class="callout warning">
+      <div class="callout-title">⚠️ GDPR / Data Compliance Problem</div>
+      <p>Tombstone compaction hone tak data disk pe rehta hai — kaafi time lag sakta hai. GDPR "right to be forgotten" compliance ke liye ye ek real challenge hai. Specialist storage engines is problem ko fast propagation se solve karte hain.</p>
+    </div>
+
+    <!-- B+ Tree -->
+    <h3>B+ Tree vs B-Tree — Postgres Internals</h3>
+
+    <p>Postgres aur MySQL (InnoDB) actually <strong style="color:#fff">B+ Tree</strong> use karte hain — regular B-Tree nahi. Difference critical hai.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">B-Tree vs B+ Tree Structure</span>
+        <div class="code-dots"><span></span><span></span><span></span></div>
+      </div>
+      <pre><span class="c-comment">-- B-Tree: data internal nodes mein bhi hota hai</span>
+         [<span class="c-bad">200:data</span>, <span class="c-bad">400:data</span>]        ← Root (data yahan bhi!)
+        /          \
+[<span class="c-bad">100:data</span>]    [<span class="c-bad">300:data</span>]       ← Internal (data yahan bhi!)
+    |                |
+ [leaf]           [leaf]
+
+<span class="c-comment">-- B+ Tree: data ONLY in leaf nodes</span>
+         [<span class="c-val">200</span>, <span class="c-val">400</span>]               ← Root (sirf keys, no data)
+        /          \
+  [<span class="c-val">100</span>, <span class="c-val">150</span>]    [<span class="c-val">300</span>, <span class="c-val">350</span>]     ← Internal (sirf keys!)
+      |                |
+[<span class="c-good">data,data</span>]   [<span class="c-good">data,data</span>]    ← Leaf nodes (ALL data here)
+     ↔ linked list ↔              ← Leaf nodes linked! Range scans fast!
+
+<span class="c-comment">-- Why B+ Tree wins:</span>
+Internal nodes mein sirf keys → <span class="c-good">zyada keys fit hoti hain per page</span>
+Higher fan-out → <span class="c-good">shallower tree</span>
+3-level B+ Tree → <span class="c-good">millions of records, only 3 disk seeks!</span>
+Range scans → <span class="c-good">leaf nodes linked list → sequential scan easy ✅</span></pre>
+    </div>
+
+    <div class="card-grid">
+      <div class="card blue">
+        <div class="card-icon">🌳</div>
+        <div class="card-title">B-Tree</div>
+        <div class="card-body">Data internal + leaf nodes mein. Internal nodes bade hote hain. Lower fan-out. Deeper tree. Range scans slow.</div>
+      </div>
+      <div class="card green">
+        <div class="card-icon">🚀</div>
+        <div class="card-title">B+ Tree (Postgres)</div>
+        <div class="card-body">Data sirf leaf nodes mein. Internal nodes compact — sirf keys. Higher fan-out → shallower tree. Leaf nodes linked → range scans blazing fast!</div>
+      </div>
+    </div>
+
+    <!-- RUM Conjecture -->
+    <h3>RUM Conjecture — The Architect's Lens</h3>
+
+    <p>Principal Engineer interview mein ye concept bologe toh interviewer impress ho jayega. <strong style="color:#fff">Ek storage engine sirf 2 hi optimize kar sakta hai — teeno nahi.</strong></p>
+
+    <div class="flow">
+      <div class="flow-title">RUM — Read, Update, Memory</div>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="flow-dot" style="border-color: var(--accent); color: var(--accent)">R</div>
+          <div class="flow-content">
+            <div class="flow-label">Read Overhead</div>
+            <div class="flow-desc">Kitne extra reads karne padte hain data dhundne ke liye. B-Tree → low (O log n). LSM → higher (multiple SSTables).</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-dot" style="border-color: var(--accent4); color: var(--accent4)">U</div>
+          <div class="flow-content">
+            <div class="flow-label">Update (Write) Overhead</div>
+            <div class="flow-desc">Write amplification — kitne actual disk writes ek logical write se hote hain. LSM → low. B-Tree → high (page splits + WAL).</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-dot" style="border-color: var(--accent3); color: var(--accent3)">M</div>
+          <div class="flow-content">
+            <div class="flow-label">Memory/Space Overhead</div>
+            <div class="flow-desc">Extra disk/RAM usage. LSM → extra space during compaction. B-Tree → fragmentation over time.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <table class="compare-table">
+      <tr>
+        <th>Engine</th>
+        <th>Optimized For</th>
+        <th>Sacrifices</th>
+        <th>MedSearch Fit</th>
+      </tr>
+      <tr>
+        <td style="color:#fff">B-Tree (Postgres)</td>
+        <td><span class="tag-good">Read (R)</span></td>
+        <td><span class="tag-bad">Write Amplification (U)</span></td>
+        <td><span class="tag-good">✅ Read-heavy history queries</span></td>
+      </tr>
+      <tr>
+        <td style="color:#fff">LSM (Cassandra)</td>
+        <td><span class="tag-good">Write (U)</span></td>
+        <td><span class="tag-bad">Read + Space (R+M)</span></td>
+        <td><span class="tag-med">⚡ Only at massive scale</span></td>
+      </tr>
+      <tr>
+        <td style="color:#fff">In-Memory (Redis)</td>
+        <td><span class="tag-good">Read + Write (R+U)</span></td>
+        <td><span class="tag-bad">Memory Cost (M)</span></td>
+        <td><span class="tag-good">✅ ICU hot patient cache</span></td>
+      </tr>
+    </table>
+
+    <div class="analogy">
+      <strong>RUM in one line:</strong> "You can make a storage engine fast to read, fast to write, or space-efficient — pick any two. Physics doesn't allow all three."
+    </div>
+
+    <!-- INCLUDE clause -->
+    <h3>INCLUDE Clause — Smarter Covering Index</h3>
+
+    <p>Postgres 11+ mein ek cleaner way hai covering index banane ka — full composite index se better!</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">INCLUDE vs Full Composite Index</span>
+        <div class="code-dots"><span></span><span></span><span></span></div>
+      </div>
+      <pre><span class="c-comment">-- Option 1: Full composite index (all columns sorted)</span>
+<span class="c-purple">CREATE INDEX</span> idx_composite <span class="c-purple">ON</span> patients(disease, age, last_visit_date);
+<span class="c-comment">-- Problem: age aur last_visit_date bhi sort hote hain</span>
+<span class="c-comment">-- Larger index size, slower writes 😬</span>
+
+<span class="c-comment">-- Option 2: INCLUDE clause (Postgres 11+)</span>
+<span class="c-purple">CREATE INDEX</span> idx_patient_lookup
+<span class="c-purple">ON</span> patients (disease)
+<span class="c-purple">INCLUDE</span> (age, last_visit_date);
+
+<span class="c-comment">-- Internal structure:</span>
+Internal nodes: <span class="c-val">disease</span> only (sorted, compact)
+Leaf nodes:     <span class="c-val">disease</span> + <span class="c-good">age</span> + <span class="c-good">last_visit_date</span> (just carried along)
+
+<span class="c-comment">-- Query benefit:</span>
+<span class="c-purple">SELECT</span> patient_id, age, last_visit_date
+<span class="c-purple">FROM</span> patients <span class="c-purple">WHERE</span> disease = 'diabetes';
+→ <span class="c-good">Index Only Scan ✅ (no heap fetch)</span>
+→ <span class="c-good">Smaller index than full composite ✅</span>
+→ <span class="c-good">Only disease column is sorted ✅</span></pre>
+    </div>
+
+    <div class="callout success">
+      <div class="callout-title">✅ When to use INCLUDE vs Composite</div>
+      <p>Agar extra columns sirf <strong>SELECT list</strong> mein hain (filter nahi karte) → <code style="color:var(--accent)">INCLUDE</code>. Agar un columns pe bhi <strong>WHERE/ORDER BY</strong> lagta hai → full composite index.</p>
+    </div>
+
+    <!-- Peak Load -->
+    <h3>Peak Load Reality — 12 writes/sec is Wrong!</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Traffic Distribution — MedSearch</span>
+        <div class="code-dots"><span></span><span></span><span></span></div>
+      </div>
+      <pre><span class="c-comment">-- Naive calculation (wrong!)</span>
+1M writes/day ÷ 86400 seconds = <span class="c-bad">~12 writes/sec (average)</span>
+
+<span class="c-comment">-- Reality: doctors work 9AM - 5PM</span>
+Night (11PM-7AM):  <span class="c-val">~2 writes/sec</span>    (emergency only)
+Morning (9AM-12PM):<span class="c-warn">~80 writes/sec</span>   (ward rounds)
+Peak (10AM-11AM):  <span class="c-bad">~120 writes/sec</span>  (everyone logs at once!)
+Afternoon:         <span class="c-val">~40 writes/sec</span>
+
+<span class="c-comment">-- But still — Postgres handles this easily</span>
+Postgres capacity: <span class="c-good">10,000+ writes/sec on decent hardware ✅</span>
+OCI Block Volume:  <span class="c-good">handles 120 writes/sec with ease ✅</span>
+
+<span class="c-comment">-- Conclusion unchanged, but reasoning is better:</span>
+<span class="c-comment">-- "Peak load ~120 writes/sec — Postgres handles 10,000+"</span>
+<span class="c-comment">-- This is architect-level thinking ✅</span></pre>
+    </div>
+
+    <div class="interview-box">
+      <div class="interview-title">Interview Answer — RUM Conjecture pe</div>
+      <div class="interview-q">"Why can't we just build a storage engine that's fast for reads, writes, AND space-efficient?"</div>
+      <div class="interview-a">
+        "This is actually formalized as the RUM Conjecture — you can optimize any two of Read overhead, Update overhead, and Memory overhead, but not all three simultaneously. B-Trees optimize reads at the cost of write amplification. LSM-trees optimize writes at the cost of read amplification and space during compaction. In-memory databases optimize both reads and writes but sacrifice memory cost. For MedSearch, knowing our peak load is ~120 writes/sec with frequent reads of the same patient records, Postgres B-tree with a hot buffer pool is the right trade-off — we're in the read-optimize zone of RUM."
+      </div>
+    </div>
+
+  </section>
+
+  <hr class="divider">
+
+  <!-- PART 6: Column-Oriented Storage -->
+  <section class="section" id="columnar">
+    <div class="section-header">
+      <div class="section-num">06</div>
+      <div class="section-title-wrap">
+        <div class="section-label">Part 6 — Analytics Path (OLAP)</div>
+        <h2>Column-Oriented Storage</h2>
+      </div>
+    </div>
+
+    <p>MedSearch hospital management needs an <strong style="color:#fff">analytics dashboard</strong> — bed occupancy trends, disease spread, monthly diagnosis counts. Ye queries <strong style="color:var(--accent)">millions of rows scan karti hain</strong> but sirf 3-4 columns access karti hain. Row storage yahan fail ho jaata hai.</p>
+
+    <h3>Row Storage vs Column Storage — The Core Problem</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Analytics Query — MedSearch Dashboard</span>
+        <div class="code-dots"><span></span><span></span><span></span></div>
+      </div>
+      <pre><span class="c-comment">-- Hospital wants: disease trends by month in 2024</span>
+<span class="c-purple">SELECT</span> month, disease, <span class="c-purple">COUNT</span>(*) as cases
+<span class="c-purple">FROM</span> fact_admissions
+<span class="c-purple">WHERE</span> year = 2024
+<span class="c-purple">GROUP BY</span> month, disease;
+
+<span class="c-comment">-- fact_admissions has 100 columns:</span>
+<span class="c-comment">-- patient_id, age, gender, blood_type, bp, spo2,</span>
+<span class="c-comment">-- doctor_id, ward_id, bed_id, admission_date,</span>
+<span class="c-comment">-- discharge_date, diagnosis, medicine_1...medicine_50, ...</span>
+
+<span class="c-comment">-- Row storage problem:</span>
+<span class="c-bad">Load ALL 100 columns for EVERY row → 95 columns wasted! 😱</span>
+<span class="c-bad">10M rows × 100 cols = 1GB+ scanned for 2 column query!</span>
+
+<span class="c-comment">-- Column storage solution:</span>
+<span class="c-good">Load ONLY month + disease columns → 99% less I/O! ✅</span></pre>
+    </div>
+
+    <h3>How Column Storage Works</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Row vs Column — Physical Layout on Disk</span>
+        <div class="code-dots"><span></span><span></span><span></span></div>
+      </div>
+      <pre><span class="c-comment">-- ROW storage (Postgres OLTP)</span>
+Row 1: [patient_001, 45, M, diabetes,  ward_A, 2024-01-15, ...]
+Row 2: [patient_002, 32, F, typhoid,   ward_B, 2024-01-16, ...]
+Row 3: [patient_003, 67, M, hypertension, ward_A, 2024-01-17, ...]
+<span class="c-comment">-- All 100 cols stored together per row</span>
+
+<span class="c-comment">-- COLUMN storage (DuckDB / Snowflake / Parquet)</span>
+patient_id col: [patient_001, patient_002, patient_003, ...]
+age col:        [45, 32, 67, ...]
+disease col:    [diabetes, typhoid, hypertension, ...]  ← only this loaded!
+month col:      [Jan, Jan, Jan, ...]                    ← and this!
+ward_id col:    [ward_A, ward_B, ward_A, ...]
+
+<span class="c-comment">-- CRITICAL: Same row order maintained across all columns!</span>
+<span class="c-comment">-- Row 3 = position 3 in EVERY column file</span>
+<span class="c-good">Reconstruct row: take 3rd value from each column ✅</span></pre>
+    </div>
+
+    <div class="card-grid">
+      <div class="card red">
+        <div class="card-icon">📦</div>
+        <div class="card-title">Row Storage (OLTP)</div>
+        <div class="card-body">Postgres, Oracle, MySQL. Entire row stored together. Fast for single record reads (patient_001 ki full history). Bad for analytics scans.</div>
+      </div>
+      <div class="card green">
+        <div class="card-icon">📊</div>
+        <div class="card-title">Column Storage (OLAP)</div>
+        <div class="card-body">DuckDB, Snowflake, Parquet, BigQuery. Each column stored separately. Only needed columns loaded. Bad for single row lookups.</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="callout-title">MedSearch Architecture</div>
+      <p><strong style="color:#fff">OLTP (Postgres)</strong> → doctor reads/writes patient records. <strong style="color:var(--accent)">OLAP (DuckDB/Snowflake)</strong> → hospital analytics dashboard. ETL ya CDC se data move hota hai OLTP → OLAP.</p>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- PART 7: Bitmap Compression -->
+  <section class="section" id="bitmap">
+    <div class="section-header">
+      <div class="section-num">07</div>
+      <div class="section-title-wrap">
+        <div class="section-label">Part 7 — Compression</div>
+        <h2>Bitmap Encoding & Column Compression</h2>
+      </div>
+    </div>
+
+    <p>Column storage ke saath ek bonus aata hai — <strong style="color:#fff">columns compress bahut achhi tarah hoti hain.</strong> Kyunki ek column mein values repetitive hoti hain. MedSearch mein disease column mein sirf ~50 distinct diseases hain but 10M rows hain!</p>
+
+    <h3>Bitmap Encoding — How It Works</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Disease Column → Bitmap Encoding</span>
+        <div class="code-dots"><span></span><span></span><span></span></div>
+      </div>
+      <pre><span class="c-comment">-- Original disease column (10M rows, 50 distinct values)</span>
+Row 1: diabetes
+Row 2: typhoid
+Row 3: hypertension
+Row 4: diabetes
+Row 5: malaria
+...
+
+<span class="c-comment">-- Bitmap encoding: 1 bitmap per distinct value</span>
+diabetes_bitmap:     [<span class="c-good">1</span>, 0, 0, <span class="c-good">1</span>, 0, <span class="c-good">1</span>, 0, 0, ...]
+typhoid_bitmap:      [0, <span class="c-good">1</span>, 0, 0, 0, 0, <span class="c-good">1</span>, 0, ...]
+hypertension_bitmap: [0, 0, <span class="c-good">1</span>, 0, 0, 0, 0, <span class="c-good">1</span>, ...]
+malaria_bitmap:      [0, 0, 0, 0, <span class="c-good">1</span>, 0, 0, 0, ...]
+
+<span class="c-comment">-- Run-Length Encoding (RLE) — compress sparse bitmaps</span>
+diabetes_bitmap raw:  [1,0,0,1,0,1,0,0,0,0,1,0,0,0,0,0,1...]
+diabetes_bitmap RLE:  "1, 2zeros, 1, 1zero, 1, 4zeros, 1, 5zeros, 1..."
+<span class="c-good">Storage: 10M bits → few KB! 🔥</span></pre>
+    </div>
+
+    <h3>Bitmap Queries — Blazing Fast</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Analytics Queries via Bitwise Operations</span>
+        <div class="code-dots"><span></span><span></span><span></span></div>
+      </div>
+      <pre><span class="c-comment">-- Query 1: WHERE disease IN ('diabetes', 'hypertension')</span>
+diabetes_bitmap:     [1, 0, 0, 1, 0, 1, 0, 1, ...]
+hypertension_bitmap: [0, 0, 1, 0, 0, 0, 0, 1, ...]
+                      <span class="c-good">OR operation ↓</span>
+result_bitmap:       [<span class="c-good">1, 0, 1, 1, 0, 1, 0, 1,</span> ...]  ← rows to include
+<span class="c-good">CPU bitwise OR: extremely fast, SIMD parallel! ✅</span>
+
+<span class="c-comment">-- Query 2: WHERE disease = 'diabetes' AND ward = 'ICU'</span>
+diabetes_bitmap: [1, 0, 0, 1, 0, 1, ...]
+icu_ward_bitmap: [1, 1, 0, 0, 0, 1, ...]
+                  <span class="c-good">AND operation ↓</span>
+result_bitmap:   [<span class="c-good">1, 0, 0, 0, 0, 1,</span> ...]  ← only ICU diabetes patients!
+<span class="c-good">No table scan — just bitmap AND! ✅</span></pre>
+    </div>
+
+    <h3>Sort Order — Compression Superpower</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Sorted Column = Much Better Compression</span>
+        <div class="code-dots"><span></span><span></span><span></span></div>
+      </div>
+      <pre><span class="c-comment">-- Unsorted disease column (bad compression)</span>
+[diabetes, typhoid, diabetes, malaria, hypertension, diabetes, typhoid...]
+RLE: "1,1,1,1,1,1,1..." → barely compresses 😬
+
+<span class="c-comment">-- Sorted by disease (great compression!)</span>
+[diabetes, diabetes, diabetes, ...(500K rows)...,
+ hypertension, hypertension, ...(300K rows)...,
+ malaria, malaria, ...(200K rows)...]
+RLE: <span class="c-good">"500000 diabetes, 300000 hypertension, 200000 malaria..."</span>
+<span class="c-good">Tiny! Few bytes represent millions of rows! 🔥</span>
+
+<span class="c-comment">-- MedSearch sort key strategy:</span>
+First sort key:  admission_date   ← most queries filter by date
+Second sort key: disease          ← group by disease within date
+<span class="c-good">Both compress well + queries ultra-fast ✅</span></pre>
+    </div>
+
+    <div class="callout success">
+      <div class="callout-title">✅ Real World Numbers</div>
+      <p>Snowflake aur Parquet typically <strong style="color:#fff">5-10x compression</strong> achieve karte hain column storage + bitmap encoding se. 100GB raw data → 10-20GB on disk. Same data, 10x cheaper storage!</p>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- PART 8: Vectorized Execution + Materialized Views -->
+  <section class="section" id="vectorized">
+    <div class="section-header">
+      <div class="section-num">08</div>
+      <div class="section-title-wrap">
+        <div class="section-label">Part 8 — Query Execution</div>
+        <h2>Vectorized Execution & Materialized Views</h2>
+      </div>
+    </div>
+
+    <p>Column data disk se load ho gayi. Ab CPU pe fast process karna hai. <strong style="color:#fff">Row-by-row processing bahut slow hai</strong> for millions of rows. Dono modern approaches — vectorized execution aur query compilation — isko solve karte hain.</p>
+
+    <h3>Row-by-Row vs Vectorized Processing</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Row-by-Row (slow) vs Vectorized (fast)</span>
+        <div class="code-dots"><span></span><span></span><span></span></div>
+      </div>
+      <pre><span class="c-comment">-- Row-by-row (naive interpreter approach)</span>
+<span class="c-bad">for each row in 10M rows:</span>
+    <span class="c-bad">read disease value</span>
+    <span class="c-bad">check if query.disease matches</span>     ← function call overhead
+    <span class="c-bad">read month value</span>
+    <span class="c-bad">check if query.year == 2024</span>         ← branch misprediction
+    <span class="c-bad">update counter</span>
+<span class="c-bad">Total: 10M iterations, 10M function calls 😱</span>
+
+<span class="c-comment">-- Vectorized processing (DuckDB / Snowflake approach)</span>
+<span class="c-good">Load disease column BATCH: [1024 values at once]</span>
+<span class="c-good">Apply equality operator to ENTIRE batch → bitmap result</span>
+<span class="c-good">Load month column BATCH: [1024 values]</span>
+<span class="c-good">Apply year filter to ENTIRE batch → bitmap result</span>
+<span class="c-good">AND both bitmaps → matching rows</span>
+<span class="c-good">Total: 10M/1024 = ~10K operations 🔥</span>
+
+<span class="c-comment">-- SIMD instructions: CPU processes 8-16 values in ONE clock cycle!</span>
+<span class="c-good">Modern CPUs: 256-bit AVX registers = 8 int32 values parallel ✅</span></pre>
+    </div>
+
+    <div class="card-grid">
+      <div class="card blue">
+        <div class="card-icon">⚡</div>
+        <div class="card-title">Vectorized Execution</div>
+        <div class="card-body">Process batch of 1024+ values at once. Uses SIMD CPU instructions. DuckDB, Snowflake, Velox. Interpreted but batch-optimized. Easier to implement.</div>
+      </div>
+      <div class="card purple">
+        <div class="card-icon">🔧</div>
+        <div class="card-title">Query Compilation (JIT)</div>
+        <div class="card-body">SQL → machine code via LLVM. No interpretation overhead. Hyper DB, SingleStore. Complex to implement but maximum performance on specific queries.</div>
+      </div>
+    </div>
+
+    <h3>Materialized Views & OLAP Cubes</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">MedSearch Dashboard — Materialized View Strategy</span>
+        <div class="code-dots"><span></span><span></span><span></span></div>
+      </div>
+      <pre><span class="c-comment">-- Hospital dashboard queries same aggregates daily</span>
+<span class="c-bad">-- Raw query: scans 10M rows every time 😬</span>
+<span class="c-purple">SELECT</span> month, disease, ward, <span class="c-purple">COUNT</span>(*), <span class="c-purple">AVG</span>(stay_days)
+<span class="c-purple">FROM</span> fact_admissions
+<span class="c-purple">WHERE</span> year = 2024
+<span class="c-purple">GROUP BY</span> month, disease, ward;
+
+<span class="c-comment">-- Materialized view: precompute and store result</span>
+<span class="c-purple">CREATE MATERIALIZED VIEW</span> mv_monthly_disease_summary <span class="c-purple">AS</span>
+<span class="c-purple">SELECT</span> month, disease, ward, <span class="c-purple">COUNT</span>(*) as cases, <span class="c-purple">AVG</span>(stay_days) as avg_stay
+<span class="c-purple">FROM</span> fact_admissions
+<span class="c-purple">GROUP BY</span> month, disease, ward;
+
+<span class="c-comment">-- Dashboard query now:</span>
+<span class="c-purple">SELECT</span> * <span class="c-purple">FROM</span> mv_monthly_disease_summary
+<span class="c-purple">WHERE</span> month = 'January';
+<span class="c-good">→ Reads precomputed result, no scan! Sub-millisecond! ✅</span>
+
+<span class="c-comment">-- OLAP Cube: multi-dimensional precomputed aggregates</span>
+Dimensions: [date × disease × ward × doctor]
+Each cell:  COUNT(*), AVG(stay), SUM(cost)
+<span class="c-good">Any slice query → instant! ✅</span>
+<span class="c-bad">Tradeoff: can't query dimensions not in cube 😬</span></pre>
+    </div>
+
+    <div class="callout warning">
+      <div class="callout-title">⚠️ Materialized View Tradeoff</div>
+      <p>Materialized view stale ho jaati hai jab underlying data change hoti hai. OLAP mein typically <strong>nightly refresh</strong> acceptable hai. Real-time analytics ke liye Apache Druid ya Pinot better hain — ye streaming data pe live materialized views maintain karte hain.</p>
+    </div>
+
+    <div class="interview-box">
+      <div class="interview-title">Interview Answer — "Analytics dashboard slow hai"</div>
+      <div class="interview-q">"Your hospital dashboard takes 30 seconds to load disease trends. How do you fix it?"</div>
+      <div class="interview-a">
+        "Three-layer approach. First, move analytics to a columnar store like DuckDB or Snowflake — row-oriented Postgres scans all 100 columns for a 3-column query. Second, create materialized views for the most common dashboard queries — precompute monthly aggregates so dashboard reads pre-aggregated results instead of scanning 10M rows. Third, sort the columnar data by admission_date as primary key and disease as secondary — this maximizes bitmap compression and allows the query engine to skip entire blocks outside the date range using min/max metadata."
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- PART 9: Full-Text Search -->
+  <section class="section" id="fulltext">
+    <div class="section-header">
+      <div class="section-num">09</div>
+      <div class="section-title-wrap">
+        <div class="section-label">Part 9 — Search Layer</div>
+        <h2>Full-Text Search & Inverted Index</h2>
+      </div>
+    </div>
+
+    <p>Doctor MedSearch pe search karta hai: <strong style="color:var(--accent)">"find all patients with chest pain and shortness of breath"</strong>. Ye clinical notes mein anywhere appear ho sakta hai. B-tree ya column index yahan kaam nahi karega — <strong style="color:#fff">Inverted Index chahiye.</strong></p>
+
+    <h3>Inverted Index — Core Concept</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Inverted Index — MedSearch Clinical Notes</span>
+        <div class="code-dots"><span></span><span></span><span></span></div>
+      </div>
+      <pre><span class="c-comment">-- Clinical notes documents</span>
+Doc 1 (patient_001): "Patient has chest pain and shortness of breath"
+Doc 2 (patient_002): "Severe chest pain, ECG shows ST elevation"
+Doc 3 (patient_003): "Shortness of breath, mild fever, cough"
+Doc 4 (patient_004): "Headache and fever, no chest involvement"
+
+<span class="c-comment">-- Inverted Index structure</span>
+<span class="c-comment">-- term → postings list (doc IDs that contain the term)</span>
+"chest"      → [<span class="c-good">Doc1, Doc2</span>]
+"pain"       → [<span class="c-good">Doc1, Doc2</span>]
+"shortness"  → [<span class="c-good">Doc1, Doc3</span>]
+"breath"     → [<span class="c-good">Doc1, Doc3</span>]
+"fever"      → [<span class="c-good">Doc3, Doc4</span>]
+"ECG"        → [<span class="c-good">Doc2</span>]
+
+<span class="c-comment">-- Query: "chest pain AND shortness of breath"</span>
+chest_bitmap:     [<span class="c-good">1</span>, <span class="c-good">1</span>, 0, 0]
+shortness_bitmap: [<span class="c-good">1</span>, 0, <span class="c-good">1</span>, 0]
+                   AND ↓
+result_bitmap:    [<span class="c-good">1</span>, 0, 0, 0]  → <span class="c-good">Doc1 (patient_001) ✅</span></pre>
+    </div>
+
+    <h3>Lucene Internals — SSTable Connection</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Lucene (Elasticsearch backend) = LSM-like structure!</span>
+        <div class="code-dots"><span></span><span></span><span></span></div>
+      </div>
+      <pre><span class="c-comment">-- Lucene stores inverted index in SSTable-like sorted files!</span>
+<span class="c-comment">-- Same pattern as LSM trees — full circle! 🔄</span>
+
+Segment 1 (newest): {chest→[D1,D2], pain→[D1,D2], ...}
+Segment 2:          {fever→[D3,D4], cough→[D3], ...}
+Segment 3 (oldest): {headache→[D4], ...}
+
+<span class="c-comment">-- Segments merge in background (like SSTable compaction)</span>
+<span class="c-good">New docs → in-memory buffer → flush to segment → merge ✅</span>
+
+<span class="c-comment">-- Fuzzy search (typo handling)</span>
+Query: "chst pain"  ← typo!
+Levenshtein automaton: edit_distance ≤ 1
+Matches: <span class="c-good">"chest" (1 char added) → found! ✅</span>
+
+<span class="c-comment">-- Postgres GIN index = same inverted index approach</span>
+<span class="c-purple">CREATE INDEX</span> gin_notes <span class="c-purple">ON</span> patients <span class="c-purple">USING GIN</span>(clinical_notes);
+<span class="c-good">Full text search in Postgres without Elasticsearch! ✅</span></pre>
+    </div>
+
+    <div class="analogy">
+      <strong>Analogy:</strong> Inverted index = book ka index page. Book mein "photosynthesis" dhundna hai → index pe jaao → page 45, 67, 89 → seedha wahan jaao. Poori book scan karne ki zarurat nahi!
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- PART 10: Vector Embeddings -->
+  <section class="section" id="vectors">
+    <div class="section-header">
+      <div class="section-num">10</div>
+      <div class="section-title-wrap">
+        <div class="section-label">Part 10 — GenAI + Search</div>
+        <h2>Vector Embeddings & Semantic Search</h2>
+      </div>
+    </div>
+
+    <p>MedSearch ka last feature — <strong style="color:var(--accent)">"Find ECG cases similar to this patient"</strong>. Keyword search kaam nahi karega — same symptom alag words mein describe hoti hai. <strong style="color:#fff">Vector embeddings + HNSW/IVF indexes</strong> yahan zaroori hain. Aur bhai, ye tera ECG deep learning project se directly connect karta hai! 🔥</p>
+
+    <h3>Vector Embeddings — What Are They</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">ECG → Vector Embedding → Similarity Search</span>
+        <div class="code-dots"><span></span><span></span><span></span></div>
+      </div>
+      <pre><span class="c-comment">-- Embedding model converts ECG/text → float vector</span>
+Patient A ECG: [0.12, 0.87, 0.34, 0.56, ..., 0.23]  ← 1536 floats
+Patient B ECG: [0.13, 0.85, 0.36, 0.54, ..., 0.24]  ← similar pattern!
+Patient C ECG: [0.82, 0.11, 0.91, 0.07, ..., 0.88]  ← very different
+
+<span class="c-comment">-- Distance functions</span>
+Cosine similarity(A, B) = <span class="c-good">0.98</span>  ← very similar! ✅
+Cosine similarity(A, C) = <span class="c-bad">0.12</span>  ← very different
+
+<span class="c-comment">-- Clinical notes semantic search</span>
+"chest tightness" → embedding: [0.45, 0.23, ...]
+"chest pain"      → embedding: [0.44, 0.24, ...]  ← close! same meaning
+"headache"        → embedding: [0.91, 0.67, ...]  ← far! different meaning
+
+<span class="c-comment">-- This is how RAG works in your GenAI platform!</span>
+<span class="c-good">Query → embed → find similar docs → feed to LLM ✅</span></pre>
+    </div>
+
+    <h3>Vector Indexes — IVF vs HNSW</h3>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">IVF vs HNSW — When to Use What</span>
+        <div class="code-dots"><span></span><span></span><span></span></div>
+      </div>
+      <pre><span class="c-comment">-- Flat Index (baseline — too slow for production)</span>
+Query ECG → compare with ALL 1M stored ECGs → find nearest
+<span class="c-bad">O(n) comparisons — 1M × 1536 floats = too slow! 😱</span>
+
+<span class="c-comment">-- IVF (Inverted File Index) — cluster-based</span>
+Training: cluster 1M ECGs into 1000 centroids (k-means)
+Query:    find nearest 5 centroids → search only those clusters
+<span class="c-good">1M → search ~5000 vectors instead ✅ (100x faster)</span>
+<span class="c-bad">Tradeoff: approximate — query ECG might be near cluster boundary 😬</span>
+Use when: <span class="c-val">large dataset, batch queries, can tolerate ~95% recall</span>
+
+<span class="c-comment">-- HNSW (Hierarchical Navigable Small World)</span>
+Layer 2 (sparse):  [A ——— E]              ← few nodes, long jumps
+Layer 1:           [A—B—C—D—E—F]          ← more nodes
+Layer 0 (dense):   [A-B-C-D-E-F-G-H-I-J] ← all nodes, short edges
+
+Query: start at Layer 2 → find nearest → drop to Layer 1
+       → refine → drop to Layer 0 → exact local nearest ✅
+<span class="c-good">O(log n) approximate search! ✅</span>
+Use when: <span class="c-val">real-time queries, need high recall (98%+), medium dataset</span>
+
+<span class="c-comment">-- Postgres pgvector — both supported!</span>
+<span class="c-purple">CREATE INDEX</span> ON ecg_embeddings <span class="c-purple">USING hnsw</span> (embedding vector_cosine_ops);
+<span class="c-purple">CREATE INDEX</span> ON ecg_embeddings <span class="c-purple">USING ivfflat</span> (embedding vector_cosine_ops)
+  <span class="c-purple">WITH</span> (lists = 100);
+<span class="c-good">pgvector = vector search inside Postgres — no separate DB needed! ✅</span></pre>
+    </div>
+
+    <table class="compare-table">
+      <tr>
+        <th>Index Type</th>
+        <th>Speed</th>
+        <th>Accuracy</th>
+        <th>Memory</th>
+        <th>MedSearch Use Case</th>
+      </tr>
+      <tr>
+        <td style="color:#fff">Flat</td>
+        <td><span class="tag-bad">😬 O(n)</span></td>
+        <td><span class="tag-good">100% exact</span></td>
+        <td><span class="tag-good">Low</span></td>
+        <td>Testing only, &lt;10K vectors</td>
+      </tr>
+      <tr>
+        <td style="color:#fff">IVF</td>
+        <td><span class="tag-good">✅ Fast</span></td>
+        <td><span class="tag-med">~95% recall</span></td>
+        <td><span class="tag-good">Low</span></td>
+        <td>Large ECG archive, batch search</td>
+      </tr>
+      <tr>
+        <td style="color:#fff">HNSW</td>
+        <td><span class="tag-good">✅ Fastest</span></td>
+        <td><span class="tag-good">~98% recall</span></td>
+        <td><span class="tag-bad">High (graph in RAM)</span></td>
+        <td>Real-time similar case finder</td>
+      </tr>
+    </table>
+
+    <div class="callout">
+      <div class="callout-title">🔥 Tera ECG Project Connection</div>
+      <p>Tera heart attack detection system jo ECG data + deep learning use karta hai — wahan embedding model ECG signals ko vectors mein convert karega. pgvector + HNSW index se similar historical ECG cases dhundh sakte hain real-time mein. Ye exactly production-grade RAG architecture hai!</p>
+    </div>
+
+    <div class="interview-box">
+      <div class="interview-title">Interview Answer — "Semantic Search kaise implement karoge?"</div>
+      <div class="interview-q">"Design a system to find similar patient cases based on clinical description, not exact keywords."</div>
+      <div class="interview-a">
+        "I'd use vector embeddings with pgvector. When a clinical note is written, pass it through a medical embedding model (like BioBERT or a fine-tuned model) to generate a 768-1536 dimensional vector. Store this vector alongside the patient record. For similarity search, use HNSW index in pgvector — it gives O(log n) approximate nearest neighbor search with ~98% recall. The query flow: doctor writes description → embed it → vector similarity search → return top-K similar historical cases. For my ECG project specifically, the ECG signal itself becomes the embedding input, enabling pattern-based case matching beyond keyword search."
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- Final Summary -->
+  <section class="section">
+    <div class="summary">
+      <div class="summary-title">📋 Complete Summary — All 10 Parts</div>
+      <ul class="summary-list">
+        <li>LSM: Write → WAL + Memtable (sorted RAM) → SSTable (immutable) → Compaction. Tombstone = delete marker</li>
+        <li>Bloom filter = guaranteed "not present" check. No false negatives, false positives OK</li>
+        <li>Postgres uses B+ Tree — data only in leaf nodes, leaf nodes linked for range scans</li>
+        <li>RUM Conjecture: Read/Update/Memory — sirf 2 optimize possible, not all 3</li>
+        <li>Write amplification: B-Tree high (page splits), LSM lower (amortized compaction)</li>
+        <li>MedSearch peak ~120 writes/sec → Postgres 10,000+ capacity → no Cassandra needed</li>
+        <li>Covering index + INCLUDE clause = index only scan, no heap fetch</li>
+        <li>Column storage (OLAP): store each column separately → load only needed columns → 10-100x less I/O</li>
+        <li>Bitmap encoding + RLE: sparse column data → tiny representation → bitwise AND/OR for queries</li>
+        <li>Vectorized execution: process 1024 values in batch with SIMD → 100x faster than row-by-row</li>
+        <li>Materialized views: precompute aggregates → dashboard queries sub-millisecond</li>
+        <li>Inverted index: term → postings list → bitmap AND for multi-keyword search. Lucene uses SSTable-like segments</li>
+        <li>Vector embeddings: semantic meaning → float vector → cosine similarity for "similar case" search</li>
+        <li>HNSW: O(log n) approximate nearest neighbor. IVF: cluster-based, faster for large datasets</li>
+        <li>pgvector: vector search inside Postgres → no separate vector DB needed for MedSearch scale</li>
+      </ul>
+    </div>
+
+    <div class="card-grid" style="margin-top: 24px">
+      <div class="card blue">
+        <div class="card-icon">🏥</div>
+        <div class="card-title">MedSearch Final Architecture</div>
+        <div class="card-body">
+          Postgres (OLTP) → doctor reads/writes<br>
+          DuckDB/Snowflake (OLAP) → analytics dashboard<br>
+          Postgres + GIN (Full-text) → clinical notes search<br>
+          pgvector + HNSW (Vector) → similar ECG case finder<br>
+          Redis (Cache) → ICU hot patient data
+        </div>
+      </div>
+      <div class="card purple">
+        <div class="card-icon">⚡</div>
+        <div class="card-title">Interview Cheat Sheet</div>
+        <div class="card-body">
+          Write heavy → LSM (Cassandra/RocksDB)<br>
+          Read heavy → B-Tree (Postgres)<br>
+          Analytics → Column store (DuckDB/Snowflake)<br>
+          Keyword search → Inverted index (Elasticsearch/GIN)<br>
+          Semantic search → Vector index (pgvector/HNSW)
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+</body>
+</html>

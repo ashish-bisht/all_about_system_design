@@ -1,0 +1,668 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Python Concurrency — asyncio vs threading vs multiprocessing</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">Python Concurrency</div>
+  <ul class="nav-links">
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#visualize">Visualize</a></li>
+    <li><a href="#gil">GIL</a></li>
+    <li><a href="#decide">Decide</a></li>
+    <li><a href="#rules">Rules</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="overview">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  
+  <div class="hero-label">Python Internals — Concurrency Deep Dive</div>
+  <h1 class="hero-title">
+    <div class="line1">Concurrency</div>
+    <div class="line2">Decoded.</div>
+    <div class="line3">Finally.</div>
+  </h1>
+  <p class="hero-desc">
+    asyncio, threading, aur multiprocessing — teen tools, ek hi goal. 
+    Samjho kab kya use karna hai, kyun GIL matter karta hai, 
+    aur async kyun threading se better hai I/O ke liye.
+  </p>
+  <div class="hero-tags">
+    <span class="tag tag-async">asyncio</span>
+    <span class="tag tag-thread">threading</span>
+    <span class="tag tag-process">multiprocessing</span>
+  </div>
+</section>
+
+<!-- MENTAL MODELS -->
+<section class="section">
+  <div class="section-label">Mental Models</div>
+  <h2 class="section-title">Teen Tools, Teen Analogies</h2>
+
+  <div class="models-grid">
+    <div class="model-card">
+      <div class="model-head">
+        <span class="model-emoji">🧑‍🍳</span>
+        <div class="model-name">asyncio</div>
+        <div class="model-metaphor">
+          Ek smart waiter jo idle time waste nahi karta — Table A ka order diya, kitchen mein gaya, wait karne ki bajaye Table B pe chala gaya. Switch sirf tab hota hai jab explicitly yield karo.
+        </div>
+      </div>
+      <div class="model-body">
+        <div class="model-stat">
+          <span class="stat-key">Threads</span>
+          <span class="stat-val good">1 (single)</span>
+        </div>
+        <div class="model-stat">
+          <span class="stat-key">Parallelism</span>
+          <span class="stat-val bad">Nahi (concurrent)</span>
+        </div>
+        <div class="model-stat">
+          <span class="stat-key">Best for</span>
+          <span class="stat-val" style="color:var(--async)">I/O bound</span>
+        </div>
+        <div class="model-stat">
+          <span class="stat-key">Switch control</span>
+          <span class="stat-val good">Tumhara (await)</span>
+        </div>
+        <div class="model-stat">
+          <span class="stat-key">Overhead</span>
+          <span class="stat-val good">Bahut kam</span>
+        </div>
+        <div class="model-stat">
+          <span class="stat-key">Race conditions</span>
+          <span class="stat-val good">Nahi hoti</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="model-card">
+      <div class="model-head">
+        <span class="model-emoji">👥</span>
+        <div class="model-name">threading</div>
+        <div class="model-metaphor">
+          Multiple waiters, lekin ek hi POS billing machine (GIL). Dono simultaneously kaam karte dikh rahe hain, lekin billing sirf ek kar sakta hai ek time pe.
+        </div>
+      </div>
+      <div class="model-body">
+        <div class="model-stat">
+          <span class="stat-key">Threads</span>
+          <span class="stat-val mid">Multiple (OS)</span>
+        </div>
+        <div class="model-stat">
+          <span class="stat-key">Parallelism</span>
+          <span class="stat-val bad">GIL ki wajah se nahi</span>
+        </div>
+        <div class="model-stat">
+          <span class="stat-key">Best for</span>
+          <span class="stat-val" style="color:var(--thread)">Legacy I/O</span>
+        </div>
+        <div class="model-stat">
+          <span class="stat-key">Switch control</span>
+          <span class="stat-val bad">OS decide karta hai</span>
+        </div>
+        <div class="model-stat">
+          <span class="stat-key">Overhead</span>
+          <span class="stat-val bad">Heavy (kernel)</span>
+        </div>
+        <div class="model-stat">
+          <span class="stat-key">Race conditions</span>
+          <span class="stat-val bad">Possible!</span>
+        </div>
+        <div style="margin-top:12px;padding:10px 12px;background:var(--thread-dim);border:1px solid var(--thread);border-radius:6px;font-size:11px;color:var(--thread);line-height:1.7">
+          ⚠️ <strong>Context Switch Cost:</strong> OS thread switch = kernel mode entry + CPU registers save/restore + stack swap. Coroutines (asyncio) user-space mein switch hote hain — 10–100x cheaper.
+        </div>
+      </div>
+    </div>
+
+    <div class="model-card">
+      <div class="model-head">
+        <span class="model-emoji">🏭</span>
+        <div class="model-name">multiprocessing</div>
+        <div class="model-metaphor">
+          Multiple alag restaurants — har ek ka apna staff, apni kitchen, apni POS machine. Truly independent. Expensive to set up lekin truly parallel.
+        </div>
+      </div>
+      <div class="model-body">
+        <div class="model-stat">
+          <span class="stat-key">Processes</span>
+          <span class="stat-val good">Multiple (separate)</span>
+        </div>
+        <div class="model-stat">
+          <span class="stat-key">Parallelism</span>
+          <span class="stat-val good">Haan! True parallel</span>
+        </div>
+        <div class="model-stat">
+          <span class="stat-key">Best for</span>
+          <span class="stat-val" style="color:var(--process)">CPU bound</span>
+        </div>
+        <div class="model-stat">
+          <span class="stat-key">Memory</span>
+          <span class="stat-val bad">Separate (heavy)</span>
+        </div>
+        <div class="model-stat">
+          <span class="stat-key">Overhead</span>
+          <span class="stat-val bad">Bahut zyada</span>
+        </div>
+        <div class="model-stat">
+          <span class="stat-key">GIL bypass</span>
+          <span class="stat-val good">Haan!</span>
+        </div>
+        <div style="margin-top:12px;padding:10px 12px;background:var(--process-dim);border:1px solid var(--process);border-radius:6px;font-size:11px;color:var(--process);line-height:1.7">
+          📦 <strong>IPC / Pickling overhead:</strong> Processes memory share nahi karte — data bhejna hai toh Queue/Pipe use karo. Har object pehle <strong>pickle</strong> (serialize) hota hai, doosre process mein unpickle. Lambda ya nested functions pickle nahi hoti — yeh ek common gotcha hai.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON TABLE -->
+<section class="section" style="padding-top:0">
+  <div class="section-label">Side by Side</div>
+  <h2 class="section-title">Feature Comparison</h2>
+
+  <div class="comparison">
+    <div class="comp-header">
+      <div style="color:var(--muted)">Feature</div>
+      <div class="h-async">asyncio</div>
+      <div class="h-thread">threading</div>
+      <div class="h-process">multiprocessing</div>
+    </div>
+
+    <div class="comp-row">
+      <div>I/O Bound</div>
+      <div><span class="good">✓ Best choice</span></div>
+      <div><span class="mid">✓ Works (legacy)</span></div>
+      <div><span class="bad">✗ Overkill</span></div>
+    </div>
+
+    <div class="comp-row">
+      <div>CPU Bound</div>
+      <div><span class="bad">✗ Blocks event loop</span></div>
+      <div><span class="bad">✗ GIL se block</span></div>
+      <div><span class="good">✓ Best choice</span></div>
+    </div>
+
+    <div class="comp-row">
+      <div>10K concurrent</div>
+      <div><span class="good">✓ No problem</span></div>
+      <div><span class="bad">✗ System crash risk</span></div>
+      <div><span class="bad">✗ Memory bomb</span></div>
+    </div>
+
+    <div class="comp-row">
+      <div>Race conditions</div>
+      <div><span class="good">✓ Not possible</span></div>
+      <div><span class="bad">✗ Possible, need locks</span></div>
+      <div><span class="mid">~ Separate memory</span></div>
+    </div>
+
+    <div class="comp-row">
+      <div>Debug difficulty</div>
+      <div><span class="good">Easy (predictable)</span></div>
+      <div><span class="bad">Hard (OS switches)</span></div>
+      <div><span class="mid">Medium (IPC)</span></div>
+    </div>
+
+    <div class="comp-row">
+      <div>Modern libraries</div>
+      <div><span class="good">✓ aiohttp, asyncpg, FastAPI</span></div>
+      <div><span class="mid">~ requests, psycopg2</span></div>
+      <div><span class="good">✓ multiprocessing pool</span></div>
+    </div>
+
+    <div class="comp-row">
+      <div>Startup cost</div>
+      <div><span class="good">Microseconds</span></div>
+      <div><span class="mid">Milliseconds</span></div>
+      <div><span class="bad">Seconds (fork)</span></div>
+    </div>
+
+    <div class="comp-row">
+      <div>Memory usage</div>
+      <div><span class="good">Very low</span></div>
+      <div><span class="mid">Medium (stack each)</span></div>
+      <div><span class="bad">High (full copy)</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- VISUALIZE EXECUTION -->
+<section class="viz-section" id="visualize">
+  <div class="section-label">Execution Model</div>
+  <h2 class="section-title">Dekho Kya Hota Hai</h2>
+
+  <div class="viz-grid">
+    <!-- Sequential vs Async -->
+    <div class="viz-card">
+      <div class="viz-card-title" style="color:var(--thread)">Sequential (Sync)</div>
+      <div class="viz-card-sub">Ek kaam khatam, tab doosra. Waiting time waste.</div>
+      
+      <div class="timeline">
+        <div class="tl-row">
+          <div class="tl-label">Task A</div>
+          <div class="tl-track" style="background:var(--surface2)">
+            <div class="tl-block" style="background:var(--thread);color:#000;left:0;width:45%;font-size:9px">▶ Run A</div>
+            <div class="tl-block" style="background:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(255,107,107,0.15) 3px,rgba(255,107,107,0.15) 6px);left:45%;width:30%;font-size:9px;color:var(--thread)">wait I/O</div>
+            <div class="tl-block" style="background:var(--thread);color:#000;left:75%;width:25%;font-size:9px">▶ End A</div>
+          </div>
+        </div>
+        <div class="tl-row">
+          <div class="tl-label">Task B</div>
+          <div class="tl-track" style="background:var(--surface2)">
+            <div class="tl-block" style="background:var(--surface2);left:0;width:100%;border:1px dashed var(--border);font-size:9px;color:var(--muted);justify-content:center">⏸ Waiting for A to finish...</div>
+          </div>
+        </div>
+        <div class="tl-row">
+          <div class="tl-label">Task B</div>
+          <div class="tl-track" style="background:var(--surface2)">
+            <div class="tl-block" style="background:#cc4444;color:#fff;left:0;width:40%;font-size:9px">▶ Run B</div>
+            <div class="tl-block" style="background:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(255,107,107,0.15) 3px,rgba(255,107,107,0.15) 6px);left:40%;width:25%;font-size:9px;color:var(--thread)">wait</div>
+            <div class="tl-block" style="background:#cc4444;color:#fff;left:65%;width:35%;font-size:9px">▶ End B</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-total tl-bad" style="margin-top:16px">⏱ Total time = A + B (sequential, slow!)</div>
+    </div>
+
+    <!-- Async Concurrent -->
+    <div class="viz-card">
+      <div class="viz-card-title" style="color:var(--async)">asyncio (Concurrent)</div>
+      <div class="viz-card-sub">await pe switch. I/O wait ka time dusra kaam karo.</div>
+      
+      <div class="timeline">
+        <div class="tl-row">
+          <div class="tl-label">Task A</div>
+          <div class="tl-track" style="background:var(--surface2)">
+            <div class="tl-block" style="background:var(--async);color:#000;left:0;width:18%;font-size:9px">▶ Start</div>
+            <div class="tl-block" style="background:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(0,229,255,0.1) 3px,rgba(0,229,255,0.1) 6px);left:18%;width:32%;font-size:9px;color:var(--async)">await I/O...</div>
+            <div class="tl-block" style="background:var(--async);color:#000;left:50%;width:22%;font-size:9px">▶ Done!</div>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-left:72px;padding:4px 0">
+          ↕ Event loop switches here (await point)
+        </div>
+        <div class="tl-row">
+          <div class="tl-label">Task B</div>
+          <div class="tl-track" style="background:var(--surface2)">
+            <div class="tl-block" style="background:var(--surface2);left:0;width:18%;font-size:9px;color:var(--muted)">queued</div>
+            <div class="tl-block" style="background:#00b8cc;color:#000;left:18%;width:16%;font-size:9px">▶ Start</div>
+            <div class="tl-block" style="background:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(0,229,255,0.1) 3px,rgba(0,229,255,0.1) 6px);left:34%;width:20%;font-size:9px;color:var(--async)">await</div>
+            <div class="tl-block" style="background:#00b8cc;color:#000;left:54%;width:18%;font-size:9px">▶ Done!</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-total tl-good" style="margin-top:16px">⚡ Total time = max(A, B) — dono saath!</div>
+    </div>
+
+    <!-- Threading vs Async switchpoint -->
+    <div class="viz-card">
+      <div class="viz-card-title" style="color:var(--thread)">Threading — OS ke haath mein</div>
+      <div class="viz-card-sub">OS kabhi bhi switch kar sakta hai. Predictable nahi.</div>
+      
+      <div class="gil-viz">
+        <div class="td-title">THREAD EXECUTION — OS decides switch points</div>
+        <div class="gil-threads">
+          <div class="gil-row">
+            <div class="gil-label">Thread 1</div>
+            <div class="gil-segments">
+              <div class="seg-run" style="background:var(--thread);color:#000;flex:2;font-size:9px">run</div>
+              <div class="seg-run" style="background:var(--surface2);color:var(--muted);flex:1;font-size:8px">OS stop!</div>
+              <div class="seg-idle" style="flex:1"></div>
+              <div class="seg-run" style="background:var(--thread);color:#000;flex:2;font-size:9px">run</div>
+              <div class="seg-run" style="background:var(--surface2);color:var(--muted);flex:1;font-size:8px">OS stop</div>
+              <div class="seg-idle" style="flex:1"></div>
+              <div class="seg-run" style="background:var(--thread);color:#000;flex:1;font-size:9px">run</div>
+            </div>
+          </div>
+          <div class="gil-row">
+            <div class="gil-label">Thread 2</div>
+            <div class="gil-segments">
+              <div class="seg-idle" style="flex:2"></div>
+              <div class="seg-run" style="background:#cc4444;color:#fff;flex:3;font-size:9px">OS gave me turn</div>
+              <div class="seg-idle" style="flex:2"></div>
+              <div class="seg-run" style="background:#cc4444;color:#fff;flex:2;font-size:9px">OS gave turn</div>
+              <div class="seg-idle" style="flex:1"></div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:16px;font-size:11px;color:var(--thread);padding:10px;background:var(--thread-dim);border-radius:6px;border:1px solid var(--thread)">
+          ⚠️ Switch points random hain — shared state access kiya toh race condition possible hai!
+        </div>
+      </div>
+    </div>
+
+    <!-- Async switch points -->
+    <div class="viz-card">
+      <div class="viz-card-title" style="color:var(--async)">asyncio — Tera control</div>
+      <div class="viz-card-sub">Switch sirf await pe. Predictable, safe, no surprises.</div>
+
+      <div class="gil-viz">
+        <div class="td-title">COROUTINE EXECUTION — You decide switch points</div>
+        <div class="gil-threads">
+          <div class="gil-row">
+            <div class="gil-label">Coro A</div>
+            <div class="gil-segments">
+              <div class="seg-run" style="background:var(--async);color:#000;flex:2;font-size:9px">run</div>
+              <div class="seg-run" style="background:var(--async-dim);color:var(--async);flex:1;font-size:8px;border:1px dashed var(--async)">await ↕</div>
+              <div class="seg-idle" style="flex:2"></div>
+              <div class="seg-run" style="background:var(--async);color:#000;flex:2;font-size:9px">resume</div>
+              <div class="seg-run" style="background:var(--async-dim);color:var(--async);flex:1;font-size:8px;border:1px dashed var(--async)">await ↕</div>
+              <div class="seg-run" style="background:var(--async);color:#000;flex:1;font-size:9px">done</div>
+            </div>
+          </div>
+          <div class="gil-row">
+            <div class="gil-label">Coro B</div>
+            <div class="gil-segments">
+              <div class="seg-idle" style="flex:2"></div>
+              <div class="seg-run" style="background:#00b8cc;color:#000;flex:3;font-size:9px">runs while A awaits</div>
+              <div class="seg-idle" style="flex:2"></div>
+              <div class="seg-run" style="background:#00b8cc;color:#000;flex:2;font-size:9px">resume</div>
+              <div class="seg-run" style="background:#00b8cc;color:#000;flex:1;font-size:9px">done</div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:16px;font-size:11px;color:var(--process);padding:10px;background:var(--process-dim);border-radius:6px;border:1px solid var(--process)">
+          ✓ Switch sirf await pe — exactly pata hai kahan context change hoga. Zero surprises!
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GIL SECTION -->
+<section class="gil-section" id="gil">
+  <div class="section-label">The Real Villain</div>
+  <h2 class="section-title">GIL — Global Interpreter Lock</h2>
+
+  <div class="gil-explainer">
+    <div class="gil-text">
+      <p>
+        Python ka ek unbreakable rule hai — <strong>ek time pe sirf ek thread Python bytecode execute kar sakta hai.</strong> 
+        Ye rule enforce karta hai GIL — ek lock jo interpreter ke paas hota hai.
+      </p>
+      <p>
+        Matlab CPU-bound threading ka koi fayda nahi. Ek thread calculate kar raha hai, 
+        doosra simply <strong>wait karta rahega</strong> chahe 100 cores ho CPU mein.
+      </p>
+      <p>
+        <strong>Toh threading ka koi use nahi?</strong> Use hai — I/O operations ke time GIL release ho jaati hai. 
+        Jab thread network request bhejta hai ya file read karta hai, 
+        wo voluntarily GIL release karta hai. Tab doosra thread kaam kar sakta hai.
+      </p>
+      <div class="gil-highlight">
+        💡 Isliye: asyncio > threading for I/O, kyunki asyncio mein ya cooperative hai — 
+        tum control karo switch kab ho. Threading mein OS random time pe switch karta hai, 
+        GIL contention hoti hai, race conditions possible hain.
+      </div>
+    </div>
+
+    <div class="thread-diagram">
+      <div class="td-title">GIL behaviour — CPU vs I/O</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:20px">CPU-bound: GIL never releases</div>
+      <div class="td-timeline">
+        <div class="td-row">
+          <div class="td-lbl">Thread 1</div>
+          <div class="td-bar">
+            <div style="position:absolute;left:0;top:0;height:100%;width:100%;background:var(--thread);display:flex;align-items:center;padding:0 8px;font-size:9px;color:#000">
+              🔒 Has GIL — calculating...
+            </div>
+          </div>
+        </div>
+        <div class="td-row">
+          <div class="td-lbl">Thread 2</div>
+          <div class="td-bar">
+            <div style="position:absolute;inset:0;display:flex;align-items:center;padding:0 8px;font-size:9px;color:var(--muted)">
+              ⏳ Waiting for GIL...
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:1px;background:var(--border);margin:24px 0"></div>
+
+      <div style="font-size:11px;color:var(--muted);margin-bottom:20px">I/O-bound: GIL releases during wait</div>
+      <div class="td-timeline">
+        <div class="td-row">
+          <div class="td-lbl">Thread 1</div>
+          <div class="td-bar">
+            <div style="position:absolute;left:0;height:100%;width:30%;background:var(--thread);display:flex;align-items:center;padding:0 6px;font-size:8px;color:#000">🔒 run</div>
+            <div style="position:absolute;left:30%;height:100%;width:40%;background:var(--async-dim);border:1px dashed var(--async);display:flex;align-items:center;padding:0 6px;font-size:8px;color:var(--async)">GIL released (I/O)</div>
+            <div style="position:absolute;left:70%;height:100%;width:30%;background:var(--thread);display:flex;align-items:center;padding:0 6px;font-size:8px;color:#000">🔒 resume</div>
+          </div>
+        </div>
+        <div class="td-row">
+          <div class="td-lbl">Thread 2</div>
+          <div class="td-bar">
+            <div style="position:absolute;left:0;height:100%;width:30%;background:var(--surface2);display:flex;align-items:center;padding:0 6px;font-size:8px;color:var(--muted)">waiting...</div>
+            <div style="position:absolute;left:30%;height:100%;width:40%;background:#cc4444;display:flex;align-items:center;padding:0 6px;font-size:8px;color:#fff">🔒 runs! (got GIL)</div>
+            <div style="position:absolute;left:70%;height:100%;width:30%;background:var(--surface2);display:flex;align-items:center;padding:0 6px;font-size:8px;color:var(--muted)">waiting...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WAITER ANALOGY DEEP DIVE -->
+<section class="analogy-section">
+  <div class="section-label">Concrete Analogy</div>
+  <h2 class="section-title">Waiter 🍽️ aur Restaurant</h2>
+  <div class="analogy-grid">
+    <div class="analogy-card">
+      <div class="analogy-title">
+        Dumb Waiter
+        <span class="analogy-badge ab-bad">SYNC / BLOCKING</span>
+      </div>
+      <div class="analogy-story">
+        Table A ka order liya → kitchen mein gaya → <span class="highlight">khana aane ka wait kiya</span> → 
+        serve kiya → ab Table B ke paas gaya → uska order liya → 
+        phir wait kiya → serve kiya.
+        <br><br>
+        Table B <span class="highlight">poori time wait karta raha</span> bina kisi wajah ke.
+      </div>
+      <div style="padding:16px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--thread);border:1px solid var(--thread)">
+        ⏱ Total time = Table A ka time + Table B ka time
+      </div>
+    </div>
+
+    <div class="analogy-card">
+      <div class="analogy-title">
+        Smart Waiter
+        <span class="analogy-badge ab-good">ASYNCIO</span>
+      </div>
+      <div class="analogy-story">
+        Table A ka order liya → kitchen mein bheja → 
+        <span class="highlight">wait karne ki bajaye Table B ke paas gaya</span> → 
+        uska order liya → kitchen mein bheja → 
+        Table A ka khana ready? → serve kiya → Table B ready? → serve kiya.
+        <br><br>
+        <span class="highlight">Ek hi waiter</span>, dono tables khush.
+      </div>
+      <div style="padding:16px;background:var(--process-dim);border-radius:8px;font-size:12px;color:var(--process);border:1px solid var(--process)">
+        ⚡ Total time = max(Table A, Table B)
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:40px;padding:32px;background:var(--bg);border:1px solid var(--border);border-radius:12px;border-left:3px solid var(--accent)">
+    <div style="font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:12px">Key Insight</div>
+    <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--accent);margin-bottom:12px">
+      Cooperative vs Preemptive
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+      <div>
+        <div style="font-size:12px;color:var(--async);margin-bottom:8px">asyncio — Cooperative</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.8">
+          Sab coroutines "cooperate" karte hain. Har ek explicitly bolta hai 
+          <code style="background:var(--surface2);padding:2px 6px;border-radius:3px;color:var(--async)">await</code> — 
+          "main ruk raha hoon, doosra chal." 
+          Switch point <strong style="color:var(--text)">predictable</strong> hai.
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--thread);margin-bottom:8px">threading — Preemptive</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.8">
+          OS <strong style="color:var(--text)">force karta hai</strong> switch — 
+          beech mein kisi bhi instruction pe rok sakta hai. 
+          Thread ko pata bhi nahi chalta kab ruka. 
+          Isliye shared state dangerous hai.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DECISION TREE -->
+<section class="decision" id="decide">
+  <div class="section-label">Decision Framework</div>
+  <h2 class="section-title">Kya Use Karun?</h2>
+
+  <div class="tree">
+    <div class="tree-node">
+      <div class="tree-question">
+        <div class="q-icon">?</div>
+        Tera task kya hai?
+      </div>
+      
+      <div class="tree-branches">
+        <!-- I/O Branch -->
+        <div class="tree-branch">
+          <div class="branch-condition">I/O Bound</div>
+          <div class="branch-result">
+            <div class="tree-question" style="font-size:14px">
+              <div class="q-icon">?</div>
+              Modern async library available hai? (aiohttp, asyncpg, aiofiles)
+            </div>
+            <div class="tree-branches">
+              <div class="tree-branch">
+                <div class="branch-condition">Haan ✓</div>
+                <div class="branch-result">
+                  <div class="result-box res-async">
+                    <div class="res-title">asyncio</div>
+                    <div class="res-desc">Best choice. Low overhead, no race conditions, scales to 10K+ concurrent.</div>
+                  </div>
+                </div>
+              </div>
+              <div class="tree-branch">
+                <div class="branch-condition">Nahi (legacy)</div>
+                <div class="branch-result">
+                  <div class="result-box res-thread">
+                    <div class="res-title">ThreadPoolExecutor</div>
+                    <div class="res-desc">Blocking libraries ke liye — requests, psycopg2, etc. asyncio ke saath bhi use kar sakte ho run_in_executor se.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CPU Branch -->
+        <div class="tree-branch">
+          <div class="branch-condition">CPU Bound</div>
+          <div class="branch-result">
+            <div class="result-box res-process">
+              <div class="res-title">ProcessPoolExecutor / multiprocessing</div>
+              <div class="res-desc">GIL bypass ho jata hai. max_workers = cpu_count(). ML inference, image processing, heavy calculations ke liye.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RULES SECTION -->
+<section class="rule-section" id="rules">
+  <div class="section-label">Final Word</div>
+  <h2 class="section-title">Simple Rules</h2>
+
+  <div class="rules-grid">
+    <div class="rule-card">
+      <div class="rule-icon">⚡</div>
+      <div class="rule-when">New I/O bound code</div>
+      <div class="rule-answer">asyncio</div>
+      <div class="rule-sub">
+        aiohttp, asyncpg, aiofiles — modern libraries sab async hain. FastAPI already async hai under the hood.
+      </div>
+      <div class="rule-examples">
+        <span class="rule-ex">HTTP calls</span>
+        <span class="rule-ex">DB queries</span>
+        <span class="rule-ex">File I/O</span>
+        <span class="rule-ex">WebSockets</span>
+      </div>
+    </div>
+
+    <div class="rule-card">
+      <div class="rule-icon">🧵</div>
+      <div class="rule-when">Legacy blocking library</div>
+      <div class="rule-answer">ThreadPoolExecutor</div>
+      <div class="rule-sub">
+        Purani libraries jo async nahi hain. asyncio ke saath bhi use kar sakte ho via run_in_executor.
+      </div>
+      <div class="rule-examples">
+        <span class="rule-ex">requests</span>
+        <span class="rule-ex">psycopg2</span>
+        <span class="rule-ex">boto3 sync</span>
+        <span class="rule-ex">old SDKs</span>
+      </div>
+    </div>
+
+    <div class="rule-card">
+      <div class="rule-icon">🏭</div>
+      <div class="rule-when">CPU heavy computation</div>
+      <div class="rule-answer">multiprocessing</div>
+      <div class="rule-sub">
+        GIL bypass. True parallelism. max_workers = cpu_count(). Startup cost high hai — sirf CPU-heavy ke liye worth it.
+      </div>
+      <div class="rule-examples">
+        <span class="rule-ex">ML inference</span>
+        <span class="rule-ex">Image proc</span>
+        <span class="rule-ex">Data processing</span>
+        <span class="rule-ex">Encryption</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:40px;padding:32px;background:var(--bg);border:1px solid var(--border);border-radius:12px;display:grid;grid-template-columns:1fr 1fr;gap:32px">
+    <div>
+      <div style="font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:16px">asyncio Gotcha</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.9">
+        Ek bhi <code style="background:var(--surface2);color:var(--thread);padding:2px 6px;border-radius:3px">time.sleep()</code> ya 
+        <code style="background:var(--surface2);color:var(--thread);padding:2px 6px;border-radius:3px">requests.get()</code> 
+        async function mein dalega toh <strong style="color:var(--thread)">poora event loop block</strong> ho jayega — matlab koi bhi coroutine nahi chalega jab tak ye khatam na ho.
+        <br><br>
+        Hamesha <code style="background:var(--surface2);color:var(--async);padding:2px 6px;border-radius:3px">await asyncio.sleep()</code> aur <code style="background:var(--surface2);color:var(--async);padding:2px 6px;border-radius:3px">aiohttp</code> use karo.
+      </div>
+    </div>
+    <div>
+      <div style="font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:16px">2026 mein Direction</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.9">
+        Pura Python ecosystem async ki taraf shift ho raha hai. 
+        <strong style="color:var(--text)">FastAPI, SQLAlchemy async, asyncpg, aiohttp</strong> — 
+        sab async-first hain. Threading manually karna increasingly rare hota ja raha hai. 
+        Agar nayi project hai — asyncio se shuru karo.
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div>Python Concurrency — asyncio · threading · multiprocessing</div>
+  <div>Made with ❤️ for Ash</div>
+</footer>
+
+</body>
+</html>

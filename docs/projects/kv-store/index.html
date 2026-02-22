@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Key-Value Store — System Design Mastery</title>
+  <title>Distributed Key-Value Store — System Design</title>
   <link rel="stylesheet" href="../../styles.css">
 </head>
 <body>
@@ -13,85 +14,482 @@
     <a href="../../" class="nav-brand">🏗️ <span>SystemDesign</span>Mastery</a>
     <ul class="nav-links">
       <li><a href="../../">Home</a></li>
-      <li><a href="../../projects/">Projects</a></li>
+      <li><a href="../">Projects</a></li>
       <li><a href="../../patterns/overview.html">Patterns</a></li>
       <li><a href="../../interview-prep/">Interview Prep</a></li>
+      <li><a href="https://github.com/ashish-bisht/all_about_system_design" target="_blank" rel="noopener">GitHub</a></li>
     </ul>
   </div>
 </nav>
 
 <div class="container">
-  <div class="breadcrumb">
-    <a href="../../">Home</a>
-    <span>›</span>
-    <a href="../../projects/">Projects</a>
-    <span>›</span>
-    <span>Key-Value Store</span>
-  </div>
 
-  <div class="page-content">
-    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
-      <span class="card-badge easy">easy</span>
-      <span class="card-tag">database</span>
-      <span style="color: var(--text-muted); font-family: var(--font-mono); font-size: 0.85rem;">#04</span>
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-badge">📦 Project #04 — Easy</div>
+        <h1>Distributed Key-Value Store</h1>
+        <p class="hero-sub">Design an in-memory distributed cache like Redis — SET, GET, DELETE with TTL support and LRU eviction. Sub-millisecond latency at massive scale.</p>
+        <div class="hero-tags">
+            <span class="hero-tag">Consistent Hashing</span>
+            <span class="hero-tag">LRU Eviction</span>
+            <span class="hero-tag">TTL Expiry</span>
+            <span class="hero-tag">Replication</span>
+            <span class="hero-tag">In-Memory</span>
+        </div>
+    </section>
+
+    <!-- TOC -->
+    <nav class="toc">
+        <h3>📑 Contents</h3>
+        <div class="toc-grid">
+            <a href="#requirements" class="toc-item"><span class="toc-num">01</span> Requirements</a>
+            <a href="#entities" class="toc-item"><span class="toc-num">02</span> Core Entities</a>
+            <a href="#api" class="toc-item"><span class="toc-num">03</span> API / Interface</a>
+            <a href="#data-flow" class="toc-item"><span class="toc-num">04</span> Data Flow</a>
+            <a href="#hld" class="toc-item"><span class="toc-num">05</span> High-Level Design</a>
+            <a href="#deep-dive-lru" class="toc-item"><span class="toc-num">06</span> Deep Dive: LRU</a>
+            <a href="#deep-dive-ttl" class="toc-item"><span class="toc-num">07</span> Deep Dive: TTL</a>
+            <a href="#deep-dive-hashing" class="toc-item"><span class="toc-num">08</span> Consistent Hashing</a>
+            <a href="#deep-dive-replication" class="toc-item"><span class="toc-num">09</span> Replication</a>
+            <a href="#deep-dive-stampede" class="toc-item"><span class="toc-num">10</span> Stampede & Hot Keys</a>
+            <a href="#capacity" class="toc-item"><span class="toc-num">11</span> Capacity Estimation</a>
+            <a href="#interview" class="toc-item"><span class="toc-num">12</span> Interview Cheatsheet</a>
+        </div>
+    </nav>
+
+    <!-- 1. REQUIREMENTS -->
+    <section class="section" id="requirements">
+        <div class="section-label">📋 Step 1</div>
+        <h2>Requirements</h2>
+        <p class="section-desc">Pehle scope lock karo — interview mein 2 minute mein ye clear hona chahiye.</p>
+        <div class="card-grid">
+            <div class="req-card">
+                <h4>✅ Functional Requirements</h4>
+                <div class="req-item"><span class="icon">1.</span> Users can <strong>SET</strong> key-value pairs</div>
+                <div class="req-item"><span class="icon">2.</span> Users can <strong>GET</strong> value by key</div>
+                <div class="req-item"><span class="icon">3.</span> Users can <strong>DELETE</strong> a key</div>
+                <div class="req-item"><span class="icon">4.</span> Users can set <strong>TTL</strong> (expiration) on keys</div>
+                <div class="req-item"><span class="icon">5.</span> When memory full, evict using <strong>LRU</strong></div>
+            </div>
+            <div class="req-card nf">
+                <h4>⚡ Non-Functional Requirements</h4>
+                <div class="req-item"><span class="icon">1.</span> <strong>Low latency</strong> — sub-millisecond</div>
+                <div class="req-item"><span class="icon">2.</span> <strong>High throughput</strong> — 100K+ ops/sec/node</div>
+                <div class="req-item"><span class="icon">3.</span> <strong>Scalable</strong> — add nodes for more data</div>
+                <div class="req-item"><span class="icon">4.</span> <strong>Available</strong> — 99.99% uptime</div>
+                <div class="req-item"><span class="icon">5.</span> <strong>Fault tolerant</strong> — no data loss on crash</div>
+            </div>
+            <div class="req-card out">
+                <h4>🚫 Out of Scope</h4>
+                <div class="req-item"><span class="icon">—</span> Complex data types (lists, sets, sorted sets)</div>
+                <div class="req-item"><span class="icon">—</span> Persistence to disk (AOF/RDB)</div>
+                <div class="req-item"><span class="icon">—</span> Pub/Sub messaging</div>
+                <div class="req-item"><span class="icon">—</span> Transactions / Lua scripting</div>
+            </div>
+        </div>
+        <div class="callout callout-info">
+            <div class="callout-title">🎤 Interview Tip</div>
+            <p>Interviewer ko pehle scope confirm karo: "I'll focus on basic key-value operations with TTL and LRU. Complex data types are out of scope — should I include them?" Clarity dikhata hai.</p>
+        </div>
+    </section>
+
+    <!-- 2. CORE ENTITIES -->
+    <section class="section" id="entities">
+        <div class="section-label">🧩 Step 2</div>
+        <h2>Core Entities</h2>
+        <p class="section-desc">System mein kaunse objects honge?</p>
+        <div class="card-grid">
+            <div class="entity-card">
+                <h4>📦 CacheEntry</h4>
+                <div class="entity-field"><span class="fname">key</span><span class="ftype">string</span><span class="fdesc">Unique identifier (max ~250 bytes)</span></div>
+                <div class="entity-field"><span class="fname">value</span><span class="ftype">bytes</span><span class="fdesc">Actual data (max ~1MB)</span></div>
+                <div class="entity-field"><span class="fname">ttl</span><span class="ftype">int64</span><span class="fdesc">Expiration timestamp (Unix ms), 0 = never</span></div>
+                <div class="entity-field"><span class="fname">created_at</span><span class="ftype">int64</span><span class="fdesc">When entry was created</span></div>
+                <div class="entity-field"><span class="fname">last_accessed</span><span class="ftype">int64</span><span class="fdesc">For LRU tracking</span></div>
+            </div>
+            <div class="entity-card">
+                <h4>🖥️ CacheNode</h4>
+                <div class="entity-field"><span class="fname">node_id</span><span class="ftype">string</span><span class="fdesc">Unique node identifier</span></div>
+                <div class="entity-field"><span class="fname">host:port</span><span class="ftype">string</span><span class="fdesc">Network address</span></div>
+                <div class="entity-field"><span class="fname">hash_slots</span><span class="ftype">range[]</span><span class="fdesc">Hash slots this node owns</span></div>
+                <div class="entity-field"><span class="fname">max_memory</span><span class="ftype">uint64</span><span class="fdesc">Memory cap (e.g. 64GB)</span></div>
+                <div class="entity-field"><span class="fname">role</span><span class="ftype">enum</span><span class="fdesc">PRIMARY or REPLICA</span></div>
+            </div>
+        </div>
+        <div class="int-banner">
+            <div class="icon">💡</div>
+            <div>
+                <h4>Why last_accessed matters?</h4>
+                <p>LRU ke liye — but actually hum linked list position se track karte hain, timestamp se nahi (O(1) vs O(n) sorting).</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. API -->
+    <section class="section" id="api">
+        <div class="section-label">🔌 Step 3</div>
+        <h2>API / Interface Design</h2>
+        <p class="section-desc">Redis-like command interface — simple aur powerful.</p>
+        <table>
+            <thead><tr><th>Operation</th><th>Command</th><th>Returns</th><th>Description</th></tr></thead>
+            <tbody>
+                <tr><td style="color:var(--accent-green);font-weight:600;">SET</td><td><code>SET key value [EX seconds]</code></td><td><code>OK</code></td><td>Store key-value. Optional TTL.</td></tr>
+                <tr><td style="color:var(--accent-blue);font-weight:600;">GET</td><td><code>GET key</code></td><td><code>value | NULL</code></td><td>Retrieve value. NULL if not found/expired.</td></tr>
+                <tr><td style="color:var(--accent-red);font-weight:600;">DELETE</td><td><code>DEL key</code></td><td><code>1 | 0</code></td><td>Remove key. 1 if deleted, 0 if not found.</td></tr>
+                <tr><td style="color:var(--accent-orange);font-weight:600;">TTL</td><td><code>TTL key</code></td><td><code>seconds | -1 | -2</code></td><td>Remaining TTL. -1=no expiry, -2=no key.</td></tr>
+                <tr><td style="color:var(--accent-purple);font-weight:600;">EXPIRE</td><td><code>EXPIRE key seconds</code></td><td><code>1 | 0</code></td><td>Set TTL on existing key.</td></tr>
+            </tbody>
+        </table>
+        <pre><span class="cmt">// HTTP API (if exposing as service)</span>
+<span class="hl">PUT</span> /cache/{key}  Body: { <span class="str">"value"</span>: <span class="str">"data"</span>, <span class="str">"ttl_seconds"</span>: <span class="num">3600</span> }  → <span class="num">200</span> OK
+<span class="hl">GET</span> /cache/{key}  → <span class="num">200</span> { <span class="str">"value"</span>: <span class="str">"data"</span> } | <span class="num">404</span>
+<span class="hl">DELETE</span> /cache/{key}  → <span class="num">200</span> { <span class="str">"deleted"</span>: <span class="kw">true</span> }</pre>
+    </section>
+
+    <!-- 4. DATA FLOW -->
+    <section class="section" id="data-flow">
+        <div class="section-label">🔄 Step 4</div>
+        <h2>Data Flow</h2>
+        <p class="section-desc">Read aur Write path clearly samjho — step by step explain karna hai.</p>
+
+        <div class="card">
+            <h3>📥 Write Flow (SET)</h3>
+            <div class="flow-diagram" style="padding:1.5rem;">
+                <svg viewBox="0 0 780 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:780px;display:block;margin:0 auto;">
+                    <rect x="10" y="30" width="110" height="45" rx="8" fill="rgba(94,170,255,0.1)" stroke="#5eaaff" stroke-width="1.5"/>
+                    <text x="65" y="57" text-anchor="middle" fill="#5eaaff" font-size="12" font-weight="600" font-family="Outfit">Client</text>
+                    <line x1="120" y1="52" x2="170" y2="52" stroke="#5a7090" stroke-width="1.5" marker-end="url(#aw1)"/>
+                    <text x="145" y="44" text-anchor="middle" fill="#5a7090" font-size="8" font-family="JetBrains Mono">SET k,v</text>
+
+                    <rect x="170" y="30" width="140" height="45" rx="8" fill="rgba(167,139,250,0.1)" stroke="#a78bfa" stroke-width="1.5"/>
+                    <text x="240" y="50" text-anchor="middle" fill="#a78bfa" font-size="11" font-weight="600" font-family="Outfit">Client Library</text>
+                    <text x="240" y="66" text-anchor="middle" fill="#5a7090" font-size="8" font-family="JetBrains Mono">hash(key) → node</text>
+                    <line x1="310" y1="52" x2="360" y2="52" stroke="#5a7090" stroke-width="1.5" marker-end="url(#aw1)"/>
+
+                    <rect x="360" y="20" width="150" height="65" rx="8" fill="rgba(45,212,160,0.1)" stroke="#2dd4a0" stroke-width="1.5"/>
+                    <text x="435" y="43" text-anchor="middle" fill="#2dd4a0" font-size="11" font-weight="600" font-family="Outfit">Primary Node</text>
+                    <text x="435" y="58" text-anchor="middle" fill="#5a7090" font-size="8" font-family="JetBrains Mono">1. Check memory</text>
+                    <text x="435" y="72" text-anchor="middle" fill="#5a7090" font-size="8" font-family="JetBrains Mono">2. LRU evict if full</text>
+
+                    <line x1="435" y1="85" x2="435" y2="115" stroke="#5a7090" stroke-width="1.5" marker-end="url(#aw1)"/>
+
+                    <rect x="360" y="115" width="150" height="45" rx="8" fill="rgba(245,158,66,0.1)" stroke="#f59e42" stroke-width="1.5"/>
+                    <text x="435" y="135" text-anchor="middle" fill="#f59e42" font-size="11" font-weight="600" font-family="Outfit">HashMap + DLL</text>
+                    <text x="435" y="152" text-anchor="middle" fill="#5a7090" font-size="8" font-family="JetBrains Mono">3. Insert/Update</text>
+
+                    <line x1="510" y1="137" x2="570" y2="137" stroke="#5a7090" stroke-width="1.5" marker-end="url(#aw1)"/>
+                    <text x="540" y="128" text-anchor="middle" fill="#5a7090" font-size="7" font-family="JetBrains Mono">async</text>
+
+                    <rect x="570" y="115" width="140" height="45" rx="8" fill="rgba(94,170,255,0.06)" stroke="#5eaaff" stroke-width="1" stroke-dasharray="4"/>
+                    <text x="640" y="135" text-anchor="middle" fill="#5eaaff" font-size="10" font-weight="600" font-family="Outfit">Replica Node</text>
+                    <text x="640" y="152" text-anchor="middle" fill="#5a7090" font-size="8" font-family="JetBrains Mono">4. Replicate</text>
+
+                    <path d="M 435 160 L 435 195 L 65 195 L 65 75" fill="none" stroke="#2dd4a0" stroke-width="1.5" stroke-dasharray="5" marker-end="url(#ag1)"/>
+                    <text x="250" y="210" text-anchor="middle" fill="#2dd4a0" font-size="9" font-weight="600" font-family="JetBrains Mono">5. Return OK</text>
+
+                    <defs>
+                        <marker id="aw1" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#5a7090"/></marker>
+                        <marker id="ag1" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#2dd4a0"/></marker>
+                    </defs>
+                </svg>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📤 Read Flow (GET)</h3>
+            <div class="flow-diagram" style="padding:1.5rem;">
+                <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:700px;display:block;margin:0 auto;">
+                    <rect x="10" y="20" width="100" height="45" rx="8" fill="rgba(94,170,255,0.1)" stroke="#5eaaff" stroke-width="1.5"/>
+                    <text x="60" y="47" text-anchor="middle" fill="#5eaaff" font-size="12" font-weight="600" font-family="Outfit">Client</text>
+                    <line x1="110" y1="42" x2="160" y2="42" stroke="#5a7090" stroke-width="1.5" marker-end="url(#ar1)"/>
+
+                    <rect x="160" y="20" width="130" height="45" rx="8" fill="rgba(167,139,250,0.1)" stroke="#a78bfa" stroke-width="1.5"/>
+                    <text x="225" y="40" text-anchor="middle" fill="#a78bfa" font-size="11" font-weight="600" font-family="Outfit">Client Library</text>
+                    <text x="225" y="56" text-anchor="middle" fill="#5a7090" font-size="8" font-family="JetBrains Mono">hash → route</text>
+                    <line x1="290" y1="42" x2="340" y2="42" stroke="#5a7090" stroke-width="1.5" marker-end="url(#ar1)"/>
+
+                    <rect x="340" y="10" width="160" height="65" rx="8" fill="rgba(45,212,160,0.1)" stroke="#2dd4a0" stroke-width="1.5"/>
+                    <text x="420" y="32" text-anchor="middle" fill="#2dd4a0" font-size="11" font-weight="600" font-family="Outfit">Cache Node</text>
+                    <text x="420" y="48" text-anchor="middle" fill="#5a7090" font-size="8" font-family="JetBrains Mono">1. HashMap.get(key)</text>
+                    <text x="420" y="62" text-anchor="middle" fill="#5a7090" font-size="8" font-family="JetBrains Mono">2. Check TTL</text>
+
+                    <line x1="390" y1="75" x2="330" y2="115" stroke="#2dd4a0" stroke-width="1.5" marker-end="url(#agr)"/>
+                    <rect x="230" y="110" width="200" height="50" rx="8" fill="rgba(45,212,160,0.06)" stroke="#2dd4a0" stroke-width="1"/>
+                    <text x="330" y="130" text-anchor="middle" fill="#2dd4a0" font-size="10" font-weight="600" font-family="Outfit">✅ Found & Valid</text>
+                    <text x="330" y="148" text-anchor="middle" fill="#5a7090" font-size="8" font-family="JetBrains Mono">Move to LRU head → Return value</text>
+
+                    <line x1="450" y1="75" x2="520" y2="115" stroke="#f87171" stroke-width="1.5" marker-end="url(#arr)"/>
+                    <rect x="450" y="110" width="200" height="50" rx="8" fill="rgba(248,113,113,0.06)" stroke="#f87171" stroke-width="1"/>
+                    <text x="550" y="130" text-anchor="middle" fill="#f87171" font-size="10" font-weight="600" font-family="Outfit">❌ Not Found / Expired</text>
+                    <text x="550" y="148" text-anchor="middle" fill="#5a7090" font-size="8" font-family="JetBrains Mono">Lazy delete if expired → Return NULL</text>
+
+                    <path d="M 330 160 L 330 190 L 60 190 L 60 65" fill="none" stroke="#2dd4a0" stroke-width="1.5" stroke-dasharray="5" marker-end="url(#agr)"/>
+                    <defs>
+                        <marker id="ar1" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#5a7090"/></marker>
+                        <marker id="agr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#2dd4a0"/></marker>
+                        <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#f87171"/></marker>
+                    </defs>
+                </svg>
+            </div>
+        </div>
+
+        <div class="callout callout-success">
+            <div class="callout-title">🔑 Key Insight — Lazy vs Active Expiry</div>
+            <p>GET mein <strong>lazy deletion</strong> hai — expired key tab delete hota hai jab access kare. But agar koi key kabhi access na kare? Memory waste! Isliye <strong>active expiry</strong> bhi chahiye (periodic background scan). Dono combine karo — Redis bhi yahi karta hai.</p>
+        </div>
+    </section>
+
+    <!-- 5. HLD -->
+    <section class="section" id="hld">
+        <div class="section-label">🏛️ Step 5</div>
+        <h2>High-Level Design</h2>
+        <p class="section-desc">Full architecture — client se lekar replica tak.</p>
+        <div class="flow-diagram">
+            <svg viewBox="0 0 820 400" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:820px;display:block;margin:0 auto;">
+                <text x="410" y="20" text-anchor="middle" fill="#5a7090" font-size="10" font-family="Outfit" font-weight="600" letter-spacing="2">DISTRIBUTED KV STORE ARCHITECTURE</text>
+                <rect x="20" y="35" width="780" height="55" rx="10" fill="rgba(94,170,255,0.05)" stroke="#1e3050"/>
+                <text x="35" y="52" fill="#5a7090" font-size="8" font-family="JetBrains Mono">APP LAYER</text>
+                <rect x="40" y="58" width="90" height="24" rx="6" fill="rgba(94,170,255,0.12)" stroke="#5eaaff"/>
+                <text x="85" y="74" text-anchor="middle" fill="#5eaaff" font-size="9" font-weight="600">App 1</text>
+                <rect x="140" y="58" width="90" height="24" rx="6" fill="rgba(94,170,255,0.12)" stroke="#5eaaff"/>
+                <text x="185" y="74" text-anchor="middle" fill="#5eaaff" font-size="9" font-weight="600">App 2</text>
+                <rect x="240" y="58" width="90" height="24" rx="6" fill="rgba(94,170,255,0.12)" stroke="#5eaaff"/>
+                <text x="285" y="74" text-anchor="middle" fill="#5eaaff" font-size="9" font-weight="600">App 3</text>
+                <rect x="450" y="48" width="330" height="36" rx="8" fill="rgba(167,139,250,0.1)" stroke="#a78bfa" stroke-width="1.5"/>
+                <text x="615" y="64" text-anchor="middle" fill="#a78bfa" font-size="10" font-weight="600">Client Library (in each app)</text>
+                <text x="615" y="78" text-anchor="middle" fill="#5a7090" font-size="8" font-family="JetBrains Mono">Consistent Hashing · Routing · Retry</text>
+                <line x1="410" y1="90" x2="410" y2="118" stroke="#5a7090" stroke-width="1.5"/>
+                <rect x="20" y="118" width="780" height="160" rx="10" fill="rgba(45,212,160,0.03)" stroke="#2dd4a0"/>
+                <text x="35" y="138" fill="#2dd4a0" font-size="8" font-family="JetBrains Mono" font-weight="600">CACHE CLUSTER</text>
+                <rect x="40" y="148" width="140" height="48" rx="8" fill="rgba(45,212,160,0.1)" stroke="#2dd4a0" stroke-width="1.5"/>
+                <text x="110" y="168" text-anchor="middle" fill="#2dd4a0" font-size="10" font-weight="700">Node A (Primary)</text>
+                <text x="110" y="186" text-anchor="middle" fill="#5a7090" font-size="8" font-family="JetBrains Mono">Slots 0-5460</text>
+                <rect x="40" y="204" width="140" height="26" rx="6" fill="rgba(94,170,255,0.06)" stroke="#5eaaff" stroke-dasharray="4"/>
+                <text x="110" y="222" text-anchor="middle" fill="#5eaaff" font-size="9">Replica A'</text>
+                <rect x="200" y="148" width="140" height="48" rx="8" fill="rgba(45,212,160,0.1)" stroke="#2dd4a0" stroke-width="1.5"/>
+                <text x="270" y="168" text-anchor="middle" fill="#2dd4a0" font-size="10" font-weight="700">Node B (Primary)</text>
+                <text x="270" y="186" text-anchor="middle" fill="#5a7090" font-size="8" font-family="JetBrains Mono">Slots 5461-10922</text>
+                <rect x="200" y="204" width="140" height="26" rx="6" fill="rgba(94,170,255,0.06)" stroke="#5eaaff" stroke-dasharray="4"/>
+                <text x="270" y="222" text-anchor="middle" fill="#5eaaff" font-size="9">Replica B'</text>
+                <rect x="360" y="148" width="140" height="48" rx="8" fill="rgba(45,212,160,0.1)" stroke="#2dd4a0" stroke-width="1.5"/>
+                <text x="430" y="168" text-anchor="middle" fill="#2dd4a0" font-size="10" font-weight="700">Node C (Primary)</text>
+                <text x="430" y="186" text-anchor="middle" fill="#5a7090" font-size="8" font-family="JetBrains Mono">Slots 10923-16383</text>
+                <rect x="360" y="204" width="140" height="26" rx="6" fill="rgba(94,170,255,0.06)" stroke="#5eaaff" stroke-dasharray="4"/>
+                <text x="430" y="222" text-anchor="middle" fill="#5eaaff" font-size="9">Replica C'</text>
+                <rect x="530" y="148" width="250" height="82" rx="8" fill="var(--bg-code)" stroke="#1e3050"/>
+                <text x="655" y="168" text-anchor="middle" fill="#f59e42" font-size="9" font-weight="600">Each Node:</text>
+                <text x="545" y="186" fill="#8fa3c0" font-size="8" font-family="JetBrains Mono">📦 HashMap  (O(1) lookup)</text>
+                <text x="545" y="202" fill="#8fa3c0" font-size="8" font-family="JetBrains Mono">🔗 DLL     (LRU ordering)</text>
+                <text x="545" y="218" fill="#8fa3c0" font-size="8" font-family="JetBrains Mono">⏰ TTL     (expiry tracking)</text>
+                <text x="280" y="260" text-anchor="middle" fill="#fbbf24" font-size="7" font-family="JetBrains Mono">← gossip protocol →</text>
+                <rect x="230" y="320" width="360" height="48" rx="10" fill="rgba(34,211,238,0.08)" stroke="#22d3ee" stroke-width="1.5"/>
+                <text x="410" y="342" text-anchor="middle" fill="#22d3ee" font-size="11" font-weight="600">Config Service (ZooKeeper/Etcd)</text>
+                <text x="410" y="358" text-anchor="middle" fill="#5a7090" font-size="8" font-family="JetBrains Mono">Node membership · Hash ring · Health checks</text>
+                <line x1="410" y1="278" x2="410" y2="320" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4"/>
+            </svg>
+        </div>
+        <div class="int-banner">
+            <div class="icon">🎤</div>
+            <div><h4>3-Layer Architecture</h4>
+            <p><strong>1.</strong> Client Library — hashing + routing. <strong>2.</strong> Cache Nodes — data + LRU + TTL. <strong>3.</strong> Config — discovery + health.</p></div>
+        </div>
+    </section>
+
+    <!-- 6. LRU DEEP DIVE -->
+    <section class="section" id="deep-dive-lru">
+        <div class="section-label">🔬 Deep Dive 1</div>
+        <h2>LRU Eviction — HashMap + Doubly Linked List</h2>
+        <p class="section-desc">Sabse important — 100% interview mein puchha jaata hai.</p>
+        <div class="card">
+            <h3>🧠 Why HashMap + DLL?</h3>
+            <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:1rem;">O(1) for GET, SET, EVICT — single DS se nahi hoga.</p>
+            <table>
+                <thead><tr><th>Operation</th><th>HashMap</th><th>Linked List</th><th>HashMap + DLL</th></tr></thead>
+                <tbody>
+                    <tr><td style="font-weight:600;">Lookup</td><td style="color:var(--accent-green);">O(1) ✅</td><td style="color:var(--accent-red);">O(n) ❌</td><td style="color:var(--accent-green);">O(1) ✅</td></tr>
+                    <tr><td style="font-weight:600;">Move to front</td><td style="color:var(--accent-red);">N/A ❌</td><td style="color:var(--accent-green);">O(1) ✅</td><td style="color:var(--accent-green);">O(1) ✅</td></tr>
+                    <tr><td style="font-weight:600;">Evict LRU</td><td style="color:var(--accent-red);">O(n) ❌</td><td style="color:var(--accent-green);">O(1) ✅</td><td style="color:var(--accent-green);">O(1) ✅</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <pre><span class="cmt">// LRU Cache Core</span>
+<span class="kw">class</span> <span class="fn">LRUCache</span>:
+    map:  <span class="str">HashMap&lt;string, DLLNode&gt;</span>
+    head: <span class="fn">DLLNode</span>  <span class="cmt">// most recent</span>
+    tail: <span class="fn">DLLNode</span>  <span class="cmt">// least recent → evict</span>
+
+    <span class="kw">def</span> <span class="fn">get</span>(key):
+        <span class="kw">if</span> key <span class="kw">not in</span> map: <span class="kw">return</span> <span class="num">NULL</span>
+        node = map[key]
+        <span class="kw">if</span> expired(node): <span class="fn">_remove</span>(node); <span class="kw">return</span> <span class="num">NULL</span>
+        <span class="fn">_move_to_head</span>(node)  <span class="cmt">// mark recently used</span>
+        <span class="kw">return</span> node.value
+
+    <span class="kw">def</span> <span class="fn">set</span>(key, value, ttl=<span class="num">0</span>):
+        <span class="kw">if</span> key <span class="kw">in</span> map: update + <span class="fn">_move_to_head</span>
+        <span class="kw">else</span>:
+            <span class="kw">if</span> full: <span class="fn">_evict_lru</span>()  <span class="cmt">// remove tail</span>
+            <span class="fn">_add_to_head</span>(new node)
+
+    <span class="kw">def</span> <span class="fn">_evict_lru</span>():
+        victim = tail.prev
+        <span class="fn">_remove</span>(victim); <span class="kw">del</span> map[victim.key]</pre>
+        <div class="callout callout-danger">
+            <div class="callout-title">❗ Thread Safety</div>
+            <p>Redis is single-threaded (no issue). Multi-threaded: use sharded locks for concurrency.</p>
+        </div>
+    </section>
+
+    <!-- 7. TTL -->
+    <section class="section" id="deep-dive-ttl">
+        <div class="section-label">🔬 Deep Dive 2</div>
+        <h2>TTL Expiration — Lazy + Active</h2>
+        <div class="algo-grid">
+            <div class="algo-card">
+                <h4 style="color:var(--accent-orange);">🦥 Lazy Expiry</h4>
+                <p>Check on access. Expired → delete + return NULL.</p>
+                <p style="color:var(--accent-green);font-size:0.78rem;margin-top:0.5rem;">✅ Zero overhead</p>
+                <p style="color:var(--accent-red);font-size:0.78rem;">❌ Unused keys waste memory</p>
+            </div>
+            <div class="algo-card">
+                <h4 style="color:var(--accent-cyan);">⏰ Active Expiry</h4>
+                <p>Every 100ms: sample 20 random keys, delete expired. If &gt;25% expired, repeat.</p>
+                <p style="color:var(--accent-green);font-size:0.78rem;margin-top:0.5rem;">✅ Reclaims memory</p>
+                <p style="color:var(--accent-red);font-size:0.78rem;">❌ CPU overhead</p>
+            </div>
+            <div class="algo-card selected">
+                <h4 style="color:var(--accent-green);">🏆 Hybrid (Redis)</h4>
+                <p>Lazy + Active combined. Probabilistically complete. Best approach.</p>
+                <span class="selected-badge">✅ RECOMMENDED</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- 8. CONSISTENT HASHING -->
+    <section class="section" id="deep-dive-hashing">
+        <div class="section-label">🔬 Deep Dive 3</div>
+        <h2>Consistent Hashing</h2>
+        <p class="section-desc">Keys evenly distribute + min disruption on node change.</p>
+        <div class="card">
+            <h3>❌ hash(key) % N Fails</h3>
+            <pre style="font-size:0.78rem;"><span class="cmt">// N=3 → N=4: ~75% keys remap → stampede!</span>
+hash(<span class="str">"user:1"</span>) % <span class="num">3</span> = <span class="num">2</span> → Node C
+hash(<span class="str">"user:1"</span>) % <span class="num">4</span> = <span class="num">1</span> → Node B  <span class="hl">← CHANGED!</span></pre>
+        </div>
+        <div class="card">
+            <h3>✅ Hash Ring + Virtual Nodes</h3>
+            <p style="color:var(--text-secondary);font-size:0.9rem;">Nodes placed on ring. Key hashed → walk clockwise → first node = owner. Node dies? Only K/N keys remap. Virtual nodes (150/physical) ensure even distribution.</p>
+            <pre style="font-size:0.78rem;"><span class="kw">for</span> i <span class="kw">in</span> range(<span class="num">150</span>):
+    ring[<span class="fn">hash</span>(f<span class="str">"NodeA-{i}"</span>)] = <span class="str">"NodeA"</span></pre>
+        </div>
+        <div class="callout callout-warn">
+            <div class="callout-title">⚠️ Interview Mistake</div>
+            <p>Don't just say "consistent hashing." Explain WHY simple hash%N fails: "When N changes, almost all keys remap → cache stampede."</p>
+        </div>
+    </section>
+
+    <!-- 9. REPLICATION -->
+    <section class="section" id="deep-dive-replication">
+        <div class="section-label">🔬 Deep Dive 4</div>
+        <h2>Replication & Fault Tolerance</h2>
+        <div class="deep-step">
+            <div class="step-num blue">1</div>
+            <h4>Primary-Replica Model</h4>
+            <p class="desc">Writes → primary. Reads → primary or replica. Async replication (fast, acceptable data loss for cache). Primary crash → replica promotes.</p>
+        </div>
+        <div class="deep-step">
+            <div class="step-num green">2</div>
+            <h4>Gossip Protocol</h4>
+            <p class="desc">Every 1s: ping 3 random nodes. No response 5s → SUSPECT. 3+ agree → FAILED → promote replica → update ring.</p>
+        </div>
+        <div class="int-banner">
+            <div class="icon">🎤</div>
+            <div><h4>Why async?</h4><p>"Cache ≠ source of truth. Sub-ms latency > durability. Need strong consistency? Use DB directly."</p></div>
+        </div>
+    </section>
+
+    <!-- 10. STAMPEDE -->
+    <section class="section" id="deep-dive-stampede">
+        <div class="section-label">🔬 Deep Dive 5</div>
+        <h2>Cache Stampede & Hot Keys</h2>
+        <div class="deep-step">
+            <div class="step-num red">1</div>
+            <h4>Cache Stampede</h4>
+            <p class="desc"><strong>Problem:</strong> Popular key expires → 1000s miss → DB crash.</p>
+            <pre style="font-size:0.78rem;margin-top:0.8rem;"><span class="hl">1. Mutex</span>: First req locks → fetches DB → populates. Others wait.
+<span class="hl">2. Refresh-Ahead</span>: TTL < 20%? Background refresh before expiry.
+<span class="hl">3. Stale-While-Revalidate</span>: Return stale + async refresh.</pre>
+        </div>
+        <div class="deep-step">
+            <div class="step-num orange">2</div>
+            <h4>Hot Key Problem</h4>
+            <p class="desc"><strong>Problem:</strong> One key 100x traffic → single node bottleneck.</p>
+            <pre style="font-size:0.78rem;margin-top:0.8rem;"><span class="hl">1. L1 Local Cache</span>: App-local (100 items, 30s TTL). Zero network.
+<span class="hl">2. Key Replication</span>: "product:42:random(1,5)" — 5 copies.
+<span class="hl">3. Read Replicas</span>: Route hot key reads to replicas.</pre>
+        </div>
+        <div class="callout callout-success">
+            <div class="callout-title">🔑 Production: Combine All</div>
+            <p>L1 local (ultra-hot) + distributed (all) + mutex (prevent stampede) + refresh-ahead (prevent gaps).</p>
+        </div>
+    </section>
+
+    <!-- 11. CAPACITY -->
+    <section class="section" id="capacity">
+        <div class="section-label">📊 Step 6</div>
+        <h2>Capacity Estimation</h2>
+        <div class="card">
+            <pre style="font-size:0.78rem;"><span class="cmt">// Per entry:</span> key(100B) + value(1KB) + overhead(200B) = <span class="hl">~1.3 KB</span>
+<span class="cmt">// 100M keys:</span> 100M × 1.3KB = <span class="hl">~130 GB</span>
+<span class="cmt">// + Replica:</span> 130 × 2 = <span class="hl">~260 GB total</span>
+<span class="cmt">// Nodes (64GB, 80% usable):</span> 130/51 = <span class="hl">3 primary + 3 replica = 6</span>
+<span class="cmt">// QPS/node:</span> 500K/3 = <span class="hl">~170K reads/sec</span> ← Redis handles 200K+</pre>
+        </div>
+    </section>
+
+    <!-- 12. CHEATSHEET -->
+    <section class="section" id="interview">
+        <div class="section-label">🎯 Bonus</div>
+        <h2>Interview Cheatsheet</h2>
+        <div class="card">
+            <h3>🗣️ 5-Minute Summary</h3>
+            <table>
+                <tbody>
+                    <tr><td style="color:var(--accent-green);font-weight:600;width:28%;">Requirements</td><td>SET, GET, DELETE. TTL. LRU. Sub-ms, 100K+ ops/sec.</td></tr>
+                    <tr><td style="color:var(--accent-blue);font-weight:600;">Data Structure</td><td>HashMap + DLL. O(1) all ops.</td></tr>
+                    <tr><td style="color:var(--accent-purple);font-weight:600;">Distribution</td><td>Consistent hashing + virtual nodes. 16384 slots.</td></tr>
+                    <tr><td style="color:var(--accent-orange);font-weight:600;">Eviction</td><td>LRU (DLL tail). TTL: lazy + active (Redis way).</td></tr>
+                    <tr><td style="color:var(--accent-cyan);font-weight:600;">Replication</td><td>Primary-Replica async. Gossip failure detection.</td></tr>
+                    <tr><td style="color:var(--accent-yellow);font-weight:600;">Challenges</td><td>Stampede (mutex), Hot keys (L1), Invalidation (TTL+events).</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card">
+            <h3>❓ Top Interview Questions</h3>
+            <div class="deep-step" style="margin-top:1rem;"><div class="step-num blue">Q1</div><h4>"Cache kab use karein?"</h4>
+            <p class="desc"><strong>Use:</strong> Read-heavy, can be stale, repeated access. <strong>Don't:</strong> Write-heavy, strong consistency, one-time data.</p></div>
+            <div class="deep-step"><div class="step-num green">Q2</div><h4>"Cache-Aside vs Read/Write-Through?"</h4>
+            <p class="desc"><strong>Cache-Aside:</strong> App checks cache → miss → DB → populate. Most common. <strong>Read-Through:</strong> Cache fetches DB. <strong>Write-Through:</strong> Sync write to both.</p></div>
+            <div class="deep-step"><div class="step-num purple">Q3</div><h4>"Redis vs Memcached?"</h4>
+            <p class="desc"><strong>Redis:</strong> Rich types, persistence, single-threaded. <strong>Memcached:</strong> Pure KV, multi-threaded, simpler. Pick Redis.</p></div>
+            <div class="deep-step"><div class="step-num orange">Q4</div><h4>"Cache invalidation?"</h4>
+            <p class="desc">TTL (safety net) + event-driven (fast). Write-through for strong consistency.</p></div>
+            <div class="deep-step"><div class="step-num red">Q5</div><h4>"Node dies?"</h4>
+            <p class="desc">Gossip detects → promote replica → update ring → temp DB load during transition.</p></div>
+        </div>
+        <div class="callout callout-success" style="margin-top:2rem;">
+            <div class="callout-title">🔑 One-Liner</div>
+            <p>"Distributed KV: consistent hashing for distribution, HashMap+DLL for O(1) LRU, lazy+active TTL, primary-replica async replication. Challenges: stampede (mutex), hot keys (L1 cache), invalidation (TTL+events)."</p>
+        </div>
+    </section>
+
+    <div class="footer">
+        <p>🏗️ System Design Mastery — Built for learning, one system at a time.</p>
+        <p style="margin-top: 0.5rem;">
+            <a href="https://github.com/ashish-bisht/all_about_system_design" style="color: var(--text-muted);">GitHub</a>
+        </p>
     </div>
 
-    <h1>Key-Value Store</h1>
-    <p style="font-size: 1.15rem; color: var(--text-secondary); margin-bottom: 2rem;">Design a distributed key-value store like Redis</p>
-
-    <h2>📋 Requirements</h2>
-    <h3>Functional Requirements</h3>
-    <ul>
-      <li>TODO: Add functional requirements</li>
-    </ul>
-    <h3>Non-Functional Requirements</h3>
-    <ul>
-      <li>TODO: Latency, throughput, availability targets</li>
-    </ul>
-
-    <h2>📊 Capacity Estimation</h2>
-    <p>TODO: Add back-of-envelope calculations — QPS, storage, bandwidth.</p>
-
-    <h2>🏛️ High-Level Architecture</h2>
-    <pre><code>┌─────────┐     ┌──────────┐     ┌──────────┐
-│  Client  │────▶│  API GW  │────▶│  Service │
-└─────────┘     └──────────┘     └────┬─────┘
-                                      │
-                                 ┌────▼─────┐
-                                 │    DB     │
-                                 └──────────┘</code></pre>
-    <p>TODO: Replace with actual architecture diagram</p>
-
-    <h2>🔧 API Design</h2>
-    <p>TODO: Define REST/gRPC endpoints</p>
-
-    <h2>💾 Data Model</h2>
-    <p>TODO: Define database schema and data access patterns</p>
-
-    <h2>⚡ Deep Dive</h2>
-    <p>TODO: Walk through the most interesting technical challenges</p>
-
-    <h2>📈 Scaling</h2>
-    <p>TODO: How to scale from 1K to 1M to 1B users</p>
-
-    <h2>🧪 Implementation</h2>
-    <p>Working code: <a href="https://github.com/yourusername../../tree/main/projects/04-easy-kv-store">projects/04-easy-kv-store/</a></p>
-
-    <h2>📝 Key Learnings</h2>
-    <ul>
-      <li>TODO: Add learnings after implementation</li>
-    </ul>
-  </div>
 </div>
-
-<footer class="footer">
-  <div class="container">
-    <p>🏗️ System Design Mastery — Built for learning, one system at a time.</p>
-    <p style="margin-top: 0.5rem;">
-      <a href="https://github.com/yourusername/system-design-mastery" style="color: var(--text-muted);">GitHub</a>
-    </p>
-  </div>
-</footer>
-
 </body>
 </html>

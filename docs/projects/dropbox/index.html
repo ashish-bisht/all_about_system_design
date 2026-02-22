@@ -1,97 +1,1052 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dropbox File Storage — System Design Mastery</title>
+  <title>Dropbox — File Storage & Sync | System Design</title>
   <link rel="stylesheet" href="../../styles.css">
 </head>
 <body>
 
+<!-- ========== NAV ========== -->
 <nav class="nav">
   <div class="container">
     <a href="../../" class="nav-brand">🏗️ <span>SystemDesign</span>Mastery</a>
     <ul class="nav-links">
       <li><a href="../../">Home</a></li>
-      <li><a href="../../projects/">Projects</a></li>
+      <li><a href="../">Projects</a></li>
       <li><a href="../../patterns/overview.html">Patterns</a></li>
       <li><a href="../../interview-prep/">Interview Prep</a></li>
+      <li><a href="https://github.com/ashish-bisht/all_about_system_design" target="_blank" rel="noopener">GitHub</a></li>
     </ul>
   </div>
 </nav>
 
-<div class="container">
-  <div class="breadcrumb">
-    <a href="../../">Home</a>
-    <span>›</span>
-    <a href="../../projects/">Projects</a>
-    <span>›</span>
-    <span>Dropbox File Storage</span>
-  </div>
-
-  <div class="page-content">
-    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
-      <span class="card-badge medium">medium</span>
-      <span class="card-tag">storage</span>
-      <span style="color: var(--text-muted); font-family: var(--font-mono); font-size: 0.85rem;">#09</span>
-    </div>
-
-    <h1>Dropbox File Storage</h1>
-    <p style="font-size: 1.15rem; color: var(--text-secondary); margin-bottom: 2rem;">Design a cloud file storage and sync service</p>
-
-    <h2>📋 Requirements</h2>
-    <h3>Functional Requirements</h3>
-    <ul>
-      <li>TODO: Add functional requirements</li>
-    </ul>
-    <h3>Non-Functional Requirements</h3>
-    <ul>
-      <li>TODO: Latency, throughput, availability targets</li>
-    </ul>
-
-    <h2>📊 Capacity Estimation</h2>
-    <p>TODO: Add back-of-envelope calculations — QPS, storage, bandwidth.</p>
-
-    <h2>🏛️ High-Level Architecture</h2>
-    <pre><code>┌─────────┐     ┌──────────┐     ┌──────────┐
-│  Client  │────▶│  API GW  │────▶│  Service │
-└─────────┘     └──────────┘     └────┬─────┘
-                                      │
-                                 ┌────▼─────┐
-                                 │    DB     │
-                                 └──────────┘</code></pre>
-    <p>TODO: Replace with actual architecture diagram</p>
-
-    <h2>🔧 API Design</h2>
-    <p>TODO: Define REST/gRPC endpoints</p>
-
-    <h2>💾 Data Model</h2>
-    <p>TODO: Define database schema and data access patterns</p>
-
-    <h2>⚡ Deep Dive</h2>
-    <p>TODO: Walk through the most interesting technical challenges</p>
-
-    <h2>📈 Scaling</h2>
-    <p>TODO: How to scale from 1K to 1M to 1B users</p>
-
-    <h2>🧪 Implementation</h2>
-    <p>Working code: <a href="https://github.com/yourusername../../tree/main/projects/09-med-dropbox">projects/09-med-dropbox/</a></p>
-
-    <h2>📝 Key Learnings</h2>
-    <ul>
-      <li>TODO: Add learnings after implementation</li>
-    </ul>
-  </div>
+<!-- ========== HERO ========== -->
+<div class="hero">
+  <div class="hero-badge">☁️ MEDIUM DIFFICULTY</div>
+  <h1>Dropbox — File Storage & Sync</h1>
+  <p>Upload, download, share and sync files across devices. Covers chunked uploads, S3 pre-signed URLs, conflict resolution, and permission models.</p>
 </div>
 
-<footer class="footer">
-  <div class="container">
-    <p>🏗️ System Design Mastery — Built for learning, one system at a time.</p>
-    <p style="margin-top: 0.5rem;">
-      <a href="https://github.com/yourusername/system-design-mastery" style="color: var(--text-muted);">GitHub</a>
-    </p>
-  </div>
-</footer>
+<div class="container">
 
+  <!-- ==================== SECTION: FUNCTIONAL REQUIREMENTS ==================== -->
+  <section class="section" id="requirements">
+    <div class="section-label green">📋 REQUIREMENTS</div>
+    <h2 class="section-title">Functional Requirements</h2>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">What are the core functional requirements?</span>
+        <span class="qa-tag core">Core</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <ul>
+          <li><strong>Upload</strong> — Users can upload files (few KB to 5GB) from any device</li>
+          <li><strong>Download</strong> — Users can download files from any device</li>
+          <li><strong>Share</strong> — Users can share files with others (public link or private with specific emails + access levels)</li>
+          <li><strong>Sync</strong> — Files automatically sync across user's devices</li>
+        </ul>
+        <p><strong>Out of scope:</strong> File editing, in-browser preview, real-time collaboration</p>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ==================== SECTION: NON-FUNCTIONAL REQUIREMENTS ==================== -->
+  <section class="section">
+    <div class="section-label yellow">⚡ NON-FUNCTIONAL</div>
+    <h2 class="section-title">Non-Functional Requirements</h2>
+
+    <table class="nfr-table">
+      <thead><tr><th>Property</th><th>Decision</th><th>Reasoning</th></tr></thead>
+      <tbody>
+        <tr><td>Availability</td><td>High</td><td>Users expect 24/7 access to their files</td></tr>
+        <tr><td>Consistency</td><td>Eventual</td><td>Sync across devices doesn't need real-time — few seconds delay acceptable</td></tr>
+        <tr><td>Fault Tolerance</td><td>Yes</td><td>No data loss even if servers crash</td></tr>
+        <tr><td>Durability</td><td>11 nines (99.999999999%)</td><td>S3-level durability — files must NEVER be lost</td></tr>
+        <tr><td>Read:Write Ratio</td><td>100:1 or more</td><td>Files uploaded once, accessed many times</td></tr>
+        <tr><td>File Size</td><td>Few KB → 5GB</td><td>Documents to large videos</td></tr>
+        <tr><td>Upload Strategy</td><td>Multipart with resume</td><td>Large files split into chunks; resume from last successful chunk on failure</td></tr>
+        <tr><td>Storage Backend</td><td>Object Storage (S3)</td><td>1B users × 2GB avg = ~2 Exabytes — only object storage scales to this</td></tr>
+      </tbody>
+    </table>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">Why eventual consistency and not strong consistency?</span>
+        <span class="qa-tag tradeoff">Trade-off</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <p>Strong consistency would mean every device sees the exact same file state at the exact same moment. This requires distributed locks and coordination — <strong>kills availability and performance</strong>.</p>
+        <p>For a file storage system, a few seconds delay in sync is perfectly acceptable. If you edit a file on laptop, seeing it on phone 2-5 seconds later is fine. <strong>Availability > Consistency</strong> here (AP in CAP theorem).</p>
+      </div></div>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">Why multipart upload with resume?</span>
+        <span class="qa-tag deep">Deep Dive</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <p>Imagine uploading a 4GB video. Without multipart:</p>
+        <ul>
+          <li>Network drops at 3.5GB → <strong>start over from scratch</strong></li>
+          <li>Single connection bottleneck → slow upload</li>
+          <li>Server memory overload holding entire file</li>
+        </ul>
+        <p>With multipart (chunked) upload:</p>
+        <ul>
+          <li>File split into chunks (e.g., 5-10MB each)</li>
+          <li>Each chunk uploaded independently</li>
+          <li>On failure, resume from last successful chunk</li>
+          <li>Parallel upload of chunks possible</li>
+          <li>Server never holds entire file in memory</li>
+        </ul>
+      </div></div>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">Storage Estimation: Why object storage?</span>
+        <span class="qa-tag scale">Scale</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <p><strong>Back of envelope:</strong></p>
+        <ul>
+          <li>1 Billion users</li>
+          <li>Average 2GB per user</li>
+          <li>Total: <strong>~2 Exabytes (2,000 Petabytes)</strong></li>
+        </ul>
+        <p>No traditional database or file system handles this. <strong>Object storage (S3)</strong> is the only option — it's designed for exactly this scale with 11 nines durability, automatic replication across AZs, and cost-effective tiered storage.</p>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ==================== SECTION: CORE ENTITIES ==================== -->
+  <section class="section" id="entities">
+    <div class="section-label cyan">🗃️ ENTITIES</div>
+    <h2 class="section-title">Core Entities</h2>
+
+    <div class="entity-grid">
+      <!-- User -->
+      <div class="entity-card">
+        <div class="entity-name">👤 User</div>
+        <div class="entity-fields">
+          <div class="field"><span class="field-name">user_id</span><span><span class="field-type">UUID</span><span class="field-pk">PK</span></span></div>
+          <div class="field"><span class="field-name">email</span><span class="field-type">VARCHAR</span></div>
+          <div class="field"><span class="field-name">name</span><span class="field-type">VARCHAR</span></div>
+          <div class="field"><span class="field-name">storage_used</span><span class="field-type">BIGINT</span></div>
+          <div class="field"><span class="field-name">storage_limit</span><span class="field-type">BIGINT</span></div>
+          <div class="field"><span class="field-name">created_at</span><span class="field-type">TIMESTAMP</span></div>
+        </div>
+      </div>
+
+      <!-- File Metadata -->
+      <div class="entity-card">
+        <div class="entity-name">📄 File Metadata</div>
+        <div class="entity-fields">
+          <div class="field"><span class="field-name">file_id</span><span><span class="field-type">UUID</span><span class="field-pk">PK</span></span></div>
+          <div class="field"><span class="field-name">owner_id</span><span class="field-type">UUID → User</span></div>
+          <div class="field"><span class="field-name">filename</span><span class="field-type">VARCHAR</span></div>
+          <div class="field"><span class="field-name">file_type</span><span class="field-type">VARCHAR</span></div>
+          <div class="field"><span class="field-name">file_size</span><span class="field-type">BIGINT</span></div>
+          <div class="field"><span class="field-name">total_chunks</span><span class="field-type">INT</span></div>
+          <div class="field"><span class="field-name">status</span><span class="field-type">ENUM (uploading, ready, failed)</span></div>
+          <div class="field"><span class="field-name">version</span><span class="field-type">INT</span></div>
+          <div class="field"><span class="field-name">checksum</span><span class="field-type">VARCHAR</span></div>
+          <div class="field"><span class="field-name">last_edited</span><span class="field-type">TIMESTAMP</span></div>
+          <div class="field"><span class="field-name">created_at</span><span class="field-type">TIMESTAMP</span></div>
+        </div>
+      </div>
+
+      <!-- File Chunks -->
+      <div class="entity-card">
+        <div class="entity-name">🧩 File Chunks</div>
+        <div class="entity-fields">
+          <div class="field"><span class="field-name">chunk_id</span><span><span class="field-type">UUID</span><span class="field-pk">PK</span></span></div>
+          <div class="field"><span class="field-name">file_id</span><span class="field-type">UUID → File</span></div>
+          <div class="field"><span class="field-name">chunk_number</span><span class="field-type">INT</span></div>
+          <div class="field"><span class="field-name">s3_object_key</span><span class="field-type">VARCHAR</span></div>
+          <div class="field"><span class="field-name">chunk_size</span><span class="field-type">BIGINT</span></div>
+          <div class="field"><span class="field-name">checksum</span><span class="field-type">VARCHAR</span></div>
+          <div class="field"><span class="field-name">uploaded_at</span><span class="field-type">TIMESTAMP</span></div>
+        </div>
+      </div>
+
+      <!-- Permissions / Access -->
+      <div class="entity-card">
+        <div class="entity-name">🔐 Permissions</div>
+        <div class="entity-fields">
+          <div class="field"><span class="field-name">permission_id</span><span><span class="field-type">UUID</span><span class="field-pk">PK</span></span></div>
+          <div class="field"><span class="field-name">file_id</span><span class="field-type">UUID → File</span></div>
+          <div class="field"><span class="field-name">user_id</span><span class="field-type">UUID → User</span></div>
+          <div class="field"><span class="field-name">access_level</span><span class="field-type">ENUM (read, write, admin)</span></div>
+          <div class="field"><span class="field-name">granted_at</span><span class="field-type">TIMESTAMP</span></div>
+        </div>
+      </div>
+
+      <!-- Share Links -->
+      <div class="entity-card">
+        <div class="entity-name">🔗 Share Links</div>
+        <div class="entity-fields">
+          <div class="field"><span class="field-name">link_id</span><span><span class="field-type">UUID</span><span class="field-pk">PK</span></span></div>
+          <div class="field"><span class="field-name">file_id</span><span class="field-type">UUID → File</span></div>
+          <div class="field"><span class="field-name">share_url</span><span class="field-type">VARCHAR (unique)</span></div>
+          <div class="field"><span class="field-name">link_type</span><span class="field-type">ENUM (public, private)</span></div>
+          <div class="field"><span class="field-name">created_by</span><span class="field-type">UUID → User</span></div>
+          <div class="field"><span class="field-name">expires_at</span><span class="field-type">TIMESTAMP (nullable)</span></div>
+          <div class="field"><span class="field-name">created_at</span><span class="field-type">TIMESTAMP</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">Why separate File Metadata and File Chunks?</span>
+        <span class="qa-tag deep">Deep Dive</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <p><strong>Metadata</strong> (filename, type, owner, version) lives in Postgres — small, structured, queried often.</p>
+        <p><strong>Actual file content</strong> lives in S3 as chunks. The Chunks table maps each piece to its S3 location.</p>
+        <p>This separation gives us:</p>
+        <ul>
+          <li>Fast metadata queries without touching blob storage</li>
+          <li>Resume capability — we know exactly which chunks are uploaded</li>
+          <li>Deduplication — same chunk hash across files can point to same S3 object</li>
+          <li>Parallel download — client fetches multiple chunks simultaneously</li>
+        </ul>
+      </div></div>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">Why separate Permissions from Share Links?</span>
+        <span class="qa-tag entity">Entity</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <p>Two different sharing models:</p>
+        <ul>
+          <li><strong>Permissions (Private)</strong> — Direct user-to-user sharing. "Share with ashish@gmail.com with read access." Query: "Show me all files shared with me" → <code>SELECT * FROM permissions WHERE user_id = ?</code></li>
+          <li><strong>Share Links (Public)</strong> — URL-based access. Anyone with the link can access. No auth check needed. The URL itself is the access token.</li>
+        </ul>
+        <p>If we mixed them in one table, querying "files shared with me" would require scanning through all public links too — <strong>inefficient and messy</strong>.</p>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ==================== SECTION: API DESIGN ==================== -->
+  <section class="section" id="apis">
+    <div class="section-label blue">🔌 API DESIGN</div>
+    <h2 class="section-title">APIs</h2>
+
+    <!-- Upload Init -->
+    <div class="api-card">
+      <span class="api-method post">POST</span>
+      <span class="api-path">/files/upload-init</span>
+      <div class="api-desc">Initialize multipart upload. Returns pre-signed URL + upload session ID.</div>
+      <pre>{
+  // Request
+  "filename": "vacation.mp4",
+  "file_type": "video/mp4",
+  "file_size": 2147483648,    // 2GB in bytes
+  "total_chunks": 20
+}
+
+// Response 200
+{
+  "file_id": "f-abc123",
+  "upload_id": "s3-upload-xyz",    // S3 multipart upload ID
+  "presigned_url": "https://bucket.s3.../vacation.mp4?uploadId=xyz&...",
+  "chunk_size": 104857600          // recommended 100MB chunks
+}</pre>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">Why POST for upload-init and not GET?</span>
+        <span class="qa-tag api">API</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <p>We're <strong>creating a resource</strong> (upload session) and sending metadata in the body. GET requests with body are technically allowed but many clients and proxies ignore GET body. POST is the correct semantic choice here.</p>
+      </div></div>
+    </div>
+
+    <!-- Upload Complete -->
+    <div class="api-card">
+      <span class="api-method post">POST</span>
+      <span class="api-path">/files/{file_id}/upload-complete</span>
+      <div class="api-desc">Finalize upload after all chunks are uploaded to S3. Alternative: Use S3 event notification to trigger this automatically.</div>
+      <pre>{
+  // Request
+  "upload_id": "s3-upload-xyz",
+  "chunks": [
+    { "chunk_number": 1, "etag": "abc123" },
+    { "chunk_number": 2, "etag": "def456" }
+  ]
+}
+
+// Response 200
+{
+  "file_id": "f-abc123",
+  "status": "ready",
+  "download_url": "/files/f-abc123/download"
+}</pre>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">Client callback vs S3 event notification — which to use?</span>
+        <span class="qa-tag tradeoff">Trade-off</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <p><strong>Option A: Client calls /upload-complete</strong></p>
+        <ul>
+          <li>Simple — client knows when it's done</li>
+          <li>Client sends chunk ETags for verification</li>
+          <li>Risk: client crashes before calling → orphaned upload</li>
+        </ul>
+        <p><strong>Option B: S3 Event → SNS/Lambda → Server</strong></p>
+        <ul>
+          <li>Server automatically knows when upload completes</li>
+          <li>No client dependency for finalization</li>
+          <li>Risk: notification fails/delays → user sees stale state</li>
+        </ul>
+        <p><strong>Best approach: Both!</strong> Client calls /upload-complete as primary. S3 events as backup/verification. A cron job cleans up orphaned uploads older than 24h.</p>
+      </div></div>
+    </div>
+
+    <!-- Download -->
+    <div class="api-card">
+      <span class="api-method get">GET</span>
+      <span class="api-path">/files/{file_id}/download</span>
+      <div class="api-desc">Get pre-signed download URL. Client downloads directly from S3. Supports parallel chunk download via byte-range requests.</div>
+      <pre>// Response 200
+{
+  "file_id": "f-abc123",
+  "filename": "vacation.mp4",
+  "file_size": 2147483648,
+  "download_url": "https://bucket.s3.../vacation.mp4?...",
+  "expires_in": 3600,    // URL valid for 1 hour
+  "chunks": [            // for parallel download
+    { "chunk_number": 1, "byte_range": "0-104857599" },
+    { "chunk_number": 2, "byte_range": "104857600-209715199" }
+  ]
+}</pre>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">Why not serve files through our server?</span>
+        <span class="qa-tag deep">Deep Dive</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <p><strong>Pre-signed URL → Direct S3 download</strong> because:</p>
+        <ul>
+          <li>Server doesn't waste bandwidth streaming 5GB files</li>
+          <li>S3 CDN is optimized for high-throughput delivery</li>
+          <li>Server only handles metadata requests (lightweight)</li>
+          <li>Horizontal scaling is easier — server is stateless</li>
+        </ul>
+        <p>Pre-signed URLs are time-limited (1hr) so security is maintained. Server's only job is: <strong>authenticate user → check permissions → generate URL → done</strong>.</p>
+      </div></div>
+    </div>
+
+    <!-- Share -->
+    <div class="api-card">
+      <span class="api-method get">GET</span>
+      <span class="api-path">/files/{file_id}/share</span>
+      <div class="api-desc">Get shareable URL for a file.</div>
+    </div>
+
+    <div class="api-card">
+      <span class="api-method put">PUT</span>
+      <span class="api-path">/files/{file_id}/share</span>
+      <div class="api-desc">Update sharing permissions — set public/private, add/remove whitelisted emails with access levels.</div>
+      <pre>{
+  // Request
+  "link_type": "private",
+  "permissions": [
+    { "email": "alice@example.com", "access": "read" },
+    { "email": "bob@example.com", "access": "write" }
+  ]
+}
+
+// Response 200
+{
+  "share_url": "https://dropbox.com/s/abc123xyz",
+  "link_type": "private",
+  "permissions": [...]
+}</pre>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">Public vs Private share links — what's the difference?</span>
+        <span class="qa-tag core">Core</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <p><strong>Public link:</strong> Anyone with the URL can access. No auth check. Server generates a unique, non-guessable URL (like a long random token). The URL itself IS the authorization.</p>
+        <p><strong>Private link:</strong> Only whitelisted emails can access. When someone clicks the link, server checks: is this user's email in the permissions table? What access level? If not found → 403 Forbidden.</p>
+        <p><strong>Key insight:</strong> Public share links should NOT be pre-signed S3 URLs because those expire (typically 1hr). Instead, share links are permanent server URLs that internally generate fresh pre-signed URLs on each access.</p>
+      </div></div>
+    </div>
+
+    <!-- Sync -->
+    <div class="api-card">
+      <span class="api-method get">GET</span>
+      <span class="api-path">/files/sync?since={timestamp}</span>
+      <div class="api-desc">Get all file changes since last sync point. Used by client to detect remote changes.</div>
+      <pre>// Response 200
+{
+  "changes": [
+    {
+      "file_id": "f-abc123",
+      "action": "modified",
+      "version": 3,
+      "last_edited": "2025-02-10T14:30:00Z"
+    },
+    {
+      "file_id": "f-def456",
+      "action": "deleted",
+      "version": 2,
+      "last_edited": "2025-02-10T15:00:00Z"
+    }
+  ],
+  "sync_cursor": "2025-02-10T15:00:00Z"
+}</pre>
+    </div>
+  </section>
+
+  <!-- ==================== SECTION: DATA FLOW ==================== -->
+  <section class="section" id="data-flow">
+    <div class="section-label orange">🔄 DATA FLOW</div>
+    <h2 class="section-title">Upload Flow (Step by Step)</h2>
+
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-title">Client → POST /files/upload-init</div>
+        <div class="step-desc">Send metadata: filename, type, size, total_chunks. Server creates file record (status: "uploading"), calls S3 CreateMultipartUpload, returns file_id + upload_id + pre-signed URL.</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-title">Client → S3 Direct Upload (via SDK)</div>
+        <div class="step-desc">Client uses S3 SDK with pre-signed URL to upload chunks one by one (or in parallel). Each chunk gets an ETag from S3 on success. Client tracks progress locally.</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-title">On Failure → Resume from Last Chunk</div>
+        <div class="step-desc">If upload fails mid-way, client calls S3 ListParts with upload_id to see which chunks completed. Resumes from next incomplete chunk. No re-upload of successful chunks.</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-title">Client → POST /files/{file_id}/upload-complete</div>
+        <div class="step-desc">After all chunks uploaded, client sends list of {chunk_number, etag}. Server calls S3 CompleteMultipartUpload, updates file status to "ready", bumps version.</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-title">S3 Event Notification (Backup)</div>
+        <div class="step-desc">S3 triggers SNS/Lambda on upload completion as backup. If client crashed before calling upload-complete, this catches it. Cron job cleans orphaned uploads after 24h.</div>
+      </div>
+    </div>
+
+    <h2 class="section-title" style="margin-top: 2rem;">Download Flow</h2>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-title">Client → GET /files/{file_id}/download</div>
+        <div class="step-desc">Server authenticates user, checks permissions, generates fresh pre-signed download URL from S3. Returns URL + file metadata + chunk byte-ranges.</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-title">Client → Direct S3 Download</div>
+        <div class="step-desc">Client uses pre-signed URL to download directly from S3. For large files, uses byte-range requests to download chunks in parallel across multiple connections.</div>
+      </div>
+    </div>
+
+    <h2 class="section-title" style="margin-top: 2rem;">Share Flow</h2>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-title">Owner → PUT /files/{file_id}/share</div>
+        <div class="step-desc">Sets link_type (public/private). For private: adds emails with access levels to permissions table. Server generates unique, non-expiring share URL.</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-title">Recipient → Clicks Share Link</div>
+        <div class="step-desc"><strong>Public:</strong> No auth check, directly generate pre-signed S3 URL and serve. <strong>Private:</strong> Authenticate user → check permissions table → if allowed, generate pre-signed URL → serve. Else 403.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== SECTION: HIGH LEVEL DESIGN ==================== -->
+  <section class="section" id="diagrams">
+    <div class="section-label purple">📐 HIGH LEVEL DESIGN</div>
+    <h2 class="section-title">Architecture Diagram</h2>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">📐 High Level Architecture</span>
+        <span class="qa-tag core">Core</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <svg viewBox="0 0 920 580" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width:920px;width:100%;">
+          <defs>
+            <marker id="arwG" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#00dc82"/></marker>
+            <marker id="arwB" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#38bdf8"/></marker>
+            <marker id="arwY" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#facc15"/></marker>
+            <marker id="arwO" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#fb923c"/></marker>
+            <marker id="arwR" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#f87171"/></marker>
+            <marker id="arwP" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#a78bfa"/></marker>
+            <marker id="arwC" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#22d3ee"/></marker>
+            <pattern id="gridH" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1e1e2e" stroke-width="0.5"/></pattern>
+          </defs>
+          <rect width="920" height="580" fill="url(#gridH)" rx="12"/>
+
+          <!-- Title -->
+          <text x="460" y="25" text-anchor="middle" fill="#555568" font-family="Outfit" font-size="11" font-weight="600">DROPBOX — HIGH LEVEL ARCHITECTURE</text>
+
+          <!-- ===== ROW 1: Client + CDN ===== -->
+          <!-- Clients -->
+          <rect x="20" y="60" width="120" height="55" rx="8" fill="#12121c" stroke="#38bdf8" stroke-width="1.5"/>
+          <text x="80" y="82" text-anchor="middle" fill="#38bdf8" font-family="Outfit" font-size="11" font-weight="600">📱 💻 Client</text>
+          <text x="80" y="100" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">Mobile / Desktop</text>
+
+          <!-- CDN -->
+          <rect x="20" y="150" width="120" height="45" rx="8" fill="#12121c" stroke="#22d3ee" stroke-width="1.5"/>
+          <text x="80" y="170" text-anchor="middle" fill="#22d3ee" font-family="Outfit" font-size="10" font-weight="600">🌐 CDN</text>
+          <text x="80" y="185" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">CloudFront/Cloudflare</text>
+
+          <!-- Client ↔ CDN -->
+          <line x1="80" y1="115" x2="80" y2="145" stroke="#22d3ee" stroke-width="1" marker-end="url(#arwC)"/>
+          <text x="105" y="133" fill="#555568" font-family="JetBrains Mono" font-size="7">Popular files</text>
+
+          <!-- ===== API Gateway ===== -->
+          <rect x="200" y="60" width="140" height="70" rx="8" fill="#12121c" stroke="#facc15" stroke-width="1.5"/>
+          <text x="270" y="82" text-anchor="middle" fill="#facc15" font-family="Outfit" font-size="11" font-weight="700">🛡️ API Gateway</text>
+          <text x="270" y="98" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">Rate Limiting</text>
+          <text x="270" y="112" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">AuthN / AuthZ</text>
+          <text x="270" y="124" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="7">Throttling</text>
+
+          <!-- Client → API GW -->
+          <line x1="140" y1="87" x2="195" y2="87" stroke="#38bdf8" stroke-width="1.5" marker-end="url(#arwB)"/>
+
+          <!-- ===== API Server ===== -->
+          <rect x="400" y="50" width="150" height="90" rx="8" fill="#12121c" stroke="#00dc82" stroke-width="1.5"/>
+          <text x="475" y="75" text-anchor="middle" fill="#00dc82" font-family="Outfit" font-size="12" font-weight="700">🖥️ API Server</text>
+          <text x="475" y="93" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">Metadata CRUD</text>
+          <text x="475" y="107" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">Pre-signed URLs</text>
+          <text x="475" y="121" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">Permissions + Sync</text>
+
+          <!-- API GW → API Server -->
+          <line x1="340" y1="95" x2="395" y2="95" stroke="#facc15" stroke-width="1.5" marker-end="url(#arwY)"/>
+
+          <!-- ===== S3 Object Storage ===== -->
+          <rect x="680" y="50" width="160" height="75" rx="8" fill="#12121c" stroke="#fb923c" stroke-width="1.5"/>
+          <text x="760" y="73" text-anchor="middle" fill="#fb923c" font-family="Outfit" font-size="12" font-weight="700">☁️ Object Storage</text>
+          <text x="760" y="91" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">S3 (File Chunks)</text>
+          <text x="760" y="105" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">11 nines durability</text>
+          <text x="760" y="118" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">5-10MB chunks</text>
+
+          <!-- API → S3 (generate pre-signed URLs) -->
+          <line x1="550" y1="85" x2="675" y2="85" stroke="#00dc82" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arwG)"/>
+          <text x="612" y="78" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">Generate pre-signed URLs</text>
+
+          <!-- Client → S3 Direct (curved, dashed) -->
+          <path d="M80,60 Q80,35 760,45" stroke="#fb923c" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arwO)" fill="none"/>
+          <text x="400" y="30" text-anchor="middle" fill="#fb923c" font-family="JetBrains Mono" font-size="9" font-weight="600">Direct upload/download (pre-signed URL)</text>
+
+          <!-- CDN → S3 -->
+          <path d="M140,172 Q400,172 680,90" stroke="#22d3ee" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arwC)" fill="none"/>
+          <text x="420" y="148" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">Cache popular files from S3</text>
+
+          <!-- ===== Redis Cache ===== -->
+          <rect x="400" y="190" width="150" height="55" rx="8" fill="#12121c" stroke="#f87171" stroke-width="1.5"/>
+          <text x="475" y="212" text-anchor="middle" fill="#f87171" font-family="Outfit" font-size="11" font-weight="600">⚡ Redis Cache</text>
+          <text x="475" y="228" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">LFU eviction</text>
+          <text x="475" y="240" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">Hot file metadata</text>
+
+          <!-- API → Redis -->
+          <line x1="475" y1="140" x2="475" y2="185" stroke="#f87171" stroke-width="1.5" marker-end="url(#arwR)"/>
+          <text x="500" y="165" fill="#555568" font-family="JetBrains Mono" font-size="7">Check cache first</text>
+
+          <!-- ===== DB Master ===== -->
+          <rect x="250" y="310" width="150" height="65" rx="8" fill="#12121c" stroke="#a78bfa" stroke-width="1.5"/>
+          <text x="325" y="332" text-anchor="middle" fill="#a78bfa" font-family="Outfit" font-size="11" font-weight="700">🗄️ DB Master</text>
+          <text x="325" y="350" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">PostgreSQL (Writes)</text>
+          <text x="325" y="365" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">file_id indexed</text>
+
+          <!-- ===== DB Slave ===== -->
+          <rect x="500" y="310" width="150" height="65" rx="8" fill="#12121c" stroke="#a78bfa" stroke-width="1" stroke-dasharray="4 3"/>
+          <text x="575" y="332" text-anchor="middle" fill="#a78bfa" font-family="Outfit" font-size="11" font-weight="600">🗄️ DB Slave</text>
+          <text x="575" y="350" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">PostgreSQL (Reads)</text>
+          <text x="575" y="365" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">Read replicas</text>
+
+          <!-- Master → Slave (async replication) -->
+          <line x1="400" y1="342" x2="495" y2="342" stroke="#a78bfa" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arwP)"/>
+          <text x="448" y="335" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">Async replication</text>
+
+          <!-- API → DB Master (writes) -->
+          <path d="M440,140 Q380,240 325,305" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arwP)" fill="none"/>
+          <text x="360" y="240" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">Writes</text>
+
+          <!-- API → DB Slave (reads, via cache miss) -->
+          <path d="M510,140 Q560,240 575,305" stroke="#a78bfa" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arwP)" fill="none"/>
+          <text x="565" y="240" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">Reads (cache miss)</text>
+
+          <!-- ===== S3 Events ===== -->
+          <rect x="680" y="170" width="160" height="50" rx="8" fill="#12121c" stroke="#f87171" stroke-width="1.5"/>
+          <text x="760" y="190" text-anchor="middle" fill="#f87171" font-family="Outfit" font-size="10" font-weight="600">⚡ S3 Events</text>
+          <text x="760" y="208" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">SNS / Lambda</text>
+
+          <!-- S3 → S3 Events -->
+          <line x1="760" y1="125" x2="760" y2="165" stroke="#f87171" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arwR)"/>
+          <text x="785" y="148" fill="#555568" font-family="JetBrains Mono" font-size="7">Event trigger</text>
+
+          <!-- S3 Events → API -->
+          <path d="M680,195 Q600,195 550,120" stroke="#f87171" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arwR)" fill="none"/>
+          <text x="620" y="170" fill="#555568" font-family="JetBrains Mono" font-size="7">Backup callback</text>
+
+          <!-- ===== Sync: Lazy approach box ===== -->
+          <rect x="680" y="280" width="160" height="55" rx="8" fill="#12121c" stroke="#22d3ee" stroke-width="1"/>
+          <text x="760" y="300" text-anchor="middle" fill="#22d3ee" font-family="Outfit" font-size="10" font-weight="600">🔄 Sync Strategy</text>
+          <text x="760" y="316" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">Lazy: check on file open</text>
+          <text x="760" y="328" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">Mobile: FCM/APNs push</text>
+
+          <!-- ===== LEGEND ===== -->
+          <rect x="20" y="430" width="880" height="140" rx="8" fill="#0d0d14" stroke="#1e1e2e" stroke-width="1"/>
+          <text x="40" y="455" fill="#e8e8ef" font-family="Outfit" font-size="12" font-weight="700">Architecture Summary</text>
+
+          <line x1="40" y1="470" x2="60" y2="470" stroke="#38bdf8" stroke-width="2"/>
+          <text x="65" y="474" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">Client → API Gateway: All requests go through gateway for auth, rate limiting, throttling</text>
+
+          <line x1="40" y1="490" x2="60" y2="490" stroke="#fb923c" stroke-width="2" stroke-dasharray="5 3"/>
+          <text x="65" y="494" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">Client → S3 Direct: File upload/download bypasses server via pre-signed URLs (no server bandwidth cost)</text>
+
+          <line x1="40" y1="510" x2="60" y2="510" stroke="#f87171" stroke-width="2"/>
+          <text x="65" y="514" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">Redis Cache (LFU): Hot metadata cached, least frequently used evicted. Check cache before DB.</text>
+
+          <line x1="40" y1="530" x2="60" y2="530" stroke="#a78bfa" stroke-width="2"/>
+          <text x="65" y="534" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">Master-Slave DB: Writes → Master, Reads → Slave replicas. Async replication (eventual consistency OK).</text>
+
+          <line x1="40" y1="550" x2="60" y2="550" stroke="#22d3ee" stroke-width="2"/>
+          <text x="65" y="554" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">CDN + Sync: CDN caches viral/popular files at edge. Sync is lazy — version check on file open, push via FCM/APNs.</text>
+        </svg>
+      </div></div>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">📤 Upload Flow Diagram</span>
+        <span class="qa-tag core">Core</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <svg viewBox="0 0 900 400" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width:900px;width:100%;">
+          <defs>
+            <marker id="arwU1" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#00dc82"/></marker>
+            <marker id="arwU2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#fb923c"/></marker>
+            <marker id="arwU3" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#38bdf8"/></marker>
+            <marker id="arwU4" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#f87171"/></marker>
+            <pattern id="gridU" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1e1e2e" stroke-width="0.5"/></pattern>
+          </defs>
+          <rect width="900" height="400" fill="url(#gridU)" rx="12"/>
+
+          <!-- Step labels at top -->
+          <text x="120" y="30" text-anchor="middle" fill="#00dc82" font-family="Outfit" font-size="11" font-weight="700">① INIT</text>
+          <text x="350" y="30" text-anchor="middle" fill="#fb923c" font-family="Outfit" font-size="11" font-weight="700">② UPLOAD CHUNKS</text>
+          <text x="600" y="30" text-anchor="middle" fill="#38bdf8" font-family="Outfit" font-size="11" font-weight="700">③ COMPLETE</text>
+          <text x="810" y="30" text-anchor="middle" fill="#f87171" font-family="Outfit" font-size="11" font-weight="700">④ VERIFY</text>
+
+          <!-- Client row -->
+          <rect x="30" y="60" width="90" height="40" rx="6" fill="#12121c" stroke="#38bdf8" stroke-width="1.5"/>
+          <text x="75" y="84" text-anchor="middle" fill="#38bdf8" font-family="Outfit" font-size="10" font-weight="600">Client</text>
+
+          <!-- Step 1: Client → Server (init) -->
+          <line x1="120" y1="80" x2="190" y2="80" stroke="#00dc82" stroke-width="1.5" marker-end="url(#arwU1)"/>
+          <text x="155" y="73" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">POST /upload-init</text>
+
+          <!-- Server -->
+          <rect x="195" y="60" width="90" height="40" rx="6" fill="#12121c" stroke="#00dc82" stroke-width="1.5"/>
+          <text x="240" y="84" text-anchor="middle" fill="#00dc82" font-family="Outfit" font-size="10" font-weight="600">API Server</text>
+
+          <!-- Server → DB -->
+          <line x1="240" y1="100" x2="240" y2="140" stroke="#a78bfa" stroke-width="1" marker-end="url(#arwU1)"/>
+          <rect x="195" y="145" width="90" height="35" rx="6" fill="#12121c" stroke="#a78bfa" stroke-width="1"/>
+          <text x="240" y="167" text-anchor="middle" fill="#a78bfa" font-family="JetBrains Mono" font-size="8">Create file record</text>
+          <text x="240" y="130" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">status: uploading</text>
+
+          <!-- Server → Client (returns URL) -->
+          <path d="M240,100 Q240,200 120,200 Q75,200 75,170" stroke="#00dc82" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arwU1)" fill="none"/>
+          <text x="160" y="215" text-anchor="middle" fill="#00dc82" font-family="JetBrains Mono" font-size="7">file_id + upload_id + presigned_url</text>
+
+          <!-- Step 2: Client → S3 (chunks) -->
+          <rect x="350" y="60" width="120" height="55" rx="6" fill="#12121c" stroke="#fb923c" stroke-width="1.5"/>
+          <text x="410" y="80" text-anchor="middle" fill="#fb923c" font-family="Outfit" font-size="10" font-weight="600">☁️ S3</text>
+          <text x="410" y="95" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">Multipart Upload</text>
+          <text x="410" y="108" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">chunk 1, 2, 3...</text>
+
+          <line x1="120" y1="85" x2="345" y2="85" stroke="#fb923c" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arwU2)"/>
+          <text x="230" y="58" text-anchor="middle" fill="#fb923c" font-family="JetBrains Mono" font-size="7">Direct upload via SDK</text>
+
+          <!-- Retry box -->
+          <rect x="350" y="150" width="120" height="40" rx="6" fill="#12121c" stroke="#facc15" stroke-width="1" stroke-dasharray="4 3"/>
+          <text x="410" y="168" text-anchor="middle" fill="#facc15" font-family="JetBrains Mono" font-size="8">❌ Fail? → ListParts</text>
+          <text x="410" y="182" text-anchor="middle" fill="#facc15" font-family="JetBrains Mono" font-size="7">Resume from last chunk</text>
+          <line x1="410" y1="115" x2="410" y2="145" stroke="#facc15" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#arwU1)"/>
+
+          <!-- Step 3: Client → Server (complete) -->
+          <rect x="550" y="60" width="110" height="40" rx="6" fill="#12121c" stroke="#38bdf8" stroke-width="1.5"/>
+          <text x="605" y="84" text-anchor="middle" fill="#38bdf8" font-family="Outfit" font-size="10" font-weight="600">Upload Complete</text>
+
+          <line x1="470" y1="85" x2="545" y2="80" stroke="#38bdf8" stroke-width="1.5" marker-end="url(#arwU3)"/>
+          <text x="505" y="72" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">All chunks done</text>
+
+          <!-- Server completes multipart -->
+          <line x1="605" y1="100" x2="605" y2="140" stroke="#00dc82" stroke-width="1" marker-end="url(#arwU1)"/>
+          <rect x="550" y="145" width="110" height="50" rx="6" fill="#12121c" stroke="#00dc82" stroke-width="1"/>
+          <text x="605" y="163" text-anchor="middle" fill="#00dc82" font-family="JetBrains Mono" font-size="8">S3 Complete</text>
+          <text x="605" y="178" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="7">status → "ready"</text>
+          <text x="605" y="190" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="7">version++</text>
+
+          <!-- Step 4: S3 Event backup -->
+          <rect x="740" y="60" width="130" height="55" rx="6" fill="#12121c" stroke="#f87171" stroke-width="1.5"/>
+          <text x="805" y="80" text-anchor="middle" fill="#f87171" font-family="Outfit" font-size="10" font-weight="600">⚡ S3 Event</text>
+          <text x="805" y="95" text-anchor="middle" fill="#8b8b9e" font-family="JetBrains Mono" font-size="8">SNS → Lambda</text>
+          <text x="805" y="108" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="7">Backup verification</text>
+
+          <line x1="660" y1="80" x2="735" y2="80" stroke="#f87171" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arwU4)"/>
+
+          <!-- Cron cleanup -->
+          <rect x="740" y="150" width="130" height="35" rx="6" fill="#12121c" stroke="#555568" stroke-width="1" stroke-dasharray="4 3"/>
+          <text x="805" y="172" text-anchor="middle" fill="#555568" font-family="JetBrains Mono" font-size="8">🕐 Cron: clean orphans &gt;24h</text>
+          <line x1="805" y1="115" x2="805" y2="145" stroke="#555568" stroke-width="1" stroke-dasharray="3 3"/>
+
+          <!-- Legend -->
+          <rect x="30" y="280" width="840" height="100" rx="8" fill="#0d0d14" stroke="#1e1e2e" stroke-width="1"/>
+          <text x="50" y="305" fill="#8b8b9e" font-family="Outfit" font-size="11" font-weight="600">Upload Flow Summary</text>
+          <text x="50" y="325" fill="#00dc82" font-family="JetBrains Mono" font-size="9">① Client sends metadata → Server creates record + returns pre-signed URL</text>
+          <text x="50" y="342" fill="#fb923c" font-family="JetBrains Mono" font-size="9">② Client uploads chunks directly to S3 via SDK (parallel possible)</text>
+          <text x="50" y="359" fill="#38bdf8" font-family="JetBrains Mono" font-size="9">③ Client calls /upload-complete → Server finalizes in S3 + updates DB status to "ready"</text>
+          <text x="50" y="376" fill="#f87171" font-family="JetBrains Mono" font-size="9">④ S3 event notification as backup + Cron cleans orphaned uploads after 24h</text>
+        </svg>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ==================== SECTION: DEEP DIVES ==================== -->
+  <section class="section" id="deep-dives">
+    <div class="section-label red">🔬 DEEP DIVES</div>
+    <h2 class="section-title">Interview Deep Dives</h2>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">How does file sync work across devices?</span>
+        <span class="qa-tag deep">Deep Dive</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <p><strong>Two approaches:</strong></p>
+        <p><strong>1. Polling (Simple)</strong> — Client periodically calls <code>GET /files/sync?since=timestamp</code> to get changes. Works but wasteful — mostly empty responses.</p>
+        <p><strong>2. Push (WebSocket / Long Polling)</strong> — Server pushes change notifications to connected devices. More efficient. When user edits file on laptop:</p>
+        <ul>
+          <li>Upload completes → Server updates metadata (version++)</li>
+          <li>Server sends push notification to all user's connected devices</li>
+          <li>Phone receives notification → calls sync API → downloads updated file</li>
+        </ul>
+        <p><strong>Best approach: Hybrid</strong> — Use WebSocket for real-time push. Fall back to polling if WebSocket disconnects. Initial sync on app open always polls to catch up.</p>
+      </div></div>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">How to handle conflict resolution?</span>
+        <span class="qa-tag tradeoff">Trade-off</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <p><strong>Scenario:</strong> User edits file on laptop at 2:00 PM. Same user edits same file on phone at 2:01 PM (without syncing).</p>
+        <p><strong>Strategy: First-write-wins + Conflict Copy</strong></p>
+        <ul>
+          <li>First upload that reaches server becomes the source of truth (version N+1)</li>
+          <li>Second upload detects version mismatch — server rejects the write</li>
+          <li>Server creates a <strong>"Conflicted Copy"</strong> of the second version</li>
+          <li>User sees both versions and manually decides which to keep or merge</li>
+        </ul>
+        <p>This is exactly how <strong>Dropbox handles it</strong> in production — "Ashish's conflicted copy (Feb 10)" appears in the folder. Simple, predictable, no data loss.</p>
+        <p><strong>Why not auto-merge?</strong> For binary files (videos, images), auto-merge is impossible. Even for text files, merge conflicts can corrupt data. Let the user decide — safest approach.</p>
+      </div></div>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">How to handle deduplication?</span>
+        <span class="qa-tag scale">Scale</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <p>With 1B users, many files will have identical content (same PDF shared multiple times, same meme, etc.). Storing duplicates wastes petabytes.</p>
+        <p><strong>Content-addressable storage:</strong></p>
+        <ul>
+          <li>Each chunk is hashed (SHA-256) before upload</li>
+          <li>S3 key = hash of chunk content</li>
+          <li>Before uploading, check: does this hash already exist in S3?</li>
+          <li>If yes → just add a reference, skip upload entirely</li>
+          <li>If no → upload the chunk</li>
+        </ul>
+        <p><strong>Savings can be massive</strong> — Dropbox reported ~75% deduplication ratio in early days. That's 1.5 Exabytes saved on our 2EB estimate!</p>
+        <p><strong>Trade-off:</strong> Deletion becomes tricky — need reference counting. Can't delete S3 object until ALL references are gone.</p>
+      </div></div>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">Why pre-signed URLs instead of streaming through server?</span>
+        <span class="qa-tag deep">Deep Dive</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <p><strong>If server streams the file:</strong></p>
+        <ul>
+          <li>Server bandwidth = upload + download traffic (huge cost)</li>
+          <li>Server needs massive memory/CPU for streaming</li>
+          <li>Server becomes bottleneck — 1M concurrent downloads kills it</li>
+          <li>More servers needed just for bandwidth</li>
+        </ul>
+        <p><strong>With pre-signed URLs:</strong></p>
+        <ul>
+          <li>Server only handles metadata (tiny payload)</li>
+          <li>S3/CloudFront handles all bandwidth (built for this)</li>
+          <li>Server can be tiny and cheap — just auth + URL generation</li>
+          <li>Horizontal scaling is trivial — server is stateless</li>
+        </ul>
+        <p><strong>Security:</strong> Pre-signed URLs are time-limited (1hr typically) and specific to one object. Even if intercepted, they expire quickly.</p>
+      </div></div>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">What if S3 event notification fails?</span>
+        <span class="qa-tag tradeoff">Trade-off</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <p><strong>Problem:</strong> In the S3 notification approach, if notification is lost or delayed, the file shows as "uploading" forever in our DB even though it's complete in S3.</p>
+        <p><strong>Solutions (defense in depth):</strong></p>
+        <ul>
+          <li><strong>Primary:</strong> Client always calls /upload-complete explicitly</li>
+          <li><strong>Secondary:</strong> S3 event notification as backup verification</li>
+          <li><strong>Tertiary:</strong> Cron job runs every hour — finds files with status "uploading" older than 24h → checks S3 if multipart is complete → updates status or aborts</li>
+          <li><strong>Client retry:</strong> If client doesn't get 200 from /upload-complete, it retries with exponential backoff</li>
+        </ul>
+        <p><strong>Key principle:</strong> Never rely on a single mechanism. Belt AND suspenders.</p>
+      </div></div>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">How would you scale the metadata database?</span>
+        <span class="qa-tag scale">Scale</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <p>1B users × average 50 files each = <strong>50 billion rows</strong> in file metadata table. Single Postgres won't handle this.</p>
+        <p><strong>Scaling strategy:</strong></p>
+        <ul>
+          <li><strong>Read replicas</strong> — Since read:write is 100:1, add read replicas. Most queries (list my files, get metadata) go to replicas.</li>
+          <li><strong>Sharding by user_id</strong> — Each shard holds a subset of users and ALL their files. Why user_id? Because most queries are "show me MY files" — single shard query, no scatter-gather.</li>
+          <li><strong>Caching with Redis</strong> — Hot file metadata cached in Redis. Frequently accessed files (shared public links going viral) served from cache.</li>
+          <li><strong>Separate permissions table</strong> — Can be sharded differently (by file_id) since access checks are per-file.</li>
+        </ul>
+      </div></div>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">Sync Strategy — Why NOT WebSocket for everyone?</span>
+        <span class="qa-tag tradeoff">Trade-off</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <p><strong>The WebSocket temptation:</strong> "Just keep a persistent connection to every device for real-time sync!"</p>
+        <p><strong>Reality check — do the math:</strong></p>
+        <ul>
+          <li>500M devices connected simultaneously</li>
+          <li>Each WebSocket connection ≈ 50KB memory</li>
+          <li>Total: <strong>500M × 50KB = 25TB memory</strong> just for connections</li>
+          <li>~500 dedicated WebSocket servers needed</li>
+        </ul>
+        <p>That's insane for just sending "hey, file changed" notifications.</p>
+        <p><strong>Our approach — Lazy Sync:</strong></p>
+        <ul>
+          <li><strong>App open:</strong> Poll <code>GET /files/sync?since=timestamp</code> to catch up on all missed changes</li>
+          <li><strong>User clicks file:</strong> Quick version check → if mismatch, show "New version available, tap to download"</li>
+          <li><strong>Mobile background:</strong> Use FCM (Android) / APNs (iOS) push notifications — OS already maintains persistent connection, piggyback on it</li>
+          <li><strong>No persistent server connections needed</strong> — simple, cheap, effective</li>
+        </ul>
+        <p><strong>Interview tip:</strong> Show you considered WebSocket, explain why it doesn't scale, then propose the pragmatic solution. This shows maturity in system design thinking.</p>
+      </div></div>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">Optimal Chunk Size — Why 5-10MB and not 100MB?</span>
+        <span class="qa-tag deep">Deep Dive</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <p><strong>Too small (1KB chunks):</strong></p>
+        <ul>
+          <li>5GB file = 5 million chunks → 5M HTTP requests overhead</li>
+          <li>S3 multipart limit is 10,000 parts max</li>
+          <li>Metadata explosion in chunks table</li>
+        </ul>
+        <p><strong>Too large (100MB chunks):</strong></p>
+        <ul>
+          <li>Fail at 95MB → re-upload entire 100MB chunk</li>
+          <li>Slow connections: one chunk takes forever</li>
+          <li>Less parallelism opportunity (fewer chunks)</li>
+          <li>Resume granularity is poor</li>
+        </ul>
+        <p><strong>Sweet spot: 5-10MB</strong></p>
+        <ul>
+          <li>5GB / 5MB = 1,000 chunks (well within S3's 10K limit)</li>
+          <li>Fail? Max 10MB re-upload — quick retry</li>
+          <li>S3 SDK uses 4-5 concurrent connections → excellent parallelism</li>
+          <li>Mobile-friendly size — works even on slower networks</li>
+          <li>Industry standard (S3 recommends 5-15MB for multipart)</li>
+        </ul>
+      </div></div>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">CDN for viral files — when and why?</span>
+        <span class="qa-tag scale">Scale</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <p><strong>Scenario:</strong> Someone shares a public Dropbox link on Twitter. 1M people click it in an hour.</p>
+        <p><strong>Without CDN:</strong> All 1M requests hit S3 directly. S3 handles it (it's designed for scale) but:</p>
+        <ul>
+          <li>Higher latency for users far from S3 region</li>
+          <li>S3 data transfer costs skyrocket</li>
+          <li>No edge caching benefits</li>
+        </ul>
+        <p><strong>With CDN (CloudFront/Cloudflare):</strong></p>
+        <ul>
+          <li>First request fetches from S3, cached at edge locations worldwide</li>
+          <li>Remaining 999,999 requests served from nearest edge — <strong>ultra-low latency</strong></li>
+          <li>S3 egress cost drops ~90%</li>
+          <li>Geographic distribution — users in Tokyo get served from Tokyo edge, not US-East S3</li>
+        </ul>
+        <p><strong>When to CDN:</strong> Only for popular/public files. Private files with unique per-user pre-signed URLs won't benefit from CDN caching (each URL is different). Use CDN for: public share links, widely accessed company files, and any file with high read frequency.</p>
+      </div></div>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">Redis Cache — Why LFU eviction?</span>
+        <span class="qa-tag deep">Deep Dive</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <p><strong>Problem:</strong> With 50 billion file metadata rows, we can't cache everything. Need smart eviction.</p>
+        <p><strong>LRU (Least Recently Used):</strong> Evicts items not accessed recently. Problem: a one-time viral file access pattern can flush out genuinely hot items.</p>
+        <p><strong>LFU (Least Frequently Used):</strong> Evicts items accessed least often overall. Better for Dropbox because:</p>
+        <ul>
+          <li>Some files are accessed daily (team documents, shared folders) — these should stay cached</li>
+          <li>Random one-time accesses (someone shared a link once) shouldn't evict frequently used files</li>
+          <li>LFU naturally keeps "working set" files hot</li>
+        </ul>
+        <p><strong>Redis config:</strong> <code>maxmemory-policy allkeys-lfu</code></p>
+        <p><strong>What to cache:</strong> File metadata only (small). NOT file content (too large, S3/CDN handles that).</p>
+      </div></div>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">Master-Slave DB — Why async replication?</span>
+        <span class="qa-tag tradeoff">Trade-off</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <p><strong>Read:Write = 100:1</strong> — overwhelming reads. Single DB can't handle it.</p>
+        <p><strong>Master-Slave setup:</strong></p>
+        <ul>
+          <li><strong>Master:</strong> Handles all writes (upload metadata, permission changes, version updates)</li>
+          <li><strong>Slave(s):</strong> Handle reads (list files, get metadata, check permissions). Multiple replicas possible.</li>
+        </ul>
+        <p><strong>Why async (not sync) replication?</strong></p>
+        <ul>
+          <li><strong>Sync replication:</strong> Master waits for slave to confirm write. If slave is slow/down, master blocks. Write latency increases. Availability drops.</li>
+          <li><strong>Async replication:</strong> Master writes and immediately responds. Slave catches up in background. Few milliseconds lag.</li>
+        </ul>
+        <p><strong>Trade-off:</strong> With async, a user might upload a file and if they immediately check from another device hitting a slave, file might not appear for a few ms. <strong>Acceptable</strong> — eventual consistency is fine for file sync.</p>
+        <p><strong>Indexing:</strong> Index on <code>file_id</code> for fast lookups, <code>owner_id</code> for "list my files" queries.</p>
+      </div></div>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">Common Interview Mistakes to Avoid</span>
+        <span class="qa-tag tradeoff">Trade-off</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <ul>
+          <li><strong>❌ Storing files in database</strong> — BLOBs in Postgres = disaster at scale. Always use object storage.</li>
+          <li><strong>❌ Streaming through server</strong> — Server becomes bandwidth bottleneck. Use pre-signed URLs for direct S3 access.</li>
+          <li><strong>❌ Single upload endpoint</strong> — Without multipart, large file uploads are fragile and slow.</li>
+          <li><strong>❌ Mixing public/private sharing in one table</strong> — Different access patterns need different data models.</li>
+          <li><strong>❌ Forgetting conflict resolution</strong> — Multi-device sync WILL have conflicts. Must have a strategy.</li>
+          <li><strong>❌ Strong consistency for sync</strong> — Overkill. Eventual consistency is perfectly fine for file sync.</li>
+          <li><strong>❌ No resume on upload failure</strong> — Without chunked upload + resume, a 5GB upload failure means starting over.</li>
+          <li><strong>❌ WebSocket for all users</strong> — 500M persistent connections = 25TB memory = 500 servers. Use lazy sync + FCM/APNs instead.</li>
+          <li><strong>❌ 100MB chunk size</strong> — Too large. Fail at 95MB = re-upload 100MB. Use 5-10MB for better retry granularity.</li>
+          <li><strong>❌ No CDN for popular files</strong> — Viral public links will hammer S3. CDN edge caching cuts latency and cost by 90%.</li>
+          <li><strong>❌ Single database</strong> — 50B rows needs master-slave with read replicas. Index on file_id and owner_id.</li>
+          <li><strong>❌ Over-engineering sync</strong> — Don't build real-time collaborative editing. Lazy version check on file open is simple, effective, and what Dropbox actually does.</li>
+        </ul>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ==================== IMPLEMENTATION TODO ==================== -->
+  <section class="section">
+    <div class="section-label cyan">🏗️ NEXT STEPS</div>
+    <h2 class="section-title">Implementation (Next Session)</h2>
+
+    <div class="qa-card">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="qa-icon">+</span>
+        <span class="qa-q-text">🏗️ Build: FastAPI + PostgreSQL + S3 (Minio)</span>
+        <span class="qa-tag api">TODO</span>
+      </div>
+      <div class="qa-answer"><div class="qa-answer-inner">
+        <p>Build the actual prototype: FastAPI routes, PostgreSQL schema, Minio as local S3 alternative, multipart upload flow, share link generation, and basic sync endpoint.</p>
+      </div></div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ========== FOOTER ========== -->
+<div class="footer">
+  <p>Dropbox System Design — Interview Prep by Ashish Bisht</p>
+  <p style="margin-top:0.5rem;">Part of <a href="../index.html">System Design Mastery</a> series</p>
+</div>
+
+<!-- ========== JS ========== -->
+<script>
+function toggle(el) {
+  const card = el.parentElement;
+  card.classList.toggle('open');
+}
+</script>
 </body>
 </html>
