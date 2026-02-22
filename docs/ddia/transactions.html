@@ -547,8 +547,12 @@
   ::-webkit-scrollbar-thumb { background: var(--border); }
   ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 </style>
+  <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
+<a href="#main" class="skip-link">Skip to content</a>
+<div class="nav-overlay"></div>
+
 
 <!-- HERO -->
 <section class="hero">
@@ -566,15 +570,41 @@
 </section>
 
 <!-- NAV -->
-<nav class="nav">
-  <button class="nav-btn active" onclick="scrollTo('acid')">01 ACID</button>
-  <button class="nav-btn" onclick="scrollTo('isolation')">02 Isolation Levels</button>
-  <button class="nav-btn" onclick="scrollTo('lost-update')">03 Lost Update</button>
-  <button class="nav-btn" onclick="scrollTo('write-skew')">04 Write Skew</button>
-  <button class="nav-btn" onclick="scrollTo('2pc')">05 2PC</button>
-  <button class="nav-btn" onclick="scrollTo('table')">06 Summary Table</button>
-  <button class="nav-btn" onclick="scrollTo('quiz')">07 Quiz</button>
+<nav class="nav" aria-label="Main navigation">
+  <div class="container">
+    <a href="../" class="nav-brand">🏗️ <span>SystemDesign</span>Mastery</a>
+    <ul class="nav-links">
+      <li><a href="../">Home</a></li>
+      <li><a href="../projects/">Projects</a></li>
+      <li><a href="../patterns/overview.html">Patterns</a></li>
+      <li><a href="../interview-prep/">Interview Prep</a></li>
+      <li><a href="../generic/">Guides</a></li>
+      <li><a href="https://github.com/ashish-bisht/all_about_system_design" target="_blank" rel="noopener">GitHub</a></li>
+    </ul>
+    <button class="nav-search-btn" aria-label="Search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <kbd>⌘K</kbd>
+    </button>
+    <button class="nav-hamburger" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
 </nav>
+<!-- Search Modal -->
+<div class="search-modal" role="dialog" aria-label="Search">
+  <div class="search-box">
+    <div class="search-input-wrap">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" class="search-input" placeholder="Search projects, patterns, guides...">
+    </div>
+    <div class="search-results"></div>
+    <div class="search-hint">
+      <span><kbd>↵</kbd> select</span>
+      <span><kbd>esc</kbd> close</span>
+      <span><kbd>⌘K</kbd> toggle</span>
+    </div>
+  </div>
+</div>
 
 <!-- MAIN -->
 <main class="content">
@@ -1226,11 +1256,39 @@ ALTAIR system → High Availability MySQL as a Service
 
 </main>
 
-<footer class="footer">
-  <div style="font-size:1.5rem; margin-bottom:0.5rem; animation: float 3s ease-in-out infinite;">🎯</div>
-  Mission <span>FANG</span> — Chapter 8 Complete<br>
-  <span style="color:var(--text2); font-size:0.65rem;">DDIA · Transactions · Flipkart Case Studies</span>
+<footer class="footer-upgraded">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">🏗️ SystemDesignMastery</div>
+        <p class="footer-desc">Learn system design by building real systems.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Learn</h4>
+        <a href="../projects/">Projects</a>
+        <a href="../patterns/overview.html">Patterns</a>
+        <a href="../generic/">Guides</a>
+      </div>
+      <div class="footer-col">
+        <h4>DDIA</h4>
+        <a href="../ddia/storage_and_retrival.html">Storage</a>
+        <a href="../ddia/transactions.html">Transactions</a>
+        <a href="../ddia/sharding.html">Sharding</a>
+      </div>
+      <div class="footer-col">
+        <h4>Prep</h4>
+        <a href="../interview-prep/">Framework</a>
+        <a href="../interview-prep/cheatsheet.html">Cheatsheet</a>
+        <a href="../interview-prep/trade-offs.html">Trade-offs</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>Built for learning, one system at a time. <a href="https://github.com/ashish-bisht/all_about_system_design" style="color: var(--muted);">GitHub</a></p>
+    </div>
+  </div>
 </footer>
+
+<button class="back-to-top" aria-label="Back to top">↑</button>
 
 <script>
   // Intersection Observer for scroll animations
@@ -1289,5 +1347,7 @@ ALTAIR system → High Availability MySQL as a Service
     document.getElementById(qId).style.display = 'block';
   }
 </script>
+<script src="../nav.js"></script>
+<script src="../site.js"></script>
 </body>
 </html>

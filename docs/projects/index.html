@@ -8,7 +8,10 @@
 </head>
 <body>
 
-<nav class="nav">
+<a href="#main" class="skip-link">Skip to content</a>
+<div class="nav-overlay"></div>
+
+<nav class="nav" aria-label="Main navigation">
   <div class="container">
     <a href="../" class="nav-brand">🏗️ <span>SystemDesign</span>Mastery</a>
     <ul class="nav-links">
@@ -16,10 +19,34 @@
       <li><a href="./">Projects</a></li>
       <li><a href="../patterns/overview.html">Patterns</a></li>
       <li><a href="../interview-prep/">Interview Prep</a></li>
+      <li><a href="../generic/">Guides</a></li>
       <li><a href="https://github.com/ashish-bisht/all_about_system_design" target="_blank" rel="noopener">GitHub</a></li>
     </ul>
+    <button class="nav-search-btn" aria-label="Search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <kbd>⌘K</kbd>
+    </button>
+    <button class="nav-hamburger" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </nav>
+
+<!-- Search Modal -->
+<div class="search-modal" role="dialog" aria-label="Search">
+  <div class="search-box">
+    <div class="search-input-wrap">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" class="search-input" placeholder="Search projects, patterns, guides...">
+    </div>
+    <div class="search-results"></div>
+    <div class="search-hint">
+      <span><kbd>↵</kbd> select</span>
+      <span><kbd>esc</kbd> close</span>
+      <span><kbd>⌘K</kbd> toggle</span>
+    </div>
+  </div>
+</div>
 
 <div class="container">
   <div class="breadcrumb">
@@ -29,7 +56,7 @@
   </div>
 </div>
 
-<section class="section">
+<section class="section" id="main">
   <div class="container">
     <div class="section-header">
       <h2 class="section-title">🗂️ All Projects</h2>
@@ -45,7 +72,7 @@
 
     <div class="project-grid">
 
-      <a href="../projects/bitly/" class="project-card easy animate-in" data-difficulty="easy">
+      <a href="../projects/bitly/" class="project-card easy animate-on-scroll" data-difficulty="easy">
         <div class="card-header">
           <span class="card-number">#01</span>
           <span class="card-badge easy">easy</span>
@@ -54,9 +81,10 @@
         <p class="card-desc">Design a URL shortening service like bit.ly</p>
         <div class="card-tags">
           <span class="card-tag">storage</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/pastebin/" class="project-card easy animate-in" data-difficulty="easy">
+      <a href="../projects/pastebin/" class="project-card easy animate-on-scroll" data-difficulty="easy">
         <div class="card-header">
           <span class="card-number">#02</span>
           <span class="card-badge easy">easy</span>
@@ -65,9 +93,10 @@
         <p class="card-desc">Design a text/code snippet sharing service</p>
         <div class="card-tags">
           <span class="card-tag">storage</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/rate-limiter/" class="project-card easy animate-in" data-difficulty="easy">
+      <a href="../projects/rate-limiter/" class="project-card easy animate-on-scroll" data-difficulty="easy">
         <div class="card-header">
           <span class="card-number">#03</span>
           <span class="card-badge easy">easy</span>
@@ -76,9 +105,10 @@
         <p class="card-desc">Design a distributed rate limiting system</p>
         <div class="card-tags">
           <span class="card-tag">infrastructure</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/kv-store/" class="project-card easy animate-in" data-difficulty="easy">
+      <a href="../projects/kv-store/" class="project-card easy animate-on-scroll" data-difficulty="easy">
         <div class="card-header">
           <span class="card-number">#04</span>
           <span class="card-badge easy">easy</span>
@@ -87,9 +117,10 @@
         <p class="card-desc">Design a distributed key-value store like Redis</p>
         <div class="card-tags">
           <span class="card-tag">database</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/task-queue/" class="project-card easy animate-in" data-difficulty="easy">
+      <a href="../projects/task-queue/" class="project-card easy animate-on-scroll" data-difficulty="easy">
         <div class="card-header">
           <span class="card-number">#05</span>
           <span class="card-badge easy">easy</span>
@@ -98,9 +129,10 @@
         <p class="card-desc">Design a distributed task queue like Celery/SQS</p>
         <div class="card-tags">
           <span class="card-tag">messaging</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/leaderboard/" class="project-card easy animate-in" data-difficulty="easy">
+      <a href="../projects/leaderboard/" class="project-card easy animate-on-scroll" data-difficulty="easy">
         <div class="card-header">
           <span class="card-number">#06</span>
           <span class="card-badge easy">easy</span>
@@ -109,9 +141,10 @@
         <p class="card-desc">Design a real-time gaming leaderboard</p>
         <div class="card-tags">
           <span class="card-tag">real-time</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/url-crawler/" class="project-card easy animate-in" data-difficulty="easy">
+      <a href="../projects/url-crawler/" class="project-card easy animate-on-scroll" data-difficulty="easy">
         <div class="card-header">
           <span class="card-number">#07</span>
           <span class="card-badge easy">easy</span>
@@ -120,9 +153,10 @@
         <p class="card-desc">Design a basic web page crawler</p>
         <div class="card-tags">
           <span class="card-tag">data-processing</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/chat-app/" class="project-card easy animate-in" data-difficulty="easy">
+      <a href="../projects/chat-app/" class="project-card easy animate-on-scroll" data-difficulty="easy">
         <div class="card-header">
           <span class="card-number">#08</span>
           <span class="card-badge easy">easy</span>
@@ -131,9 +165,10 @@
         <p class="card-desc">Design a simple real-time chat application</p>
         <div class="card-tags">
           <span class="card-tag">real-time</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/dropbox/" class="project-card medium animate-in" data-difficulty="medium">
+      <a href="../projects/dropbox/" class="project-card medium animate-on-scroll" data-difficulty="medium">
         <div class="card-header">
           <span class="card-number">#09</span>
           <span class="card-badge medium">medium</span>
@@ -142,9 +177,10 @@
         <p class="card-desc">Design a cloud file storage and sync service</p>
         <div class="card-tags">
           <span class="card-tag">storage</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/instagram/" class="project-card medium animate-in" data-difficulty="medium">
+      <a href="../projects/instagram/" class="project-card medium animate-on-scroll" data-difficulty="medium">
         <div class="card-header">
           <span class="card-number">#10</span>
           <span class="card-badge medium">medium</span>
@@ -153,9 +189,10 @@
         <p class="card-desc">Design a photo sharing social network</p>
         <div class="card-tags">
           <span class="card-tag">social</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/twitter-timeline/" class="project-card medium animate-in" data-difficulty="medium">
+      <a href="../projects/twitter-timeline/" class="project-card medium animate-on-scroll" data-difficulty="medium">
         <div class="card-header">
           <span class="card-number">#11</span>
           <span class="card-badge medium">medium</span>
@@ -164,9 +201,10 @@
         <p class="card-desc">Design a social media feed/timeline system</p>
         <div class="card-tags">
           <span class="card-tag">social</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/notification/" class="project-card medium animate-in" data-difficulty="medium">
+      <a href="../projects/notification/" class="project-card medium animate-on-scroll" data-difficulty="medium">
         <div class="card-header">
           <span class="card-number">#12</span>
           <span class="card-badge medium">medium</span>
@@ -175,9 +213,10 @@
         <p class="card-desc">Design a multi-channel notification platform</p>
         <div class="card-tags">
           <span class="card-tag">messaging</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/ticketmaster/" class="project-card medium animate-in" data-difficulty="medium">
+      <a href="../projects/ticketmaster/" class="project-card medium animate-on-scroll" data-difficulty="medium">
         <div class="card-header">
           <span class="card-number">#13</span>
           <span class="card-badge medium">medium</span>
@@ -186,9 +225,10 @@
         <p class="card-desc">Design an event ticketing and booking system</p>
         <div class="card-tags">
           <span class="card-tag">booking</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/yelp/" class="project-card medium animate-in" data-difficulty="medium">
+      <a href="../projects/yelp/" class="project-card medium animate-on-scroll" data-difficulty="medium">
         <div class="card-header">
           <span class="card-number">#14</span>
           <span class="card-badge medium">medium</span>
@@ -197,9 +237,10 @@
         <p class="card-desc">Design a location-based business discovery service</p>
         <div class="card-tags">
           <span class="card-tag">search</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/web-crawler/" class="project-card medium animate-in" data-difficulty="medium">
+      <a href="../projects/web-crawler/" class="project-card medium animate-on-scroll" data-difficulty="medium">
         <div class="card-header">
           <span class="card-number">#15</span>
           <span class="card-badge medium">medium</span>
@@ -208,9 +249,10 @@
         <p class="card-desc">Design a large-scale distributed web crawler</p>
         <div class="card-tags">
           <span class="card-tag">data-processing</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/typeahead/" class="project-card medium animate-in" data-difficulty="medium">
+      <a href="../projects/typeahead/" class="project-card medium animate-on-scroll" data-difficulty="medium">
         <div class="card-header">
           <span class="card-number">#16</span>
           <span class="card-badge medium">medium</span>
@@ -219,9 +261,10 @@
         <p class="card-desc">Design a real-time search autocomplete system</p>
         <div class="card-tags">
           <span class="card-tag">search</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/api-gateway/" class="project-card medium animate-in" data-difficulty="medium">
+      <a href="../projects/api-gateway/" class="project-card medium animate-on-scroll" data-difficulty="medium">
         <div class="card-header">
           <span class="card-number">#17</span>
           <span class="card-badge medium">medium</span>
@@ -230,9 +273,10 @@
         <p class="card-desc">Design a scalable API gateway with rate limiting</p>
         <div class="card-tags">
           <span class="card-tag">infrastructure</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/distributed-cache/" class="project-card medium animate-in" data-difficulty="medium">
+      <a href="../projects/distributed-cache/" class="project-card medium animate-on-scroll" data-difficulty="medium">
         <div class="card-header">
           <span class="card-number">#18</span>
           <span class="card-badge medium">medium</span>
@@ -241,9 +285,10 @@
         <p class="card-desc">Design a distributed caching layer like Memcached</p>
         <div class="card-tags">
           <span class="card-tag">infrastructure</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/youtube/" class="project-card hard animate-in" data-difficulty="hard">
+      <a href="../projects/youtube/" class="project-card hard animate-on-scroll" data-difficulty="hard">
         <div class="card-header">
           <span class="card-number">#19</span>
           <span class="card-badge hard">hard</span>
@@ -252,9 +297,10 @@
         <p class="card-desc">Design a video upload and streaming platform</p>
         <div class="card-tags">
           <span class="card-tag">streaming</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/uber/" class="project-card hard animate-in" data-difficulty="hard">
+      <a href="../projects/uber/" class="project-card hard animate-on-scroll" data-difficulty="hard">
         <div class="card-header">
           <span class="card-number">#20</span>
           <span class="card-badge hard">hard</span>
@@ -263,9 +309,10 @@
         <p class="card-desc">Design a ride-sharing service with real-time matching</p>
         <div class="card-tags">
           <span class="card-tag">location</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/google-docs/" class="project-card hard animate-in" data-difficulty="hard">
+      <a href="../projects/google-docs/" class="project-card hard animate-on-scroll" data-difficulty="hard">
         <div class="card-header">
           <span class="card-number">#21</span>
           <span class="card-badge hard">hard</span>
@@ -274,9 +321,10 @@
         <p class="card-desc">Design a real-time collaborative document editor</p>
         <div class="card-tags">
           <span class="card-tag">real-time</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/search-engine/" class="project-card hard animate-in" data-difficulty="hard">
+      <a href="../projects/search-engine/" class="project-card hard animate-on-scroll" data-difficulty="hard">
         <div class="card-header">
           <span class="card-number">#22</span>
           <span class="card-badge hard">hard</span>
@@ -285,9 +333,10 @@
         <p class="card-desc">Design a web-scale search engine</p>
         <div class="card-tags">
           <span class="card-tag">search</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/whatsapp/" class="project-card hard animate-in" data-difficulty="hard">
+      <a href="../projects/whatsapp/" class="project-card hard animate-on-scroll" data-difficulty="hard">
         <div class="card-header">
           <span class="card-number">#23</span>
           <span class="card-badge hard">hard</span>
@@ -296,9 +345,10 @@
         <p class="card-desc">Design an end-to-end encrypted messaging platform</p>
         <div class="card-tags">
           <span class="card-tag">messaging</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/payment/" class="project-card hard animate-in" data-difficulty="hard">
+      <a href="../projects/payment/" class="project-card hard animate-on-scroll" data-difficulty="hard">
         <div class="card-header">
           <span class="card-number">#24</span>
           <span class="card-badge hard">hard</span>
@@ -307,9 +357,10 @@
         <p class="card-desc">Design a payment processing system like Stripe</p>
         <div class="card-tags">
           <span class="card-tag">fintech</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/news-feed/" class="project-card hard animate-in" data-difficulty="hard">
+      <a href="../projects/news-feed/" class="project-card hard animate-on-scroll" data-difficulty="hard">
         <div class="card-header">
           <span class="card-number">#25</span>
           <span class="card-badge hard">hard</span>
@@ -318,9 +369,10 @@
         <p class="card-desc">Design a personalized news feed with ranking</p>
         <div class="card-tags">
           <span class="card-tag">social</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/hotel-booking/" class="project-card hard animate-in" data-difficulty="hard">
+      <a href="../projects/hotel-booking/" class="project-card hard animate-on-scroll" data-difficulty="hard">
         <div class="card-header">
           <span class="card-number">#26</span>
           <span class="card-badge hard">hard</span>
@@ -329,9 +381,10 @@
         <p class="card-desc">Design a hotel reservation system like Booking.com</p>
         <div class="card-tags">
           <span class="card-tag">booking</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/stock-exchange/" class="project-card hard animate-in" data-difficulty="hard">
+      <a href="../projects/stock-exchange/" class="project-card hard animate-on-scroll" data-difficulty="hard">
         <div class="card-header">
           <span class="card-number">#27</span>
           <span class="card-badge hard">hard</span>
@@ -340,9 +393,10 @@
         <p class="card-desc">Design a real-time stock trading platform</p>
         <div class="card-tags">
           <span class="card-tag">fintech</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
-      <a href="../projects/distributed-db/" class="project-card hard animate-in" data-difficulty="hard">
+      <a href="../projects/distributed-db/" class="project-card hard animate-on-scroll" data-difficulty="hard">
         <div class="card-header">
           <span class="card-number">#28</span>
           <span class="card-badge hard">hard</span>
@@ -351,21 +405,49 @@
         <p class="card-desc">Design a distributed SQL database</p>
         <div class="card-tags">
           <span class="card-tag">database</span>
+          <span class="status-badge todo">skeleton</span>
         </div>
       </a>
     </div>
   </div>
 </section>
 
-<footer class="footer">
+<footer class="footer-upgraded">
   <div class="container">
-    <p>🏗️ System Design Mastery — Built for learning, one system at a time.</p>
-    <p style="margin-top: 0.5rem;">
-      <a href="https://github.com/ashish-bisht/all_about_system_design" style="color: var(--text-muted);">GitHub</a>
-    </p>
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">🏗️ SystemDesignMastery</div>
+        <p class="footer-desc">Learn system design by building real systems.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Learn</h4>
+        <a href="../projects/">Projects</a>
+        <a href="../patterns/overview.html">Patterns</a>
+        <a href="../generic/">Guides</a>
+      </div>
+      <div class="footer-col">
+        <h4>DDIA</h4>
+        <a href="../ddia/storage_and_retrival.html">Storage</a>
+        <a href="../ddia/transactions.html">Transactions</a>
+        <a href="../ddia/sharding.html">Sharding</a>
+      </div>
+      <div class="footer-col">
+        <h4>Prep</h4>
+        <a href="../interview-prep/">Framework</a>
+        <a href="../interview-prep/cheatsheet.html">Cheatsheet</a>
+        <a href="../interview-prep/trade-offs.html">Trade-offs</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>Built for learning, one system at a time. <a href="https://github.com/ashish-bisht/all_about_system_design" style="color: var(--muted);">GitHub</a></p>
+    </div>
   </div>
 </footer>
 
+<button class="back-to-top" aria-label="Back to top">↑</button>
+
+<script src="../nav.js"></script>
+<script src="../site.js"></script>
 <script>
 document.querySelectorAll('.filter-tab').forEach(tab => {
   tab.addEventListener('click', () => {
