@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebSockets — Interview Prep</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #1e1e2e;
+    --accent: #7c3aed;
+    --accent2: #06b6d4;
+    --accent3: #f59e0b;
+    --danger: #ef4444;
+    --success: #10b981;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --heading: #f8fafc;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* Grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* HERO */
+  .hero {
+    padding: 80px 0 60px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::after {
+    content: 'WS';
+    position: absolute;
+    right: -20px;
+    top: 20px;
+    font-size: 200px;
+    font-weight: 800;
+    color: var(--accent);
+    opacity: 0.04;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    background: var(--accent);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 2px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .hero h1 {
+    font-size: clamp(36px, 6vw, 64px);
+    font-weight: 800;
+    color: var(--heading);
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+
+  .hero h1 span {
+    color: var(--accent2);
+  }
+
+  .hero p {
+    font-size: 17px;
+    color: var(--muted);
+    max-width: 500px;
+  }
+
+  /* SECTIONS */
+  .section {
+    padding: 60px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 8px;
+  }
+
+  .section-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--heading);
+    margin-bottom: 32px;
+  }
+
+  /* FLOW DIAGRAM */
+  .flow {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 32px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    overflow-x: auto;
+  }
+
+  .flow-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 10px 0;
+    flex-wrap: wrap;
+  }
+
+  .flow-client {
+    color: var(--accent2);
+    min-width: 80px;
+    font-weight: 500;
+  }
+
+  .flow-server {
+    color: var(--accent);
+    min-width: 80px;
+    font-weight: 500;
+    text-align: right;
+  }
+
+  .flow-arrow {
+    color: var(--muted);
+    flex: 1;
+    text-align: center;
+    min-width: 120px;
+  }
+
+  .flow-arrow.right::before { content: '──────────► '; }
+  .flow-arrow.left::before { content: ' ◄──────────'; }
+  .flow-arrow.both { color: var(--success); }
+  .flow-arrow.both::before { content: ' ◄══════════► '; }
+
+  .flow-note {
+    color: var(--muted);
+    font-size: 11px;
+    margin-left: 8px;
+  }
+
+  .flow-divider {
+    border: none;
+    border-top: 1px dashed var(--border);
+    margin: 16px 0;
+  }
+
+  /* Q&A CARDS */
+  .qa-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .qa-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .qa-card:hover {
+    border-color: var(--accent);
+  }
+
+  .qa-question {
+    padding: 20px 24px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .qa-question-text {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--heading);
+  }
+
+  .qa-icon {
+    color: var(--accent);
+    font-size: 18px;
+    transition: transform 0.3s;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .qa-card.open .qa-icon {
+    transform: rotate(45deg);
+  }
+
+  .qa-answer {
+    display: none;
+    padding: 0 24px 20px;
+    color: var(--text);
+    font-size: 14px;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+  }
+
+  .qa-card.open .qa-answer {
+    display: block;
+  }
+
+  /* COMPARISON TABLE */
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  th {
+    background: var(--surface);
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  .yes { color: var(--success); font-weight: 700; }
+  .no  { color: var(--danger);  font-weight: 700; }
+  .mid { color: var(--accent3); font-weight: 700; }
+
+  td:first-child { color: var(--heading); font-weight: 700; }
+
+  /* TRAPS */
+  .traps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+
+  .trap-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--danger);
+    border-radius: 8px;
+    padding: 20px;
+  }
+
+  .trap-card.tip {
+    border-left-color: var(--success);
+  }
+
+  .trap-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--danger);
+    margin-bottom: 8px;
+  }
+
+  .trap-card.tip .trap-label {
+    color: var(--success);
+  }
+
+  .trap-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--heading);
+    margin-bottom: 8px;
+  }
+
+  .trap-text {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* SCALE SECTION */
+  .scale-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .scale-step {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .scale-step:last-child { border-bottom: none; }
+
+  .scale-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--border);
+    min-width: 48px;
+    line-height: 1;
+    padding-top: 4px;
+  }
+
+  .scale-content h4 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--heading);
+    margin-bottom: 6px;
+  }
+
+  .scale-content p {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .scale-content .highlight {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent2);
+    background: rgba(6, 182, 212, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 6px;
+  }
+
+  /* BOTTLENECK BARS */
+  .bottleneck-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .bn-item {}
+
+  .bn-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+
+  .bn-name { color: var(--heading); font-weight: 700; }
+  .bn-val  { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 12px; }
+
+  .bn-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .bn-fill {
+    height: 100%;
+    border-radius: 3px;
+    animation: grow 1s ease forwards;
+    transform-origin: left;
+  }
+
+  @keyframes grow {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
+
+  .bn-note {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* FOOTER */
+  .footer {
+    padding: 40px 0;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* MONO INLINE */
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: rgba(124, 58, 237, 0.15);
+    color: var(--accent2);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  /* BADGE */
+  .badge {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  .badge-hot  { background: rgba(239,68,68,0.15); color: var(--danger); }
+  .badge-common { background: rgba(245,158,11,0.15); color: var(--accent3); }
+  .badge-deep { background: rgba(124,58,237,0.15); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="tag">Interview Prep</div>
+    <h1>Web<span>Sockets</span><br>Zero to Interview</h1>
+    <p>TCP → HTTP → WebSocket. Pura picture — jo interviewer actually poochta hai.</p>
+  </div>
+
+  <!-- SECTION 1: HOW IT WORKS -->
+  <div class="section">
+    <div class="section-label">01 / Foundation</div>
+    <div class="section-title">Connection Kaise Banta Hai</div>
+
+    <div class="flow">
+      <div class="flow-title">TCP → HTTP Upgrade → WebSocket Tunnel</div>
+
+      <div class="flow-row">
+        <span class="flow-client">Client</span>
+        <span class="flow-arrow right">SYN</span>
+        <span class="flow-server">Server</span>
+        <span class="flow-note">← TCP 3-way handshake shuru</span>
+      </div>
+      <div class="flow-row">
+        <span class="flow-client">Client</span>
+        <span class="flow-arrow left">SYN + ACK</span>
+        <span class="flow-server">Server</span>
+      </div>
+      <div class="flow-row">
+        <span class="flow-client">Client</span>
+        <span class="flow-arrow right">ACK</span>
+        <span class="flow-server">Server</span>
+        <span class="flow-note">← Reliable pipe ready</span>
+      </div>
+
+      <hr class="flow-divider">
+
+      <div class="flow-row">
+        <span class="flow-client">Client</span>
+        <span class="flow-arrow right">HTTP GET + Upgrade: websocket</span>
+        <span class="flow-server">Server</span>
+        <span class="flow-note">← Sec-WebSocket-Key bhi bheja</span>
+      </div>
+      <div class="flow-row">
+        <span class="flow-client">Client</span>
+        <span class="flow-arrow left">HTTP 101 Switching Protocols</span>
+        <span class="flow-server">Server</span>
+        <span class="flow-note">← Key verify karke accept kiya</span>
+      </div>
+
+      <hr class="flow-divider">
+
+      <div class="flow-row">
+        <span class="flow-client">Client</span>
+        <span class="flow-arrow both">OPEN 2-WAY TUNNEL</span>
+        <span class="flow-server">Server</span>
+        <span class="flow-note">← Koi bhi, kabhi bhi bhej sakta hai</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: WHY 101 -->
+  <div class="section">
+    <div class="section-label">02 / Key Concepts</div>
+    <div class="section-title">Core Concepts</div>
+
+    <div class="qa-grid">
+
+      <div class="qa-card">
+        <div class="qa-question" onclick="toggle(this)">
+          <span class="qa-question-text">HTTP 101 kyun? 200 kyun nahi? <span class="badge badge-hot">Hot</span></span>
+          <span class="qa-icon">+</span>
+        </div>
+        <div class="qa-answer">
+          <code>200 OK</code> ka matlab — "response complete, connection band karo." <code>101 Switching Protocols</code> ek informational code hai (1xx) jiska matlab hai "protocol change ho raha hai, connection <strong>khuli rakho</strong>." WebSocket ke liye connection open rehni chahiye — isliye sirf 101 kaam karta hai.
+        </div>
+      </div>
+
+      <div class="qa-card">
+        <div class="qa-question" onclick="toggle(this)">
+          <span class="qa-question-text">Sec-WebSocket-Key ka kya kaam hai? <span class="badge badge-common">Common</span></span>
+          <span class="qa-icon">+</span>
+        </div>
+        <div class="qa-answer">
+          Client ek random base64 key bhejta hai. Server us key ko ek fixed magic string se jodke SHA1 hash banata hai aur wapas bhejta hai. Iska purpose — verify karna ki server genuinely WebSocket samajhta hai, koi random HTTP server accidentally accept na kar le. Yeh security nahi, <strong>protocol verification</strong> hai.
+        </div>
+      </div>
+
+      <div class="qa-card">
+        <div class="qa-question" onclick="toggle(this)">
+          <span class="qa-question-text">WebSocket aur HTTP polling mein fark? <span class="badge badge-hot">Hot</span></span>
+          <span class="qa-icon">+</span>
+        </div>
+        <div class="qa-answer">
+          Polling mein client bar bar server se poochta hai — "koi naya data?" — 99% requests mein jawab hota hai "nahi." Wasteful aur slow. WebSocket mein ek baar connection khulta hai, server khud data push karta hai jab ready ho. Lower latency, much less overhead.
+        </div>
+      </div>
+
+      <div class="qa-card">
+        <div class="qa-question" onclick="toggle(this)">
+          <span class="qa-question-text">WebSocket vs SSE — kab kaunsa? <span class="badge badge-common">Common</span></span>
+          <span class="qa-icon">+</span>
+        </div>
+        <div class="qa-answer">
+          SSE (Server-Sent Events) sirf <strong>server → client</strong> one-way stream hai. WebSocket fully bi-directional hai. Live notifications, news feed, progress bars ke liye SSE enough hai — simpler bhi hai. Chat, games, collaborative editing ke liye WebSocket chahiye kyunki client bhi push karta hai.
+        </div>
+      </div>
+
+      <div class="qa-card">
+        <div class="qa-question" onclick="toggle(this)">
+          <span class="qa-question-text">Connection close kaise hoti hai? <span class="badge badge-deep">Deep</span></span>
+          <span class="qa-icon">+</span>
+        </div>
+        <div class="qa-answer">
+          WebSocket ka apna close handshake hota hai — TCP jaisa. Koi bhi side ek <strong>Close frame</strong> bhejta hai with a status code aur reason. Doosri side Close frame se acknowledge karti hai. Phir TCP connection band hoti hai. Abrupt disconnect (network gaya) mein sirf TCP RST aata hai — isliye heartbeat/ping-pong important hai dead connections detect karne ke liye.
+        </div>
+      </div>
+
+      <div class="qa-card">
+        <div class="qa-question" onclick="toggle(this)">
+          <span class="qa-question-text">WebSocket ka HTTP version dependency? <span class="badge badge-deep">Deep</span></span>
+          <span class="qa-icon">+</span>
+        </div>
+        <div class="qa-answer">
+          Standard WebSocket sirf <strong>HTTP/1.1</strong> pe kaam karta hai — <code>Upgrade</code> header HTTP/1.1 ka feature hai. HTTP/2 mein WebSocket ka equivalent alag tarike se handle hota hai (RFC 8441). Real world mein browser to CDN HTTP/2 hota hai, CDN to backend HTTP/1.1 — isliye practically WebSocket HTTP/1.1 upgrade pe hi milega.
+        </div>
+      </div>
+
+      <div class="qa-card">
+        <div class="qa-question" onclick="toggle(this)">
+          <span class="qa-question-text">Authentication WebSocket mein kaise karein? <span class="badge badge-hot">Hot</span></span>
+          <span class="qa-icon">+</span>
+        </div>
+        <div class="qa-answer">
+          WebSocket handshake mein custom headers nahi bheje ja sakte browser se (limitation hai). Do options: <strong>(1)</strong> Initial HTTP upgrade request mein query param mein token bhejo — <code>ws://host/ws?token=xyz</code> — server validate kare connect pe. <strong>(2)</strong> Connect hone ke baad pehla message hi auth token bhejo — server validate kare warna disconnect kare. Option 1 zyada common hai.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECTION 3: COMPARISON TABLE -->
+  <div class="section">
+    <div class="section-label">03 / Comparison</div>
+    <div class="section-title">HTTP vs SSE vs WebSocket</div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>HTTP</th>
+            <th>SSE</th>
+            <th>WebSocket</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Direction</td>
+            <td>Client → Server</td>
+            <td>Server → Client</td>
+            <td class="yes">Both ↔</td>
+          </tr>
+          <tr>
+            <td>Connection</td>
+            <td class="no">Close (each req)</td>
+            <td class="mid">Open (1-way)</td>
+            <td class="yes">Open (2-way)</td>
+          </tr>
+          <tr>
+            <td>Server Push</td>
+            <td class="no">No</td>
+            <td class="yes">Yes</td>
+            <td class="yes">Yes</td>
+          </tr>
+          <tr>
+            <td>Overhead</td>
+            <td class="no">High (headers every req)</td>
+            <td class="mid">Low</td>
+            <td class="yes">Very Low</td>
+          </tr>
+          <tr>
+            <td>Complexity</td>
+            <td class="yes">Simple</td>
+            <td class="mid">Medium</td>
+            <td class="no">Complex</td>
+          </tr>
+          <tr>
+            <td>RAM per conn</td>
+            <td class="yes">Negligible</td>
+            <td class="mid">~2-4 KB</td>
+            <td class="mid">~2-8 KB</td>
+          </tr>
+          <tr>
+            <td>Use Case</td>
+            <td>REST APIs, pages</td>
+            <td>Notifications, feeds</td>
+            <td>Chat, games, trading</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SECTION 4: BOTTLENECKS -->
+  <div class="section">
+    <div class="section-label">04 / Performance</div>
+    <div class="section-title">Bottleneck Order — Kya Pehle Toot ta Hai</div>
+
+    <div class="bottleneck-list">
+      <div class="bn-item">
+        <div class="bn-header">
+          <span class="bn-name">File Descriptors (OS limit)</span>
+          <span class="bn-val">Default: 1024 / Tuned: 1M+</span>
+        </div>
+        <div class="bn-bar"><div class="bn-fill" style="width:95%; background: var(--danger);"></div></div>
+        <div class="bn-note">Pehla wall. ulimit -n se fix hota hai. Har connection = 1 FD.</div>
+      </div>
+
+      <div class="bn-item">
+        <div class="bn-header">
+          <span class="bn-name">RAM</span>
+          <span class="bn-val">~2-8 KB per connection</span>
+        </div>
+        <div class="bn-bar"><div class="bn-fill" style="width:75%; background: var(--accent3);"></div></div>
+        <div class="bn-note">10K conn ≈ 80 MB. 100K conn ≈ 800 MB. Ek server ka real limit.</div>
+      </div>
+
+      <div class="bn-item">
+        <div class="bn-header">
+          <span class="bn-name">Network / Bandwidth</span>
+          <span class="bn-val">Messages per second</span>
+        </div>
+        <div class="bn-bar"><div class="bn-fill" style="width:50%; background: var(--accent2);"></div></div>
+        <div class="bn-note">High-frequency updates (trading, games) mein bottleneck ban sakta hai.</div>
+      </div>
+
+      <div class="bn-item">
+        <div class="bn-header">
+          <span class="bn-name">CPU</span>
+          <span class="bn-val">~0.1% for 500 idle conns</span>
+        </div>
+        <div class="bn-bar"><div class="bn-fill" style="width:15%; background: var(--success);"></div></div>
+        <div class="bn-note">Async ki wajah se CPU LAST toot ta hai. await = CPU free hai baaki ke liye.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 5: SCALING -->
+  <div class="section">
+    <div class="section-label">05 / Scaling</div>
+    <div class="section-title">1 Server Se 1M Users Tak</div>
+
+    <div class="scale-steps">
+      <div class="scale-step">
+        <div class="scale-num">01</div>
+        <div class="scale-content">
+          <h4>Single Server — ~10K connections</h4>
+          <p>Uvicorn + FastAPI. Async se sab handle ho jaata hai. FD limit tune karo, RAM enough ho toh kaam chalega.</p>
+          <span class="highlight">ulimit -n 65536</span>
+        </div>
+      </div>
+
+      <div class="scale-step">
+        <div class="scale-num">02</div>
+        <div class="scale-content">
+          <h4>Problem: Multiple Servers</h4>
+          <p>User A — Server 1 pe connected. User B — Server 2 pe connected. A ka message B ko kaise milega? Dono servers ek doosre ko jaante hi nahi!</p>
+          <span class="highlight">This is the core interview problem</span>
+        </div>
+      </div>
+
+      <div class="scale-step">
+        <div class="scale-num">03</div>
+        <div class="scale-content">
+          <h4>Solution: Redis Pub/Sub</h4>
+          <p>Har server Redis ko subscribe karta hai. Koi bhi server message receive kare, Redis pe publish karo. Sab servers ko milega, wo apne connected clients ko bhej denge.</p>
+          <span class="highlight">Redis = message broker between servers</span>
+        </div>
+      </div>
+
+      <div class="scale-step">
+        <div class="scale-num">04</div>
+        <div class="scale-content">
+          <h4>Load Balancer: Sticky Sessions</h4>
+          <p>Normal load balancer har request pe alag server pe jaata hai — WebSocket ke liye problem! Ek baar connected, same server pe rehna chahiye. Sticky sessions (IP hash) se solve hota hai.</p>
+          <span class="highlight">Nginx: ip_hash directive</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 6: TRAPS -->
+  <div class="section">
+    <div class="section-label">06 / Watch Out</div>
+    <div class="section-title">Common Mistakes + Interview Traps</div>
+
+    <div class="traps-grid">
+      <div class="trap-card">
+        <div class="trap-label">⚠️ Trap</div>
+        <div class="trap-title">WebSocket har jagah use karna</div>
+        <div class="trap-text">REST API, login, file upload — sab ke liye WebSocket use karna overkill hai. Simple request-response ke liye HTTP hi best hai.</div>
+      </div>
+
+      <div class="trap-card">
+        <div class="trap-label">⚠️ Trap</div>
+        <div class="trap-title">Dead connections track nahi karna</div>
+        <div class="trap-text">Network abruptly gayi — server ko pata nahi chalta. Ping/Pong heartbeat nahi rakha toh RAM mein "ghost connections" bhar jaayenge.</div>
+      </div>
+
+      <div class="trap-card">
+        <div class="trap-label">⚠️ Trap</div>
+        <div class="trap-title">Broadcast loop mein error handling nahi</div>
+        <div class="trap-text">Ek broken connection pe send fail hua toh poora broadcast loop crash. Try/except har send ke around zaroori hai.</div>
+      </div>
+
+      <div class="trap-card">
+        <div class="trap-label">⚠️ Trap</div>
+        <div class="trap-title">Auth ignore karna</div>
+        <div class="trap-text">WebSocket endpoint pe koi bhi connect kar sakta hai bina auth ke. Token validation connect ke time pe zaroori hai.</div>
+      </div>
+
+      <div class="trap-card tip">
+        <div class="trap-label">✅ Tip</div>
+        <div class="trap-title">JSON protocol design pehle karo</div>
+        <div class="trap-text">Plain text se shuru mat karo. Type field wala JSON protocol pehle design karo — typing indicators, read receipts sab is pe build hote hain.</div>
+      </div>
+
+      <div class="trap-card tip">
+        <div class="trap-label">✅ Tip</div>
+        <div class="trap-title">Reconnection client side pe rakho</div>
+        <div class="trap-text">Exponential backoff se auto-reconnect rakho browser mein. Server restart ya deploy hone pe users automatically reconnect ho jayein.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    websockets — interview prep // TCP → HTTP/1.1 → WS
+  </div>
+
+</div>
+
+<script>
+  function toggle(el) {
+    const card = el.closest('.qa-card');
+    card.classList.toggle('open');
+  }
+</script>
+
+</body>
+</html>

@@ -33,3 +33,5 @@ htmlcov/
 .pytest_cache/
 
 db.sh
+
+dummy/
